@@ -1,383 +1,1199 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aurora Asset Manager - 충남 현장 자산 관리 시스템</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- SheetJS (Excel Parsing & Export) -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <!-- QR Code Generator CDN -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <!-- Kakao Maps API -->
-    <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=77c97bf1b0283e37f4ca3c548d45e5e6"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#312e81">
+<title>Aurora Asset Manager · 충남 현장</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<!--
+  Aurora Asset Manager (개발 단계)
+  ─────────────────────────────────
+  · 이 파일 하나에 화면과 기능이 모두 들어 있어요.
+  · 자산 데이터는 같은 GitHub 저장소의 assets.json 파일에 저장돼요. (앱에서 처음 저장할 때 자동 생성)
+  · 코드 구성
+      [1] 기본 설정 (CONFIG)      ← 비밀번호, 카카오 키, 저장소 이름 등 바꿀 값은 여기
+      [2] 데이터 저장소 (Store)   ← 12월 Firebase 이전 때 이 구역만 바꾸면 됨
+      [3] 로그인
+      [4] 화면: 현황 / 자산 / 지도 / 라벨
+      [5] 자산 상세·등록 패널
+      [6] 엑셀 (양식·올리기·내보내기)
+      [7] 설정 · 시작
+-->
+<style>
+:root{
+  --bg:#f4f6fa;--card:#fff;--line:#e6e9f0;--line2:#d5dae4;--text:#141a2a;--sub:#667085;--muted:#98a2b3;
+  --acc:#4338ca;--acc-d:#3730a3;--acc-bg:#eef0ff;
+  --ok:#15803d;--ok-bg:#dcfce7;--use:#0369a1;--use-bg:#e0f2fe;--chk:#b45309;--chk-bg:#fef3c7;--off:#667085;--off-bg:#eef0f3;
+  --red:#dc2626;--red-bg:#fee2e2;--r:14px;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
+button{font:inherit;cursor:pointer;color:inherit}
+input,select,textarea{font:inherit;color:inherit}
+.hidden{display:none!important}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:-.01em}
+.muted{color:var(--muted)}
+.sub{color:var(--sub);font-size:13.5px;margin:4px 0 0}
+svg.i{flex:none;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+/* 로그인 */
+#gate{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:#1e1b4b;background-image:radial-gradient(circle at 20% 10%,#4338ca 0,transparent 45%),radial-gradient(circle at 90% 90%,#0e7490 0,transparent 40%)}
+.gate-card{background:#fff;border-radius:22px;padding:36px 30px 28px;width:100%;max-width:360px;box-shadow:0 24px 60px rgba(0,0,0,.3)}
+.logo{width:44px;height:44px;border-radius:13px;background:linear-gradient(135deg,#4338ca,#0e7490);color:#fff;display:grid;place-items:center;font-weight:800;font-size:20px;flex:none}
+.gate-card h1{font-size:21px;margin:18px 0 2px;letter-spacing:-.02em}
+.gate-card form{margin-top:26px;display:flex;flex-direction:column;gap:12px}
+.pw{width:100%;font-size:22px;letter-spacing:.3em;text-align:center;padding:14px;border:1.5px solid var(--line2);border-radius:12px;outline:none}
+.pw:focus{border-color:var(--acc);box-shadow:0 0 0 4px var(--acc-bg)}
+.gate-err{color:var(--red);font-size:13px;min-height:18px;text-align:center}
+.remember{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--sub);justify-content:center}
+.shake{animation:shake .35s}
+@keyframes shake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+
+/* 레이아웃 */
+#app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+.side{background:#fff;border-right:1px solid var(--line);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;padding:20px 14px 14px}
+.brand{display:flex;gap:11px;align-items:center;padding:2px 8px 24px}
+.brand b{display:block;font-size:15px;letter-spacing:-.01em}
+.brand small{color:var(--sub);font-size:12px}
+.nav{display:flex;flex-direction:column;gap:2px}
+.nav-btn{display:flex;align-items:center;gap:11px;width:100%;border:0;background:none;padding:11px 12px;border-radius:10px;color:#4b5565;font-weight:600;font-size:14.5px;text-align:left}
+.nav-btn:hover{background:#f5f6fa}
+.nav-btn.on{background:var(--acc-bg);color:var(--acc)}
+.nav-btn .cnt{margin-left:auto;background:var(--red);color:#fff;font-size:11px;font-weight:700;padding:1px 7px;border-radius:99px}
+.side-foot{margin-top:auto;border-top:1px solid var(--line);padding-top:10px;display:flex;flex-direction:column;gap:2px}
+.side-foot .nav-btn{font-size:13.5px;padding:9px 12px}
+.sync{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--sub);padding:9px 12px;border-radius:10px;border:0;background:none;text-align:left;width:100%}
+.sync:hover{background:#f5f6fa}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--muted);flex:none}
+.dot.ok{background:#22c55e}.dot.local{background:#f59e0b}.dot.err{background:#ef4444}
+.dot.saving,.dot.loading{background:#6366f1;animation:pulse 1s infinite}
+@keyframes pulse{50%{opacity:.3}}
+main{padding:28px 34px 56px;min-width:0;max-width:1320px;width:100%}
+.topbar,.tabbar{display:none}
+
+/* 공통 요소 */
+.page-head{display:flex;justify-content:space-between;align-items:flex-end;gap:14px;margin-bottom:20px;flex-wrap:wrap}
+h1{font-size:25px;margin:0;letter-spacing:-.025em}
+.head-actions{display:flex;gap:8px;flex-wrap:wrap}
+.btn-group{display:flex;gap:6px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--line2);background:#fff;padding:9px 14px;border-radius:10px;font-weight:600;font-size:13.5px;white-space:nowrap}
+.btn:hover{background:#f7f8fb}
+.btn.primary{background:var(--acc);border-color:var(--acc);color:#fff}
+.btn.primary:hover{background:var(--acc-d)}
+.btn.sm{padding:6px 10px;font-size:12.5px;border-radius:8px}
+.btn.lg{padding:13px 18px;font-size:15px;border-radius:12px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.icon-btn{border:0;background:none;padding:8px;border-radius:9px;color:var(--sub);display:inline-grid;place-items:center}
+.icon-btn:hover{background:#f1f3f7}
+.link{border:0;background:none;color:var(--acc);font-weight:600;font-size:13px;padding:0}
+.card{background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:20px}
+.card h2{font-size:16px;margin:0 0 10px;display:flex;align-items:center;gap:8px;letter-spacing:-.01em}
+.badge{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;padding:3px 9px 3px 8px;border-radius:99px;white-space:nowrap}
+.badge::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.ok{--c:var(--ok);--cb:var(--ok-bg)}.use{--c:var(--use);--cb:var(--use-bg)}.chk{--c:var(--chk);--cb:var(--chk-bg)}.off{--c:var(--off);--cb:var(--off-bg)}
+.badge.ok,.badge.use,.badge.chk,.badge.off{color:var(--c);background:var(--cb)}
+.due{font-size:12px;font-weight:700;padding:3px 8px;border-radius:7px;white-space:nowrap;display:inline-block}
+.due.red{color:var(--red);background:var(--red-bg)}.due.amber{color:var(--chk);background:var(--chk-bg)}.due.gray{color:var(--sub);background:#f1f3f6}
+.empty{text-align:center;padding:34px 10px;color:var(--sub)}
+.empty b{display:block;color:var(--text);font-size:15px;margin-bottom:4px}
+.search{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--line2);border-radius:10px;padding:0 12px;color:var(--muted);min-width:0}
+.search:focus-within{border-color:var(--acc);box-shadow:0 0 0 3px var(--acc-bg)}
+.search input{border:0;outline:none;padding:10px 0;flex:1;min-width:0;background:none}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:1px solid var(--line2);background:#fff;padding:7px 13px;border-radius:99px;font-size:13px;font-weight:600;color:#4b5565}
+.chip.on{background:var(--text);border-color:var(--text);color:#fff}
+.sel{border:1px solid var(--line2);border-radius:10px;padding:9px 10px;background:#fff}
+
+/* 현황 */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
+.stat{background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:16px 18px 14px;text-align:left;position:relative;overflow:hidden}
+.stat:hover{border-color:var(--line2);box-shadow:0 3px 10px rgba(16,24,40,.06)}
+.stat::after{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--c,var(--acc))}
+.stat .lbl{font-size:13px;color:var(--sub);font-weight:600}
+.stat .num{font-size:32px;font-weight:800;margin-top:4px;letter-spacing:-.03em;color:var(--c,var(--text))}
+.stat .num small{font-size:14px;font-weight:600;color:var(--sub);margin-left:3px}
+.grid2{display:grid;grid-template-columns:1.35fr 1fr;gap:18px;align-items:start}
+.count{background:var(--red-bg);color:var(--red);font-size:12px;padding:1px 8px;border-radius:99px}
+.row-item{display:flex;align-items:center;gap:12px;padding:11px 10px;margin:0 -10px;border-radius:10px;cursor:pointer}
+.row-item:hover{background:#f7f8fb}
+.row-item + .row-item{box-shadow:0 -1px 0 #f0f2f6}
+.ri-icon{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;flex:none}
+.ri-icon.red{background:var(--red-bg);color:var(--red)}.ri-icon.amber{background:var(--chk-bg);color:var(--chk)}
+.ri-main{flex:1;min-width:0}
+.ri-title{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ri-sub{font-size:12.5px;color:var(--sub);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* 자산 목록 */
+.toolbar{display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
+.toolbar .search{flex:1 1 260px;max-width:380px}
+.tbl-wrap{background:#fff;border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+table.tbl{width:100%;border-collapse:collapse}
+.tbl th{text-align:left;font-size:12.5px;color:var(--sub);font-weight:600;padding:11px 14px;background:#fafbfc;border-bottom:1px solid var(--line)}
+.tbl td{padding:13px 14px;border-bottom:1px solid #f0f2f6;vertical-align:middle}
+.tbl tr:last-child td{border-bottom:0}
+.tbl tbody tr{cursor:pointer}
+.tbl tbody tr:hover{background:#f8f9fc}
+.tbl .nm{font-weight:600}
+.tbl .chev{color:var(--muted);width:30px}
+.mlist{display:none}
+.mcard{background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:14px 15px;margin-bottom:10px;cursor:pointer}
+.mc-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.mc-name{font-size:16px;font-weight:700;margin:6px 0 3px;letter-spacing:-.01em}
+.mc-sub{font-size:13px;color:var(--sub);display:flex;align-items:center;gap:4px}
+.mc-due{margin-top:9px}
+
+/* 패널 (상세·등록) */
+.overlay{position:fixed;inset:0;z-index:50;background:rgba(17,24,39,.38);display:flex;justify-content:flex-end}
+.panel{background:#fff;width:460px;max-width:100%;height:100%;display:flex;flex-direction:column;box-shadow:-10px 0 40px rgba(0,0,0,.12);animation:slide .18s ease-out}
+@keyframes slide{from{transform:translateX(30px);opacity:.4}}
+.p-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding:20px 20px 14px;border-bottom:1px solid var(--line)}
+.p-head h2{font-size:20px;margin:3px 0 0;letter-spacing:-.02em;line-height:1.3}
+.p-body{flex:1;overflow:auto;padding:18px 20px 24px}
+.p-foot{display:flex;gap:8px;padding:14px 20px calc(14px + env(safe-area-inset-bottom));border-top:1px solid var(--line)}
+.p-foot .btn{flex:1}
+.flabel{font-size:13px;font-weight:700;color:#344054;margin:0 0 7px;display:flex;gap:4px;align-items:center}
+.flabel em{color:var(--red);font-style:normal}
+.seg{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:20px}
+.seg button{border:1.5px solid var(--line2);background:#fff;border-radius:10px;padding:11px 4px;font-weight:700;font-size:13.5px;color:#4b5565}
+.seg button.on{border-color:var(--c);background:var(--cb);color:var(--c)}
+.info{margin:0;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.info>div{display:flex;gap:12px;padding:12px 14px;border-bottom:1px solid #f0f2f6;align-items:baseline}
+.info>div:last-child{border-bottom:0}
+.info dt{width:78px;flex:none;color:var(--sub);font-size:13px}
+.info dd{margin:0;flex:1;min-width:0;font-weight:500;display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center}
+.qr-box{display:flex;gap:16px;align-items:center;margin-top:16px;padding:14px;border:1px dashed var(--line2);border-radius:12px}
+.qr-box img{width:92px;height:92px;flex:none;image-rendering:pixelated}
+.field{margin-bottom:18px}
+.inp{width:100%;border:1px solid var(--line2);border-radius:10px;padding:11px 12px;outline:none;background:#fff;font-size:15px}
+.inp:focus{border-color:var(--acc);box-shadow:0 0 0 3px var(--acc-bg)}
+textarea.inp{min-height:70px;resize:vertical}
+.cat-chips{display:flex;flex-wrap:wrap;gap:6px}
+.cat-chips .chip{padding:9px 14px;font-size:14px}
+.cat-chips .chip.on{background:var(--acc);border-color:var(--acc)}
+.coord-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.coord-btns{display:flex;gap:8px;margin-top:8px}
+.coord-btns .btn{flex:1}
+details.more{border-top:1px solid var(--line);padding-top:14px}
+details.more summary{cursor:pointer;font-weight:700;font-size:13.5px;color:var(--sub);margin-bottom:14px;list-style:none;display:flex;align-items:center;gap:6px}
+details.more summary::-webkit-details-marker{display:none}
+details.more summary::before{content:"▸";transition:.15s}
+details[open].more summary::before{transform:rotate(90deg)}
+.ferr{color:var(--red);font-size:13px;font-weight:600;margin-top:-6px;margin-bottom:12px}
+
+/* 모달 */
+.modal-wrap{position:fixed;inset:0;z-index:60;background:rgba(17,24,39,.45);display:flex;align-items:center;justify-content:center;padding:20px}
+.modal{background:#fff;border-radius:18px;width:100%;max-width:560px;max-height:calc(100vh - 40px);display:flex;flex-direction:column;box-shadow:0 24px 60px rgba(0,0,0,.25)}
+.modal.wide{max-width:860px}
+.m-head{display:flex;justify-content:space-between;align-items:center;padding:18px 20px 12px}
+.m-head h2{margin:0;font-size:18px}
+.m-body{padding:0 20px 16px;overflow:auto}
+.m-foot{display:flex;gap:8px;padding:14px 20px;border-top:1px solid var(--line);align-items:center}
+.sp{flex:1}
+.set-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 12px}
+.set-grid label,.set-one{display:flex;flex-direction:column;gap:5px;font-size:12.5px;font-weight:600;color:#344054}
+.set-one{margin-top:10px}
+.hint{font-size:12.5px;color:var(--sub);margin:6px 0 0;line-height:1.55}
+.set-block{padding:14px 0;border-top:1px solid var(--line)}
+.set-block:first-child{border-top:0;padding-top:4px}
+.set-block h3{margin:0 0 2px;font-size:14.5px}
+.test-res{font-size:13px;font-weight:600;margin-top:8px}
+.sum-chips{display:flex;gap:8px;flex-wrap:wrap;margin:4px 0 12px}
+.sum-chips span{font-size:13px;font-weight:700;padding:5px 11px;border-radius:99px}
+.t-new{background:var(--ok-bg);color:var(--ok)}.t-update{background:var(--use-bg);color:var(--use)}.t-error{background:var(--red-bg);color:var(--red)}.t-same{background:#f1f3f6;color:var(--sub)}
+.plan{width:100%;border-collapse:collapse;font-size:13px}
+.plan th{text-align:left;color:var(--sub);font-weight:600;padding:8px;border-bottom:1px solid var(--line);background:#fafbfc;position:sticky;top:0}
+.plan td{padding:9px 8px;border-bottom:1px solid #f0f2f6;vertical-align:top}
+.plan .tag{font-size:11.5px;font-weight:700;padding:2px 8px;border-radius:6px;white-space:nowrap}
+.chg{color:var(--sub)} .chg b{color:var(--use)}
+.pmap{width:100%;height:56vh;min-height:300px;border-radius:12px;background:#e9edf3;overflow:hidden}
+.pick-coord{margin-top:10px;font-size:13.5px;color:var(--sub)}
+
+/* 지도 */
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--sub);font-weight:600}
+.legend span{display:flex;align-items:center;gap:6px}
+.legend i{width:11px;height:11px;border-radius:50%;background:var(--c);display:inline-block}
+.map-layout{display:grid;grid-template-columns:300px 1fr;gap:14px;height:calc(100vh - 150px);min-height:460px}
+.map-list{background:#fff;border:1px solid var(--line);border-radius:var(--r);display:flex;flex-direction:column;overflow:hidden}
+.map-list .search{margin:12px}
+.map-items{overflow:auto;flex:1;padding:0 6px 8px}
+.mi{display:flex;gap:10px;align-items:center;padding:10px;border-radius:10px;cursor:pointer;border:0;background:none;width:100%;text-align:left}
+.mi:hover,.mi.on{background:var(--acc-bg)}
+.mi i{width:10px;height:10px;border-radius:50%;background:var(--c);flex:none}
+.map-box{border-radius:var(--r);overflow:hidden;border:1px solid var(--line);background:#e9edf3;position:relative}
+#kmap{width:100%;height:100%}
+.map-fail{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;color:var(--sub);gap:6px}
+.map-fail b{color:var(--text);font-size:15px}
+.pin{width:20px;height:20px;border-radius:50%;border:3px solid #fff;background:var(--c);box-shadow:0 1px 5px rgba(0,0,0,.4);padding:0;display:block}
+.pin.big{width:26px;height:26px}
+.mapcard{background:#fff;border-radius:12px;box-shadow:0 6px 24px rgba(0,0,0,.2);padding:12px 14px;min-width:210px;max-width:260px;font-size:13px;position:relative}
+.mapcard::after{content:"";position:absolute;left:50%;bottom:-7px;margin-left:-7px;border:7px solid transparent;border-bottom:0;border-top-color:#fff}
+.mapcard b{display:block;font-size:14px;margin:4px 0 2px;white-space:normal}
+.mapcard .btn{margin-top:10px;width:100%}
+
+/* 라벨 */
+.lab-layout{display:grid;grid-template-columns:330px 1fr;gap:16px;align-items:start}
+.lab-pick{padding:14px;position:sticky;top:20px}
+.lab-row{display:flex;align-items:center;justify-content:space-between;margin:10px 2px 6px;font-size:13px;color:var(--sub)}
+.lab-row div{display:flex;gap:12px}
+.lab-items{max-height:calc(100vh - 260px);overflow:auto;margin:0 -6px}
+.lab-it{display:flex;gap:10px;align-items:center;padding:9px 8px;border-radius:9px;cursor:pointer}
+.lab-it:hover{background:#f7f8fb}
+.lab-it input{width:17px;height:17px;accent-color:var(--acc);flex:none}
+.lab-preview{min-width:0}
+.sheet-scale{transform-origin:top left}
+.sheet-gap{height:16px}
+.prev-note{font-size:12.5px;color:var(--sub);margin:0 0 10px}
+
+/* 라벨 실물 크기 (인쇄·미리보기 공통) */
+.sheet{width:210mm;height:296mm;background:#fff;padding:3.5mm 30mm 0;display:grid;grid-template-columns:70mm 70mm;grid-auto-rows:70mm;column-gap:10mm;row-gap:3mm;align-content:start;box-shadow:0 2px 14px rgba(16,24,40,.12);overflow:hidden}
+.label{width:70mm;height:70mm;border:.3mm dashed #9aa3b2;display:flex;flex-direction:column;align-items:center;padding:3.5mm 4mm 3mm;color:#111;font-family:inherit}
+.lb-top{width:100%;display:flex;justify-content:space-between;font-size:7.5pt;font-weight:700;color:#4338ca;letter-spacing:.04em}
+.lb-top span:last-child{color:#555;letter-spacing:0}
+.lb-qr{width:43mm;height:43mm;margin-top:2mm;image-rendering:pixelated}
+.lb-qr.none{display:grid;place-items:center;border:1px solid #ccc;font-size:8pt;color:#999}
+.lb-id{font-size:17pt;font-weight:800;letter-spacing:.02em;margin-top:1.6mm;line-height:1}
+.lb-name{font-size:8.5pt;font-weight:600;text-align:center;line-height:1.25;margin-top:1.3mm;max-height:2.5em;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;width:100%}
+#print-area{display:none}
+
+/* 토스트 */
+#toasts{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:90;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none}
+.toast{background:#111827;color:#fff;padding:11px 18px;border-radius:12px;font-size:13.5px;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.25);animation:tin .2s ease-out;max-width:90vw}
+.toast.err{background:#b91c1c}.toast.warn{background:#92400e}
+@keyframes tin{from{transform:translateY(10px);opacity:0}}
+
+/* 휴대폰 */
+@media (max-width:899px){
+  #app{grid-template-columns:1fr}
+  .side{display:none}
+  .topbar{display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:20;background:rgba(255,255,255,.95);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);padding:10px 12px 10px 16px;padding-top:calc(10px + env(safe-area-inset-top))}
+  .topbar .logo{width:32px;height:32px;font-size:15px;border-radius:9px}
+  .topbar b{font-size:15px;flex:1}
+  .topbar .sync{width:auto;padding:6px 8px}
+  .tabbar{display:grid;grid-template-columns:repeat(3,1fr);position:fixed;left:0;right:0;bottom:0;z-index:30;background:#fff;border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+  .tab{border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 0 8px;font-size:11.5px;font-weight:600;color:var(--muted);position:relative}
+  .tab.on{color:var(--acc)}
+  .tab .cnt{position:absolute;top:5px;left:calc(50% + 6px);background:var(--red);color:#fff;font-size:10px;font-weight:700;padding:0 5px;border-radius:99px}
+  main{padding:18px 14px 96px}
+  h1{font-size:22px}
+  .page-head{align-items:center;margin-bottom:14px}
+  .desktop-only{display:none!important}
+  .stats{grid-template-columns:repeat(2,1fr);gap:10px}
+  .stat .num{font-size:28px}
+  .grid2{grid-template-columns:1fr}
+  .toolbar .search{max-width:none;flex-basis:100%}
+  .chips{flex-wrap:nowrap;overflow-x:auto;padding-bottom:2px}
+  .toolbar .sel{display:none}
+  .tbl-wrap{display:none}
+  .mlist{display:block}
+  .panel{width:100%}
+  .map-layout{grid-template-columns:1fr;height:calc(100vh - 205px)}
+  .map-list{display:none}
+  .modal-wrap{padding:0;align-items:flex-end}
+  .modal{border-radius:18px 18px 0 0;max-height:94vh}
+  .set-grid{grid-template-columns:1fr}
+  #toasts{bottom:86px}
+}
+@media print{
+  @page{size:A4;margin:0}
+  body{background:#fff}
+  body>*:not(#print-area){display:none!important}
+  #print-area{display:block!important}
+  .sheet{box-shadow:none;break-after:page;page-break-after:always}
+  .sheet:last-child{break-after:auto;page-break-after:auto}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+</style>
 </head>
-<body class="bg-gray-100 min-h-screen flex flex-col font-sans">
+<body>
 
-    <!-- 상단 헤더 -->
-    <header class="bg-blue-900 text-white shadow-md">
-        <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-            <div class="flex items-center space-x-3">
-                <h1 class="text-xl font-bold tracking-tight">Aurora Asset Manager</h1>
-                <span class="text-xs bg-blue-800 text-blue-200 px-2 py-0.5 rounded">충남 현장 v2.4</span>
-            </div>
-            <div class="flex items-center space-x-3">
-                <span id="auth-badge" class="bg-blue-800 text-xs px-2 py-1 rounded">모드: 일반 사용자</span>
-                <button onclick="openLoginModal()" id="login-toggle-btn" class="bg-blue-600 hover:bg-blue-500 text-xs px-3 py-1 rounded transition">관리자 로그인</button>
-            </div>
-        </div>
-    </header>
+<!-- 로그인 화면 -->
+<div id="gate" class="hidden">
+  <div class="gate-card">
+    <div class="logo">A</div>
+    <h1>Aurora Asset Manager</h1>
+    <p class="sub">충남 현장 v2.4 · 관리자 전용</p>
+    <form onsubmit="login(event)">
+      <input id="pw" class="pw" type="password" inputmode="numeric" autocomplete="current-password" placeholder="비밀번호" aria-label="관리자 비밀번호">
+      <div id="gate-err" class="gate-err"></div>
+      <button class="btn primary lg" type="submit">들어가기</button>
+      <label class="remember"><input type="checkbox" id="remember" checked> 이 기기에서 30일 동안 로그인 유지</label>
+    </form>
+  </div>
+</div>
 
-    <!-- 메인 네비게이션 탭 -->
-    <nav class="bg-white shadow-sm border-b sticky top-0 z-30">
-        <div class="max-w-7xl mx-auto px-4 flex space-x-6 py-3 text-sm font-semibold">
-            <button onclick="switchTab('dashboard')" id="btn-dashboard" class="text-blue-600 border-b-2 border-blue-600 pb-1 flex items-center space-x-1">
-                <span>📋 통합 대시보드</span>
-            </button>
-            <button onclick="switchTab('map')" id="btn-map" class="text-gray-500 hover:text-blue-600 pb-1 flex items-center space-x-1">
-                <span>📍 지도 위치 보기 (Kakao)</span>
-            </button>
-            <button onclick="switchTab('excel')" id="btn-excel" class="text-gray-500 hover:text-blue-600 pb-1 flex items-center space-x-1">
-                <span>📄 엑셀 증분 업로드 & QR 출력</span>
-            </button>
-            <button onclick="switchTab('scan')" id="btn-scan" class="text-gray-500 hover:text-blue-600 pb-1 flex items-center space-x-1">
-                <span>📱 모바일 스캔 (시연)</span>
-            </button>
-        </div>
-    </nav>
-
-    <!-- 메인 컨테이너 -->
-    <main class="max-w-7xl mx-auto px-4 py-6 flex-grow w-full">
-        
-        <!-- 1. 통합 대시보드 탭 -->
-        <div id="tab-dashboard" class="space-y-6">
-            <!-- 요약 카드 영역 -->
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div class="bg-white p-4 rounded-lg shadow border-l-4 border-blue-600">
-                    <p class="text-xs text-gray-500 font-semibold">전체 등록 자산</p>
-                    <p id="stat-total" class="text-2xl font-bold text-gray-800 mt-1">5 개</p>
-                </div>
-                <div class="bg-white p-4 rounded-lg shadow border-l-4 border-green-500">
-                    <p class="text-xs text-gray-500 font-semibold">정상 운용 중</p>
-                    <p id="stat-normal" class="text-2xl font-bold text-green-600 mt-1">4 개</p>
-                </div>
-                <div class="bg-white p-4 rounded-lg shadow border-l-4 border-amber-500">
-                    <p class="text-xs text-gray-500 font-semibold">점검 필요 / 입고대기</p>
-                    <p id="stat-check" class="text-2xl font-bold text-amber-600 mt-1">1 개</p>
-                </div>
-                <div class="bg-white p-4 rounded-lg shadow border-l-4 border-indigo-600">
-                    <p class="text-xs text-gray-500 font-semibold">최근 업데이트</p>
-                    <p class="text-sm font-semibold text-gray-700 mt-2">2026-11-10 현황</p>
-                </div>
-            </div>
-
-            <!-- 자산 목록 테이블 카드 -->
-            <div class="bg-white rounded-lg shadow p-6 border space-y-4">
-                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                    <div>
-                        <h2 class="text-lg font-bold text-gray-800">현장 자산 관리 대장</h2>
-                        <p class="text-xs text-gray-500">충남 오로라 프로젝트 주요 장비 및 비품 통합 대장입니다.</p>
-                    </div>
-                    <div class="flex space-x-2">
-                        <input type="text" id="search-input" onkeyup="filterAssets()" placeholder="자산명 / 위치 검색..." class="border rounded px-3 py-1.5 text-xs w-48 focus:outline-none focus:border-blue-600">
-                        <button onclick="exportToExcel()" class="bg-green-700 hover:bg-green-600 text-white text-xs px-3 py-1.5 rounded transition flex items-center space-x-1">
-                            <span>📥 엑셀 내보내기</span>
-                        </button>
-                    </div>
-                </div>
-
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse text-xs">
-                        <thead>
-                            <tr class="bg-gray-100 text-gray-700 uppercase font-semibold">
-                                <th class="p-3 border">자산 관리 번호</th>
-                                <th class="p-3 border">품명 및 규격</th>
-                                <th class="p-3 border">설치/보관 위치</th>
-                                <th class="p-3 border">위경도 좌표</th>
-                                <th class="p-3 border">운용 상태</th>
-                                <th class="p-3 border text-center">QR 코드</th>
-                            </tr>
-                        </thead>
-                        <tbody id="asset-table-body" class="divide-y divide-gray-200">
-                            <!-- JavaScript로 동적 렌더링 -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <!-- 2. 지도 탭 (Kakao Maps) -->
-        <div id="tab-map" class="hidden space-y-4">
-            <div class="bg-white p-4 rounded-lg shadow border flex justify-between items-center">
-                <div>
-                    <h2 class="text-lg font-bold text-gray-800">📍 현장 비품 GPS 정밀 시각화</h2>
-                    <p class="text-xs text-gray-500">카카오 지도를 통해 충남 현장 내 비품 및 장비의 정밀 좌표 위치를 확인합니다. 마커 클릭 시 정밀 정보를 확인합니다.</p>
-                </div>
-                <button onclick="relayoutMap()" class="bg-blue-100 hover:bg-blue-200 text-blue-800 text-xs px-3 py-1.5 rounded transition">🔄 지도 위치 재정렬</button>
-            </div>
-            <!-- 지도가 그려질 영역 -->
-            <div id="kakao-map" class="w-full h-[600px] rounded-lg border shadow-inner"></div>
-        </div>
-
-        <!-- 3. 엑셀 업로드 & QR 출력 탭 -->
-        <div id="tab-excel" class="hidden space-y-6">
-            <div class="bg-white p-6 rounded-lg shadow border space-y-4">
-                <h2 class="text-lg font-bold text-gray-800">📄 엑셀 증분 업로드 & 자산 라벨 QR 출력</h2>
-                <p class="text-xs text-gray-500">기존 대장에 새로운 자산 데이터를 추가하거나, 신규 라벨용 QR 코드를 일괄 생성하여 출력합니다.</p>
-                
-                <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center bg-gray-50 space-y-3">
-                    <p class="text-sm text-gray-600 font-semibold">신규 엑셀 (.xlsx, .xls) 파일 선택</p>
-                    <input type="file" id="excel-file-input" accept=".xlsx, .xls" class="block mx-auto text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-100 file:text-blue-800 hover:file:bg-blue-200 cursor-pointer">
-                    <button onclick="processExcelUpload()" class="bg-blue-900 hover:bg-blue-800 text-white text-xs px-4 py-2 rounded transition font-semibold">데이터 증분 적용하기</button>
-                </div>
-            </div>
-
-            <!-- QR 코드 일괄 출력 영역 -->
-            <div class="bg-white p-6 rounded-lg shadow border space-y-4">
-                <div class="flex justify-between items-center">
-                    <h3 class="text-md font-bold text-gray-800">🖨️ 자산 부착용 QR 라벨 목록</h3>
-                    <button onclick="window.print()" class="bg-gray-800 hover:bg-gray-700 text-white text-xs px-3 py-1.5 rounded">🖨️ 라벨 인쇄하기</button>
-                </div>
-                <div id="qr-container" class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <!-- QR 코드 동적 출력 -->
-                </div>
-            </div>
-        </div>
-
-        <!-- 4. 모바일 스캔 탭 (시연) -->
-        <div id="tab-scan" class="hidden space-y-4">
-            <div class="bg-white p-6 rounded-lg shadow border max-w-lg mx-auto space-y-4 text-center">
-                <h2 class="text-lg font-bold text-gray-800">📱 현장 모바일 QR 스캐너 (시연)</h2>
-                <p class="text-xs text-gray-500">현장 장비에 부착된 QR 코드를 카메라로 스캔하여 자산 정보를 조회하고 즉시 상태를 업데이트합니다.</p>
-                
-                <div class="bg-gray-900 text-white p-8 rounded-lg space-y-3">
-                    <div class="w-48 h-48 border-2 border-blue-400 border-dashed mx-auto flex items-center justify-center text-xs text-gray-400">
-                        [ 카메라 스캔 영역 ]
-                    </div>
-                    <p class="text-xs text-blue-300">QR 코드를 카메라 중앙에 맞춰주세요.</p>
-                </div>
-
-                <div class="pt-2 border-t text-left space-y-2">
-                    <p class="text-xs font-semibold text-gray-700">시연용 직전 스캔 자산 조회의 건:</p>
-                    <div id="scan-result" class="bg-blue-50 p-3 rounded text-xs space-y-1 text-gray-800 border border-blue-200">
-                        <p><strong>자산번호:</strong> AUR-001</p>
-                        <p><strong>품명:</strong> OSBL 메인 배관 파이프 자재 (STS 304)</p>
-                        <p><strong>위치:</strong> OSBL 야적장 A구역 (36.7801, 126.5502)</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-    </main>
-
-    <!-- 관리자 로그인 모달 -->
-    <div id="login-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
-        <div class="bg-white p-6 rounded-lg shadow-lg w-80 space-y-4">
-            <h3 class="text-md font-bold text-gray-800 border-b pb-2">🔒 관리자 권한 인증</h3>
-            <p class="text-xs text-gray-500">관리자 전용 암호를 입력하십시오.</p>
-            <input type="password" id="admin-pw-input" onkeyup="if(event.key==='Enter') checkAdminLogin()" placeholder="암호 입력 (예: 230880)" class="w-full border p-2 rounded text-xs focus:outline-none focus:border-blue-600">
-            <div class="flex justify-end space-x-2 pt-2">
-                <button onclick="closeLoginModal()" class="px-3 py-1.5 bg-gray-200 hover:bg-gray-300 rounded text-xs font-semibold">취소</button>
-                <button onclick="checkAdminLogin()" class="px-3 py-1.5 bg-blue-900 hover:bg-blue-800 text-white rounded text-xs font-semibold">로그인</button>
-            </div>
-        </div>
+<!-- 앱 -->
+<div id="app" class="hidden">
+  <aside class="side">
+    <div class="brand"><div class="logo">A</div><div><b>Aurora Asset</b><small>충남 현장 v2.4</small></div></div>
+    <nav class="nav" id="side-nav"></nav>
+    <div class="side-foot">
+      <button class="sync" onclick="reloadData()" title="눌러서 새로고침"><span class="dot" data-sync-dot></span><span data-sync-text>불러오는 중…</span></button>
+      <button class="nav-btn" onclick="openSettings()"><span data-ic="settings"></span>설정</button>
+      <button class="nav-btn" onclick="logout()"><span data-ic="logout"></span>로그아웃</button>
     </div>
+  </aside>
+  <div>
+    <header class="topbar">
+      <div class="logo">A</div><b>Aurora Asset</b>
+      <button class="sync" onclick="reloadData()" aria-label="동기화 상태"><span class="dot" data-sync-dot></span></button>
+      <button class="icon-btn" onclick="openSettings()" aria-label="설정"><span data-ic="settings"></span></button>
+    </header>
+    <main id="view"></main>
+  </div>
+  <nav class="tabbar" id="tab-nav"></nav>
+</div>
 
-    <!-- 스크립트 메인 로직 -->
-    <script>
-        // 전역 상태 및 기초 데이터
-        let isAdmin = false;
-        const ADMIN_PASSWORD = "230880";
-        let kakaoMapInstance = null;
-        let mapInitialized = false;
+<div id="drawer" class="overlay hidden" onclick="if(event.target===this)closeDrawer()"><div class="panel" id="panel"></div></div>
+<div id="modal" class="modal-wrap hidden" onclick="if(event.target===this)closeModal()"><div class="modal" id="modal-box"></div></div>
+<div id="toasts"></div>
+<div id="print-area"></div>
+<input type="file" id="xl-file" accept=".xlsx,.xls" hidden onchange="handleExcel(this)">
 
-        let assetData = [
-            { id: "AUR-001", name: "OSBL 메인 배관 파이프 자재 (STS 304)", location: "OSBL 야적장 A구역", lat: 36.7801, lng: 126.5502, status: "정상" },
-            { id: "AUR-002", name: "인버터 용접기 500A", location: "ISBL 메인 구조물동", lat: 36.7812, lng: 126.5515, status: "사용중" },
-            { id: "AUR-003", name: "고소작업대 (렌탈 장비)", location: "OSBL B구역 외곽", lat: 36.7795, lng: 126.5490, status: "정상" },
-            { id: "AUR-004", name: "현장 전력 분배전반 #3", location: "변전실 인근", lat: 36.7820, lng: 126.5522, status: "점검필요" },
-            { id: "AUR-005", name: "품질 검사용 레이저 측정기", location: "품질관리 사무실", lat: 36.7808, lng: 126.5498, status: "정상" }
-        ];
+<script>
+/* ═══════════════════════════════════════════
+   [1] 기본 설정 — 바꿀 값은 여기서
+   ═══════════════════════════════════════════ */
+const CONFIG = {
+  SITE: '충남 현장 v2.4',
+  // 관리자 비밀번호의 SHA-256 값 (현재 비밀번호: 230880)
+  // 바꾸는 법: 앱을 연 브라우저 개발자도구 콘솔에서  await sha256('새비밀번호')  실행 → 나온 값을 아래에 붙여넣기
+  PW_HASH: '8d129f703b9851ce74cbb41cb84db46fcb6098bea25563526bb700d4a03f8812',
+  AUTH_DAYS: 30,
+  KAKAO_KEY: '77c97bf1b0283e37f4ca3c548d45e5e6',
+  MAP_CENTER: [36.7805, 126.5505],
+  // 데이터 저장 위치 (앱의 '설정'에서도 바꿀 수 있어요)
+  GITHUB: { owner: 'sskim4912', repo: 'aurora_asset_manager', branch: 'main', path: 'assets.json' },
+  QR_BASE_DEFAULT: 'https://sskim4912.github.io/aurora_asset_manager/'
+};
+const STATUSES = ['정상', '사용중', '점검필요', '폐기'];
+const ST_KEY = { '정상': 'ok', '사용중': 'use', '점검필요': 'chk', '폐기': 'off' };
+const CATEGORIES = ['장비', '공구', '자재', '전기설비', '측정기', '비품'];
 
-        // 페이지 로드 초기화
-        window.onload = function() {
-            renderAssetTable(assetData);
-            generateQRCodes();
-        };
+function seedDoc() {
+  const t = '2026-11-10T09:00:00+09:00';
+  return { version: 1, updatedAt: t, assets: [
+    { id: 'AUR-001', name: 'OSBL 메인 배관 파이프 자재 (STS 304)', category: '자재', location: 'OSBL 야적장 A구역', lat: 36.7801, lng: 126.5502, status: '정상', nextCheck: '', rentalDue: '', note: '', updatedAt: t },
+    { id: 'AUR-002', name: '인버터 용접기 500A', category: '장비', location: 'ISBL 메인 구조물동', lat: 36.7812, lng: 126.5515, status: '사용중', nextCheck: '2026-12-01', rentalDue: '', note: '', updatedAt: t },
+    { id: 'AUR-003', name: '고소작업대 (렌탈 장비)', category: '장비', location: 'OSBL B구역 외곽', lat: 36.7795, lng: 126.5490, status: '정상', nextCheck: '', rentalDue: '2026-11-20', note: '', updatedAt: t },
+    { id: 'AUR-004', name: '현장 전력 분배전반 #3', category: '전기설비', location: '변전실 인근', lat: 36.7820, lng: 126.5522, status: '점검필요', nextCheck: '2026-11-05', rentalDue: '', note: '차단기 발열 확인 필요', updatedAt: t },
+    { id: 'AUR-005', name: '품질 검사용 레이저 측정기', category: '측정기', location: '품질관리 사무실', lat: 36.7808, lng: 126.5498, status: '정상', nextCheck: '2026-11-14', rentalDue: '', note: '', updatedAt: t }
+  ]};
+}
 
-        // 자산 대장 테이블 렌더링
-        function renderAssetTable(data) {
-            const tbody = document.getElementById('asset-table-body');
-            tbody.innerHTML = '';
+/* ═══════════════════════════════════════════
+   공통 도구
+   ═══════════════════════════════════════════ */
+const ICONS = {
+  home: '<path d="M3 10l9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/>',
+  box: '<path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.3 7L12 12l8.7-5M12 22V12"/>',
+  pin: '<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>',
+  tag: '<path d="M20.6 13.4l-7.2 7.2a2 2 0 0 1-2.8 0L2 12V2h10l8.6 8.6a2 2 0 0 1 0 2.8z"/><circle cx="7" cy="7" r="1"/>',
+  settings: '<path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/>',
+  logout: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  search: '<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>',
+  download: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>',
+  upload: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/>',
+  file: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13l4 4M12 13l-4 4"/>',
+  x: '<path d="M18 6L6 18M6 6l12 12"/>',
+  crosshair: '<circle cx="12" cy="12" r="9"/><path d="M22 12h-4M6 12H2M12 6V2M12 22v-4"/>',
+  printer: '<path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>',
+  edit: '<path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>',
+  alert: '<path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/>',
+  clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  chev: '<path d="M9 18l6-6-6-6"/>',
+  map: '<path d="M1 6v16l7-4 8 4 7-4V2l-7 4-8-4z"/><path d="M8 2v16M16 6v16"/>'
+};
+function icon(n, s = 18) { return `<svg class="i" width="${s}" height="${s}" viewBox="0 0 24 24">${ICONS[n] || ''}</svg>`; }
+function esc(v) { return String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+const $ = id => document.getElementById(id);
+const pad = n => String(n).padStart(2, '0');
+const ymd = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const todayStr = () => ymd(new Date());
+function dday(s) { if (!s) return null; const [y, m, d] = s.split('-').map(Number); const t = new Date(); return Math.round((new Date(y, m - 1, d) - new Date(t.getFullYear(), t.getMonth(), t.getDate())) / 864e5); }
+function ddText(n) { return n < 0 ? `${-n}일 지남` : n === 0 ? '오늘' : `D-${n}`; }
+function todayLabel() { const d = new Date(); return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일 (${'일월화수목금토'[d.getDay()]})`; }
+function relTime(iso) {
+  if (!iso) return '—';
+  const m = Math.round((Date.now() - new Date(iso)) / 6e4);
+  if (m < 1) return '방금'; if (m < 60) return `${m}분 전`;
+  const h = Math.round(m / 60); if (h < 24) return `${h}시간 전`;
+  const d = Math.round(h / 24); if (d < 30) return `${d}일 전`;
+  return ymd(new Date(iso));
+}
+const hasCoord = a => Number.isFinite(+a.lat) && Number.isFinite(+a.lng) && a.lat !== '' && a.lng !== '' && a.lat != null;
+const validLat = v => Number.isFinite(v) && v >= 33 && v <= 39;
+const validLng = v => Number.isFinite(v) && v >= 124 && v <= 132;
+function badge(s) { return `<span class="badge ${ST_KEY[s] || 'off'}">${esc(s)}</span>`; }
+function toast(msg, type = '') {
+  const el = document.createElement('div'); el.className = 'toast ' + type; el.textContent = msg;
+  $('toasts').appendChild(el); setTimeout(() => el.remove(), type === 'err' ? 5000 : 2600);
+}
+async function sha256(s) {
+  const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
+  return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join('');
+}
+function b64encode(str) {
+  const bytes = new TextEncoder().encode(str); let bin = '';
+  for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+  return btoa(bin);
+}
+function b64decode(b64) {
+  const bin = atob(b64.replace(/\s/g, '')); const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return new TextDecoder().decode(bytes);
+}
+function lsGet(k) { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } }
+function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
 
-            data.forEach(item => {
-                let statusBadge = item.status === '정상' ? '<span class="bg-green-100 text-green-800 px-2 py-0.5 rounded font-semibold">정상</span>' :
-                                  item.status === '사용중' ? '<span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded font-semibold">사용중</span>' :
-                                  '<span class="bg-amber-100 text-amber-800 px-2 py-0.5 rounded font-semibold">점검필요</span>';
+/* ═══════════════════════════════════════════
+   [2] 데이터 저장소 — GitHub assets.json
+   · load()   : 데이터 불러오기
+   · commit() : 최신 데이터를 다시 읽어 변경을 적용한 뒤 저장 (여러 기기가 동시에 저장해도 덮어쓰지 않음)
+   · 토큰이 없으면 '로컬 모드' — 이 기기 브라우저에만 저장
+   ※ 12월 Firebase 이전 시 이 객체의 load / commit 만 Firestore 용으로 바꾸면 됩니다.
+   ═══════════════════════════════════════════ */
+function normalizeDoc(d) {
+  const doc = d && Array.isArray(d.assets) ? d : { version: 1, assets: [] };
+  doc.assets = doc.assets.filter(a => a && a.id).map(a => ({
+    id: String(a.id), name: a.name || '', category: a.category || '', location: a.location || '',
+    lat: a.lat === '' || a.lat == null ? '' : Number(a.lat), lng: a.lng === '' || a.lng == null ? '' : Number(a.lng),
+    status: STATUSES.includes(a.status) ? a.status : '정상', nextCheck: a.nextCheck || '', rentalDue: a.rentalDue || '',
+    note: a.note || '', updatedAt: a.updatedAt || ''
+  }));
+  return doc;
+}
+const Store = {
+  cfg() { return { ...CONFIG.GITHUB, token: '', qrBase: '', ...(lsGet('aam_settings') || {}) }; },
+  saveCfg(c) { lsSet('aam_settings', c); },
+  mode() { return this.cfg().token ? 'github' : 'local'; },
+  url(c = this.cfg()) { return `https://api.github.com/repos/${encodeURIComponent(c.owner)}/${encodeURIComponent(c.repo)}/contents/${c.path.split('/').map(encodeURIComponent).join('/')}`; },
+  headers(json, c = this.cfg()) {
+    const h = { Accept: 'application/vnd.github+json' };
+    if (c.token) h.Authorization = 'Bearer ' + c.token;
+    if (json) h['Content-Type'] = 'application/json';
+    return h;
+  },
+  async readRemote() {
+    const c = this.cfg();
+    const r = await fetch(this.url(c) + '?ref=' + encodeURIComponent(c.branch) + '&_=' + Date.now(), { headers: this.headers(false, c), cache: 'no-store' });
+    if (r.status === 404) return { doc: null, sha: null };
+    if (!r.ok) throw new Error(ghErr(r.status));
+    const j = await r.json();
+    return { doc: normalizeDoc(JSON.parse(b64decode(j.content))), sha: j.sha };
+  },
+  async load() {
+    if (this.mode() === 'local') {
+      const local = lsGet('aam_local'); if (local) return normalizeDoc(local);
+      try { const { doc } = await this.readRemote(); if (doc) return doc; } catch (e) {}
+      return normalizeDoc(lsGet('aam_cache') || seedDoc());
+    }
+    const { doc } = await this.readRemote();
+    return doc || normalizeDoc(lsGet('aam_local') || lsGet('aam_cache') || seedDoc());
+  },
+  async commit(mutator, message) {
+    if (this.mode() === 'local') {
+      const next = structuredClone(DOC); const result = mutator(next);
+      next.updatedAt = new Date().toISOString(); lsSet('aam_local', next);
+      return { doc: next, result };
+    }
+    const c = this.cfg();
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const { doc, sha } = await this.readRemote();
+      const next = structuredClone(doc || normalizeDoc(lsGet('aam_local') || DOC || seedDoc()));
+      const result = mutator(next);
+      next.updatedAt = new Date().toISOString();
+      const body = { message: message + ' (Aurora 앱)', content: b64encode(JSON.stringify(next, null, 2) + '\n'), branch: c.branch };
+      if (sha) body.sha = sha;
+      const r = await fetch(this.url(c), { method: 'PUT', headers: this.headers(true, c), body: JSON.stringify(body) });
+      if (r.ok) { localStorage.removeItem('aam_local'); lsSet('aam_cache', next); return { doc: next, result }; }
+      if ((r.status === 409 || r.status === 422) && attempt < 2) continue;
+      throw new Error(ghErr(r.status));
+    }
+  }
+};
+function ghErr(s) {
+  return s === 401 ? '토큰이 올바르지 않아요 (401)' : s === 403 ? '권한이 없거나 요청 한도를 넘었어요 (403)'
+    : s === 404 ? '저장소를 찾을 수 없어요 (404)' : `GitHub 오류 (${s})`;
+}
+function nextId(doc) {
+  const max = doc.assets.reduce((m, a) => { const n = parseInt(String(a.id).replace(/\D/g, ''), 10); return Number.isFinite(n) && n > m ? n : m; }, 0);
+  return 'AUR-' + String(max + 1).padStart(3, '0');
+}
+function qrBase() {
+  const c = Store.cfg(); if (c.qrBase) return c.qrBase;
+  if (location.protocol.startsWith('http')) return location.origin + location.pathname.replace(/index\.html$/, '');
+  return CONFIG.QR_BASE_DEFAULT;
+}
+const qrUrl = id => qrBase() + '?id=' + encodeURIComponent(id);
 
-                const tr = document.createElement('tr');
-                tr.className = "hover:bg-gray-50 transition";
-                tr.innerHTML = `
-                    <td class="p-3 border font-mono font-bold text-blue-900">${item.id}</td>
-                    <td class="p-3 border font-semibold text-gray-800">${item.name}</td>
-                    <td class="p-3 border text-gray-600">${item.location}</td>
-                    <td class="p-3 border font-mono text-gray-500">${item.lat.toFixed(4)}, ${item.lng.toFixed(4)}</td>
-                    <td class="p-3 border">${statusBadge}</td>
-                    <td class="p-3 border text-center">
-                        <button onclick="switchTab('excel')" class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 px-2 py-1 rounded border">QR보기</button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
+/* 앱 상태 */
+let DOC = null;
+let DRAWER = null;          // {mode:'detail'|'form', id, draft}
+let PENDING_ID = null;      // QR로 들어온 자산번호
+const UI = { q: '', status: '전체', cat: '전체', mapQ: '', labQ: '', labSel: new Set() };
+const getAsset = id => DOC.assets.find(a => a.id === id);
+const activeAssets = () => DOC.assets.filter(a => a.status !== '폐기');
 
-            // 통계 수치 업데이트
-            document.getElementById('stat-total').innerText = data.length + ' 개';
-            document.getElementById('stat-normal').innerText = data.filter(d => d.status === '정상' || d.status === '사용중').length + ' 개';
-            document.getElementById('stat-check').innerText = data.filter(d => d.status === '점검필요').length + ' 개';
-        }
+function setSync(state, msg = '') {
+  const t = { ok: 'GitHub 저장됨 · ' + new Date().toTimeString().slice(0, 5), local: '로컬 모드 · 이 기기에만 저장', saving: '저장 중…', loading: '불러오는 중…', err: '연결 오류 · 눌러서 다시 시도' }[state];
+  document.querySelectorAll('[data-sync-dot]').forEach(d => d.className = 'dot ' + state);
+  document.querySelectorAll('[data-sync-text]').forEach(d => d.textContent = t);
+  document.querySelectorAll('.sync').forEach(b => b.title = msg || t);
+}
+async function reloadData() {
+  setSync('loading');
+  try { DOC = await Store.load(); if (Store.mode() === 'github') { lsSet('aam_cache', DOC); setSync('ok'); } else setSync('local'); }
+  catch (e) { DOC = DOC || normalizeDoc(lsGet('aam_cache') || seedDoc()); setSync('err', e.message); toast('데이터를 불러오지 못했어요 · ' + e.message, 'err'); }
+  render(); if (DRAWER) renderDrawer();
+  if (PENDING_ID) {
+    const id = PENDING_ID; PENDING_ID = null;
+    if (getAsset(id)) openAsset(id); else toast(`${id} 자산을 찾을 수 없어요`, 'warn');
+  }
+}
+async function saveChange(mutator, message, okMsg) {
+  setSync('saving');
+  try {
+    const { doc, result } = await Store.commit(mutator, message);
+    DOC = doc; setSync(Store.mode() === 'github' ? 'ok' : 'local');
+    render(); if (okMsg) toast(okMsg);
+    return result ?? true;
+  } catch (e) {
+    setSync('err', e.message); toast('저장하지 못했어요 · ' + e.message, 'err'); return false;
+  }
+}
 
-        // 검색 필터링
-        function filterAssets() {
-            const query = document.getElementById('search-input').value.toLowerCase();
-            const filtered = assetData.filter(item => 
-                item.id.toLowerCase().includes(query) ||
-                item.name.toLowerCase().includes(query) ||
-                item.location.toLowerCase().includes(query)
-            );
-            renderAssetTable(filtered);
-        }
+/* ═══════════════════════════════════════════
+   [3] 로그인
+   ═══════════════════════════════════════════ */
+function isAuthed() {
+  const a = lsGet('aam_auth') || JSON.parse(sessionStorage.getItem('aam_auth') || 'null');
+  return !!(a && a.h === CONFIG.PW_HASH && a.exp > Date.now());
+}
+async function login(e) {
+  e.preventDefault();
+  const err = $('gate-err'); let h;
+  try { h = await sha256($('pw').value); } catch (x) { err.textContent = '이 브라우저에서는 로그인할 수 없어요 (https 주소로 열어주세요)'; return; }
+  if (h !== CONFIG.PW_HASH) {
+    err.textContent = '비밀번호가 맞지 않아요';
+    const c = document.querySelector('.gate-card'); c.classList.remove('shake'); void c.offsetWidth; c.classList.add('shake');
+    $('pw').select(); return;
+  }
+  const rec = JSON.stringify({ h, exp: Date.now() + CONFIG.AUTH_DAYS * 864e5 });
+  if ($('remember').checked) localStorage.setItem('aam_auth', rec); else sessionStorage.setItem('aam_auth', rec);
+  startApp();
+}
+function logout() { localStorage.removeItem('aam_auth'); sessionStorage.removeItem('aam_auth'); location.href = location.pathname; }
 
-        // 탭 전환 핸들러
-        function switchTab(tabName) {
-            ['dashboard', 'map', 'excel', 'scan'].forEach(t => {
-                document.getElementById('tab-' + t).classList.add('hidden');
-                document.getElementById('btn-' + t).className = "text-gray-500 hover:text-blue-600 pb-1 flex items-center space-x-1";
-            });
+/* ═══════════════════════════════════════════
+   [4] 화면
+   ═══════════════════════════════════════════ */
+const VIEWS = {
+  home: { label: '현황', icon: 'home', render: renderHome },
+  assets: { label: '자산', icon: 'box', render: renderAssets, after: updateAssetList },
+  map: { label: '지도', icon: 'pin', render: renderMap, after: initMainMap },
+  labels: { label: '라벨 인쇄', icon: 'tag', render: renderLabels, after: () => { updateLabelList(); updateLabelPreview(); }, desktop: true }
+};
+function currentView() { const h = location.hash.slice(1); return VIEWS[h] ? h : 'home'; }
+function go(v) { if (location.hash.slice(1) === v) render(); else location.hash = v; window.scrollTo(0, 0); }
+function render() {
+  if (!DOC) return;
+  const v = currentView(); const tn = todos().length;
+  $('side-nav').innerHTML = Object.entries(VIEWS).map(([k, o]) =>
+    `<button class="nav-btn ${k === v ? 'on' : ''}" onclick="go('${k}')">${icon(o.icon)}${o.label}${k === 'home' && tn ? `<span class="cnt">${tn}</span>` : ''}</button>`).join('');
+  $('tab-nav').innerHTML = Object.entries(VIEWS).filter(([, o]) => !o.desktop).map(([k, o]) =>
+    `<button class="tab ${k === v ? 'on' : ''}" onclick="go('${k}')">${icon(o.icon, 22)}${o.label}${k === 'home' && tn ? `<span class="cnt">${tn}</span>` : ''}</button>`).join('');
+  $('view').innerHTML = VIEWS[v].render();
+  if (VIEWS[v].after) VIEWS[v].after();
+}
 
-            document.getElementById('tab-' + tabName).classList.remove('hidden');
-            document.getElementById('btn-' + tabName).className = "text-blue-600 border-b-2 border-blue-600 pb-1 font-semibold flex items-center space-x-1";
+/* ── 현황 ── */
+function todos() {
+  const out = [];
+  activeAssets().forEach(a => {
+    if (a.status === '점검필요') out.push({ a, level: 'red', text: '점검 필요', rank: -1000 });
+    const c = dday(a.nextCheck);
+    if (c !== null && c <= 7 && a.status !== '점검필요') out.push({ a, level: c < 0 ? 'red' : 'amber', text: '점검 ' + ddText(c), rank: c });
+    const r = dday(a.rentalDue);
+    if (r !== null && r <= 14) out.push({ a, level: r < 0 ? 'red' : 'amber', text: '렌탈 반납 ' + ddText(r), rank: r });
+  });
+  return out.sort((x, y) => x.rank - y.rank);
+}
+function renderHome() {
+  const act = activeAssets(); const cnt = s => act.filter(a => a.status === s).length;
+  const t = todos();
+  const recent = [...DOC.assets].sort((a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || '')).slice(0, 6);
+  const stat = (label, s, n, k) => `<button class="stat ${k}" onclick="filterBy('${s}')"><div class="lbl">${label}</div><div class="num">${n}<small>건</small></div></button>`;
+  return `
+  <div class="page-head">
+    <div><h1>현황</h1><p class="sub">${todayLabel()} · 운용 중인 자산 ${act.length}건</p></div>
+    <button class="btn primary" onclick="openForm()">${icon('plus', 16)} 자산 등록</button>
+  </div>
+  <div class="stats">
+    ${stat('전체 자산', '전체', act.length, '')}${stat('정상', '정상', cnt('정상'), 'ok')}${stat('사용중', '사용중', cnt('사용중'), 'use')}${stat('점검필요', '점검필요', cnt('점검필요'), 'chk')}
+  </div>
+  <div class="grid2">
+    <section class="card">
+      <h2>할 일 ${t.length ? `<span class="count">${t.length}</span>` : ''}</h2>
+      ${t.length ? t.map(x => `
+        <div class="row-item" onclick="openAsset('${x.a.id}')">
+          <span class="ri-icon ${x.level}">${icon(x.text.startsWith('렌탈') ? 'clock' : 'alert', 17)}</span>
+          <div class="ri-main"><div class="ri-title">${esc(x.a.name)}</div><div class="ri-sub">${x.a.id} · ${esc(x.a.location)}</div></div>
+          <span class="due ${x.level}">${x.text}</span>
+        </div>`).join('') : `<div class="empty"><b>처리할 일이 없어요</b>점검·반납 일정이 모두 여유 있어요</div>`}
+    </section>
+    <section class="card">
+      <h2>최근 변경</h2>
+      ${recent.map(a => `
+        <div class="row-item" onclick="openAsset('${a.id}')">
+          <div class="ri-main"><div class="ri-title">${esc(a.name)}</div><div class="ri-sub">${a.id} · ${relTime(a.updatedAt)}</div></div>
+          ${badge(a.status)}
+        </div>`).join('')}
+    </section>
+  </div>`;
+}
+function filterBy(s) { UI.status = s; UI.q = ''; UI.cat = '전체'; go('assets'); }
 
-            if (tabName === 'map') {
-                setTimeout(initKakaoMap, 150);
-            }
-        }
+/* ── 자산 ── */
+function renderAssets() {
+  return `
+  <div class="page-head">
+    <div><h1>자산</h1><p class="sub" id="asset-count"></p></div>
+    <div class="head-actions">
+      <div class="btn-group desktop-only">
+        <button class="btn" onclick="downloadTemplate()">${icon('file', 16)} 엑셀 양식</button>
+        <button class="btn" onclick="$('xl-file').click()">${icon('upload', 16)} 엑셀 올리기</button>
+        <button class="btn" onclick="exportExcel()">${icon('download', 16)} 내보내기</button>
+      </div>
+      <button class="btn primary" onclick="openForm()">${icon('plus', 16)} 등록</button>
+    </div>
+  </div>
+  <div class="toolbar">
+    <label class="search">${icon('search', 16)}<input id="q" placeholder="품명, 위치, 자산번호 검색" value="${esc(UI.q)}" oninput="UI.q=this.value;updateAssetList()"></label>
+    <div class="chips">${['전체', ...STATUSES].map(s => `<button class="chip ${UI.status === s ? 'on' : ''}" onclick="UI.status='${s}';render()">${s}</button>`).join('')}</div>
+    <select class="sel" onchange="UI.cat=this.value;updateAssetList()">${['전체', ...CATEGORIES].map(c => `<option ${UI.cat === c ? 'selected' : ''} value="${c}">${c === '전체' ? '분류 전체' : c}</option>`).join('')}</select>
+  </div>
+  <div id="asset-list"></div>`;
+}
+function filteredAssets() {
+  const q = UI.q.trim().toLowerCase();
+  return DOC.assets.filter(a =>
+    (UI.status === '전체' ? a.status !== '폐기' : a.status === UI.status) &&
+    (UI.cat === '전체' || a.category === UI.cat) &&
+    (!q || [a.id, a.name, a.location, a.category, a.note].some(v => String(v).toLowerCase().includes(q))));
+}
+function schedOf(a) {
+  const items = [];
+  const c = dday(a.nextCheck); if (c !== null) items.push({ d: c, t: '점검 ' + ddText(c), lvl: c < 0 ? 'red' : c <= 7 ? 'amber' : 'gray' });
+  const r = dday(a.rentalDue); if (r !== null) items.push({ d: r, t: '반납 ' + ddText(r), lvl: r < 0 ? 'red' : r <= 14 ? 'amber' : 'gray' });
+  return items.sort((x, y) => x.d - y.d)[0] || null;
+}
+function updateAssetList() {
+  const list = filteredAssets(); const total = activeAssets().length;
+  const cntEl = $('asset-count'); if (cntEl) cntEl.textContent = `${list.length}건 표시 · 운용 중 ${total}건`;
+  const box = $('asset-list'); if (!box) return;
+  if (!list.length) { box.innerHTML = `<div class="card empty"><b>찾는 자산이 없어요</b>검색어나 상태를 바꿔 보세요</div>`; return; }
+  const sch = a => { const s = schedOf(a); return s ? `<span class="due ${s.lvl}">${s.t}</span>` : '<span class="muted">—</span>'; };
+  box.innerHTML = `
+  <div class="tbl-wrap"><table class="tbl">
+    <thead><tr><th style="width:110px">자산번호</th><th>품명</th><th style="width:90px">분류</th><th>위치</th><th style="width:100px">상태</th><th style="width:120px">일정</th><th class="chev"></th></tr></thead>
+    <tbody>${list.map(a => `<tr onclick="openAsset('${a.id}')">
+      <td class="mono">${a.id}</td><td class="nm">${esc(a.name)}</td><td>${esc(a.category)}</td><td>${esc(a.location)}</td>
+      <td>${badge(a.status)}</td><td>${sch(a)}</td><td class="chev">${icon('chev', 16)}</td></tr>`).join('')}</tbody>
+  </table></div>
+  <div class="mlist">${list.map(a => { const s = schedOf(a); return `
+    <div class="mcard" onclick="openAsset('${a.id}')">
+      <div class="mc-top"><span class="mono sub" style="margin:0">${a.id} · ${esc(a.category)}</span>${badge(a.status)}</div>
+      <div class="mc-name">${esc(a.name)}</div>
+      <div class="mc-sub">${icon('pin', 14)}${esc(a.location)}</div>
+      ${s ? `<div class="mc-due"><span class="due ${s.lvl}">${s.t}</span></div>` : ''}
+    </div>`; }).join('')}</div>`;
+}
 
-        // 카카오 지도 초기화 및 마커 표시
-        function initKakaoMap() {
-            const container = document.getElementById('kakao-map');
-            if (!container) return;
+/* ── 지도 ── */
+let KAKAO_P = null, MAP = null, MAP_INFO = null, MAP_FOCUS = null;
+function loadKakao() {
+  if (window.kakao && kakao.maps && kakao.maps.LatLng) return Promise.resolve();
+  if (KAKAO_P) return KAKAO_P;
+  KAKAO_P = new Promise((res, rej) => {
+    const s = document.createElement('script');
+    s.src = 'https://dapi.kakao.com/v2/maps/sdk.js?autoload=false&appkey=' + CONFIG.KAKAO_KEY;
+    const to = setTimeout(() => rej(new Error('timeout')), 10000);
+    s.onload = () => { try { kakao.maps.load(() => { clearTimeout(to); res(); }); } catch (e) { clearTimeout(to); rej(e); } };
+    s.onerror = () => { clearTimeout(to); rej(new Error('load')); };
+    document.head.appendChild(s);
+  });
+  KAKAO_P.catch(() => { KAKAO_P = null; });
+  return KAKAO_P;
+}
+const mapFail = () => `<div class="map-fail">${icon('map', 30)}<b>지도를 불러오지 못했어요</b>인터넷 연결을 확인하거나, 카카오 개발자 콘솔에<br>이 사이트 주소(도메인)가 등록되어 있는지 확인해 주세요.</div>`;
+const mapAssets = () => activeAssets().filter(hasCoord);
+function renderMap() {
+  const n = mapAssets().length, all = activeAssets().length;
+  return `
+  <div class="page-head">
+    <div><h1>지도</h1><p class="sub">위치가 등록된 자산 ${n}건${all > n ? ` · 위치 없음 ${all - n}건` : ''}</p></div>
+    <div class="legend">${STATUSES.slice(0, 3).map(s => `<span class="${ST_KEY[s]}"><i></i>${s}</span>`).join('')}</div>
+  </div>
+  <div class="map-layout">
+    <aside class="map-list">
+      <label class="search">${icon('search', 16)}<input placeholder="자산 찾기" value="${esc(UI.mapQ)}" oninput="UI.mapQ=this.value;updateMapList()"></label>
+      <div class="map-items" id="map-items"></div>
+    </aside>
+    <div class="map-box"><div id="kmap"></div></div>
+  </div>`;
+}
+function updateMapList(sel) {
+  const box = $('map-items'); if (!box) return;
+  const q = UI.mapQ.trim().toLowerCase();
+  const list = mapAssets().filter(a => !q || (a.name + a.location + a.id).toLowerCase().includes(q));
+  box.innerHTML = list.length ? list.map(a => `
+    <button class="mi ${ST_KEY[a.status]} ${sel === a.id ? 'on' : ''}" onclick="mapSelect('${a.id}')"><i></i>
+      <div class="ri-main"><div class="ri-title">${esc(a.name)}</div><div class="ri-sub">${a.id} · ${esc(a.location)}</div></div></button>`).join('')
+    : `<div class="empty" style="padding:20px">해당 자산이 없어요</div>`;
+}
+async function initMainMap() {
+  updateMapList();
+  const box = $('kmap'); if (!box) return;
+  try { await loadKakao(); } catch (e) { box.parentElement.insertAdjacentHTML('beforeend', mapFail()); return; }
+  if (!document.body.contains(box)) return;
+  MAP = new kakao.maps.Map(box, { center: new kakao.maps.LatLng(...CONFIG.MAP_CENTER), level: 4 });
+  MAP.addControl(new kakao.maps.ZoomControl(), kakao.maps.ControlPosition.RIGHT);
+  MAP_INFO = null;
+  const bounds = new kakao.maps.LatLngBounds(); const list = mapAssets();
+  list.forEach(a => {
+    const el = document.createElement('button');
+    el.className = 'pin ' + ST_KEY[a.status]; el.title = a.name; el.setAttribute('aria-label', a.name);
+    el.addEventListener('click', ev => { ev.stopPropagation(); mapSelect(a.id); });
+    const pos = new kakao.maps.LatLng(a.lat, a.lng);
+    new kakao.maps.CustomOverlay({ position: pos, content: el, xAnchor: .5, yAnchor: .5, zIndex: 2 }).setMap(MAP);
+    bounds.extend(pos);
+  });
+  kakao.maps.event.addListener(MAP, 'click', closeMapInfo);
+  setTimeout(() => {
+    MAP.relayout();
+    if (MAP_FOCUS) { const f = MAP_FOCUS; MAP_FOCUS = null; mapSelect(f, 3); }
+    else if (list.length > 1) MAP.setBounds(bounds, 60, 60, 60, 60);
+    else if (list.length === 1) MAP.setCenter(new kakao.maps.LatLng(list[0].lat, list[0].lng));
+  }, 80);
+}
+function closeMapInfo() { if (MAP_INFO) { MAP_INFO.setMap(null); MAP_INFO = null; } }
+function mapSelect(id, level) {
+  const a = getAsset(id); if (!MAP || !a || !hasCoord(a)) return;
+  closeMapInfo();
+  const pos = new kakao.maps.LatLng(a.lat, a.lng);
+  const el = document.createElement('div'); el.className = 'mapcard';
+  el.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center"><span class="mono" style="color:var(--sub);font-size:12px">${a.id}</span>${badge(a.status)}</div>
+    <b>${esc(a.name)}</b><div style="color:var(--sub)">${esc(a.location)}</div>
+    <button class="btn sm primary" data-open>상세 보기</button>`;
+  el.addEventListener('click', e => e.stopPropagation());
+  el.addEventListener('mousedown', e => e.stopPropagation());
+  el.addEventListener('touchstart', e => e.stopPropagation(), { passive: true });
+  el.querySelector('[data-open]').onclick = () => openAsset(a.id);
+  MAP_INFO = new kakao.maps.CustomOverlay({ position: pos, content: el, xAnchor: .5, yAnchor: 1, zIndex: 10 });
+  MAP_INFO.setMap(MAP);
+  if (level) MAP.setLevel(level);
+  MAP.panTo(pos);
+  updateMapList(id);
+}
+function showOnMap(id) { MAP_FOCUS = id; closeDrawer(); go('map'); }
 
-            if (!mapInitialized) {
-                const options = {
-                    center: new kakao.maps.LatLng(36.7805, 126.5505),
-                    level: 3
-                };
-                kakaoMapInstance = new kakao.maps.Map(container, options);
-                mapInitialized = true;
+/* ── 라벨 ── */
+function renderLabels() {
+  return `
+  <div class="page-head">
+    <div><h1>라벨 인쇄</h1><p class="sub">7×7cm · A4 한 장에 8개 · 점선을 따라 잘라 코팅하세요</p></div>
+    <button class="btn primary" id="print-btn" onclick="printLabels()">${icon('printer', 16)} 인쇄</button>
+  </div>
+  <div class="lab-layout">
+    <section class="card lab-pick">
+      <label class="search">${icon('search', 16)}<input placeholder="자산 찾기" value="${esc(UI.labQ)}" oninput="UI.labQ=this.value;updateLabelList()"></label>
+      <div class="lab-row"><span id="lab-count"></span><div><button class="link" onclick="labAll(true)">전체 선택</button><button class="link" onclick="labAll(false)">선택 해제</button></div></div>
+      <div class="lab-items" id="lab-items"></div>
+    </section>
+    <section class="lab-preview"><p class="prev-note">미리보기 · 인쇄할 때 배율은 '100%(실제 크기)', 여백은 '없음'으로 맞춰 주세요</p><div id="lab-sheets"></div></section>
+  </div>`;
+}
+function labCandidates() {
+  const q = UI.labQ.trim().toLowerCase();
+  return activeAssets().filter(a => !q || (a.name + a.location + a.id).toLowerCase().includes(q));
+}
+function updateLabelList() {
+  const box = $('lab-items'); if (!box) return;
+  box.innerHTML = labCandidates().map(a => `
+    <label class="lab-it"><input type="checkbox" ${UI.labSel.has(a.id) ? 'checked' : ''} onchange="labToggle('${a.id}',this.checked)">
+      <div class="ri-main"><div class="ri-title">${esc(a.name)}</div><div class="ri-sub">${a.id} · ${esc(a.location)}</div></div></label>`).join('')
+    || `<div class="empty" style="padding:20px">해당 자산이 없어요</div>`;
+}
+function labToggle(id, on) { on ? UI.labSel.add(id) : UI.labSel.delete(id); updateLabelPreview(); }
+function labAll(on) { labCandidates().forEach(a => on ? UI.labSel.add(a.id) : UI.labSel.delete(a.id)); updateLabelList(); updateLabelPreview(); }
+function selectedLabels() { return DOC.assets.filter(a => UI.labSel.has(a.id)); }
+const QR_CACHE = {};
+function qrData(id) {
+  const key = qrUrl(id); if (QR_CACHE[key]) return QR_CACHE[key];
+  if (typeof QRCode === 'undefined') return '';
+  const div = document.createElement('div');
+  new QRCode(div, { text: key, width: 480, height: 480, colorDark: '#000000', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.H });
+  const cv = div.querySelector('canvas'); const im = div.querySelector('img');
+  return (QR_CACHE[key] = cv ? cv.toDataURL('image/png') : (im ? im.src : ''));
+}
+function labelHTML(a) {
+  const src = qrData(a.id);
+  return `<div class="label"><div class="lb-top"><span>AURORA</span><span>${esc(CONFIG.SITE.replace(/ v[\d.]+$/, ''))}</span></div>
+    ${src ? `<img class="lb-qr" src="${src}" alt="">` : `<div class="lb-qr none">QR 생성 불가</div>`}
+    <div class="lb-id">${a.id}</div><div class="lb-name">${esc(a.name)}</div></div>`;
+}
+function sheetsHTML(list) {
+  const pages = []; for (let i = 0; i < list.length; i += 8) pages.push(list.slice(i, i + 8));
+  return pages.map(p => `<div class="sheet">${p.map(labelHTML).join('')}</div>`);
+}
+function updateLabelPreview() {
+  const box = $('lab-sheets'); if (!box) return;
+  const list = selectedLabels(); const pages = Math.ceil(list.length / 8);
+  $('lab-count').textContent = `${list.length}개 선택`;
+  $('print-btn').innerHTML = `${icon('printer', 16)} 인쇄${list.length ? ` (${list.length}개 · ${pages}장)` : ''}`;
+  $('print-btn').disabled = !list.length;
+  if (!list.length) { box.innerHTML = `<div class="card empty"><b>인쇄할 자산을 고르세요</b>왼쪽 목록에서 체크하면 여기에 A4 미리보기가 나와요</div>`; return; }
+  const w = box.clientWidth || 700; const z = Math.min(1, w / 794);
+  box.innerHTML = sheetsHTML(list).map(s => `<div style="width:${794 * z}px;height:${1119 * z}px"><div class="sheet-scale" style="transform:scale(${z})">${s}</div></div>`).join('<div class="sheet-gap"></div>');
+}
+function printLabels() {
+  const list = selectedLabels(); if (!list.length) return toast('인쇄할 자산을 먼저 고르세요', 'warn');
+  $('print-area').innerHTML = sheetsHTML(list).join('');
+  setTimeout(() => window.print(), 100);
+}
+function printOne(id) { UI.labSel = new Set([id]); UI.labQ = ''; closeDrawer(); go('labels'); }
 
-                // 데이터 좌표별 마커 추가
-                assetData.forEach(item => {
-                    const markerPosition = new kakao.maps.LatLng(item.lat, item.lng);
-                    const marker = new kakao.maps.Marker({
-                        position: markerPosition,
-                        clickable: true
-                    });
-                    marker.setMap(kakaoMapInstance);
+/* ═══════════════════════════════════════════
+   [5] 자산 상세 · 등록 패널
+   ═══════════════════════════════════════════ */
+function openAsset(id) { if (!getAsset(id)) return; closeModal(); DRAWER = { mode: 'detail', id }; renderDrawer(); }
+function openForm(id) {
+  const a = id ? getAsset(id) : null;
+  DRAWER = { mode: 'form', id: id || null, draft: a ? { ...a } : { name: '', category: '', location: '', status: '정상', lat: '', lng: '', nextCheck: '', rentalDue: '', note: '' } };
+  renderDrawer();
+}
+function closeDrawer() { DRAWER = null; $('drawer').classList.add('hidden'); }
+function renderDrawer() {
+  if (!DRAWER) return;
+  if (DRAWER.mode === 'detail' && !getAsset(DRAWER.id)) return closeDrawer();
+  $('drawer').classList.remove('hidden');
+  $('panel').innerHTML = DRAWER.mode === 'detail' ? detailHTML(getAsset(DRAWER.id)) : formHTML();
+}
+function detailHTML(a) {
+  const row = (k, v) => `<div><dt>${k}</dt><dd>${v}</dd></div>`;
+  const dateRow = (k, s, warnDays) => { const n = dday(s); return row(k, `${s}<span class="due ${n < 0 ? 'red' : n <= warnDays ? 'amber' : 'gray'}">${ddText(n)}</span>`); };
+  const qr = qrData(a.id);
+  return `
+  <div class="p-head"><div><div class="mono" style="color:var(--sub);font-size:13px">${a.id} · ${esc(a.category)}</div><h2>${esc(a.name)}</h2></div>
+    <button class="icon-btn" onclick="closeDrawer()" aria-label="닫기">${icon('x', 20)}</button></div>
+  <div class="p-body">
+    <div class="flabel">상태 — 누르면 바로 저장돼요</div>
+    <div class="seg">${STATUSES.map(s => `<button class="${ST_KEY[s]} ${a.status === s ? 'on' : ''}" onclick="setStatus('${a.id}','${s}')">${s}</button>`).join('')}</div>
+    <dl class="info">
+      ${row('위치', `${esc(a.location)}${hasCoord(a) ? `<button class="link" onclick="showOnMap('${a.id}')">지도에서 보기</button>` : '<span class="muted" style="font-size:12.5px">좌표 없음</span>'}`)}
+      ${a.nextCheck ? dateRow('다음 점검', a.nextCheck, 7) : ''}
+      ${a.rentalDue ? dateRow('렌탈 반납', a.rentalDue, 14) : ''}
+      ${a.note ? row('비고', esc(a.note)) : ''}
+      ${row('최종 변경', relTime(a.updatedAt))}
+    </dl>
+    <div class="qr-box">${qr ? `<img src="${qr}" alt="QR">` : ''}<div><b>QR 라벨</b><p class="sub" style="margin-bottom:8px">휴대폰 카메라로 찍으면 이 화면이 열려요</p>
+      <button class="btn sm desktop-only" onclick="printOne('${a.id}')">${icon('printer', 14)} 라벨 인쇄</button></div></div>
+  </div>
+  <div class="p-foot"><button class="btn" onclick="openForm('${a.id}')">${icon('edit', 16)} 정보 수정</button>${hasCoord(a) ? `<button class="btn" onclick="showOnMap('${a.id}')">${icon('pin', 16)} 지도</button>` : ''}</div>`;
+}
+async function setStatus(id, s) {
+  const a = getAsset(id); if (!a || a.status === s) return;
+  if (s === '폐기' && !confirm(`${a.name}\n폐기 처리할까요? 목록과 지도에서 숨겨져요. (자산 > 폐기 에서 다시 볼 수 있어요)`)) return;
+  document.querySelectorAll('.seg button').forEach(b => b.disabled = true);
+  await saveChange(doc => { const x = doc.assets.find(y => y.id === id); if (x) { x.status = s; x.updatedAt = new Date().toISOString(); } }, `상태 변경: ${id} → ${s}`, `'${s}'(으)로 바꿨어요`);
+  renderDrawer();
+}
+function formHTML() {
+  const d = DRAWER.draft, isNew = !DRAWER.id;
+  const bind = k => `oninput="DRAWER.draft.${k}=this.value"`;
+  const moreOpen = d.nextCheck || d.rentalDue || d.note;
+  return `
+  <div class="p-head"><div><div class="mono" style="color:var(--sub);font-size:13px">${isNew ? '자산번호는 자동으로 붙어요' : DRAWER.id}</div><h2>${isNew ? '자산 등록' : '정보 수정'}</h2></div>
+    <button class="icon-btn" onclick="${isNew ? 'closeDrawer()' : `openAsset('${DRAWER.id}')`}" aria-label="닫기">${icon('x', 20)}</button></div>
+  <div class="p-body">
+    <div class="field"><div class="flabel">품명<em>*</em></div><input class="inp" id="f-name" value="${esc(d.name)}" ${bind('name')} placeholder="예: 인버터 용접기 500A"></div>
+    <div class="field"><div class="flabel">분류<em>*</em></div>
+      <div class="cat-chips">${CATEGORIES.map(c => `<button type="button" class="chip ${d.category === c ? 'on' : ''}" onclick="DRAWER.draft.category='${c}';this.parentNode.querySelectorAll('.chip').forEach(b=>b.classList.toggle('on',b===this))">${c}</button>`).join('')}</div></div>
+    <div class="field"><div class="flabel">위치<em>*</em></div><input class="inp" value="${esc(d.location)}" ${bind('location')} placeholder="예: OSBL 야적장 A구역"></div>
+    <div class="field"><div class="flabel">상태</div>
+      <div class="seg" style="margin:0">${STATUSES.map(s => `<button type="button" class="${ST_KEY[s]} ${d.status === s ? 'on' : ''}" onclick="DRAWER.draft.status='${s}';this.parentNode.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b===this))">${s}</button>`).join('')}</div></div>
+    <div class="field"><div class="flabel">지도 위치 <span class="muted" style="font-weight:500">(선택)</span></div>
+      <div class="coord-row"><input class="inp" id="f-lat" inputmode="decimal" value="${esc(d.lat)}" ${bind('lat')} placeholder="위도 36.78…"><input class="inp" id="f-lng" inputmode="decimal" value="${esc(d.lng)}" ${bind('lng')} placeholder="경도 126.55…"></div>
+      <div class="coord-btns"><button type="button" class="btn" onclick="useMyLocation()">${icon('crosshair', 16)} 지금 내 위치</button><button type="button" class="btn" onclick="openPicker()">${icon('pin', 16)} 지도에서 찍기</button></div></div>
+    <details class="more" ${moreOpen ? 'open' : ''}><summary>추가 정보 (선택)</summary>
+      <div class="field"><div class="flabel">다음 점검일</div><input class="inp" type="date" value="${esc(d.nextCheck)}" ${bind('nextCheck')}></div>
+      <div class="field"><div class="flabel">렌탈 반납일 <span class="muted" style="font-weight:500">렌탈 장비만</span></div><input class="inp" type="date" value="${esc(d.rentalDue)}" ${bind('rentalDue')}></div>
+      <div class="field"><div class="flabel">비고</div><textarea class="inp" ${bind('note')} placeholder="자유 메모">${esc(d.note)}</textarea></div>
+    </details>
+  </div>
+  <div class="p-foot">
+    <button class="btn" onclick="${isNew ? 'closeDrawer()' : `openAsset('${DRAWER.id}')`}">취소</button>
+    <button class="btn primary" id="f-save" onclick="saveForm()">${isNew ? '등록하기' : '저장'}</button></div>`;
+}
+function formError(msg) { toast(msg, 'warn'); }
+async function saveForm() {
+  const d = DRAWER.draft, id = DRAWER.id, isNew = !id;
+  const miss = [!d.name.trim() && '품명', !d.category && '분류', !d.location.trim() && '위치'].filter(Boolean);
+  if (miss.length) return formError(miss.join(', ') + '을(를) 입력해 주세요');
+  let lat = '', lng = '';
+  if (String(d.lat).trim() || String(d.lng).trim()) {
+    lat = parseFloat(d.lat); lng = parseFloat(d.lng);
+    if (!validLat(lat) || !validLng(lng)) return formError('좌표가 올바르지 않아요 (예: 36.7805 / 126.5505)');
+    lat = +lat.toFixed(6); lng = +lng.toFixed(6);
+  }
+  const fields = { name: d.name.trim(), category: d.category, location: d.location.trim(), status: d.status, lat, lng, nextCheck: d.nextCheck || '', rentalDue: d.rentalDue || '', note: (d.note || '').trim() };
+  $('f-save').disabled = true; $('f-save').textContent = '저장 중…';
+  const res = await saveChange(doc => {
+    const now = new Date().toISOString();
+    if (isNew) { const nid = nextId(doc); doc.assets.push({ id: nid, ...fields, updatedAt: now }); return nid; }
+    const a = doc.assets.find(x => x.id === id); if (!a) throw new Error('자산을 찾을 수 없어요');
+    Object.assign(a, fields, { updatedAt: now }); return id;
+  }, isNew ? `자산 등록: ${fields.name}` : `자산 수정: ${id}`, isNew ? '등록했어요' : '저장했어요');
+  if (res) openAsset(res); else if ($('f-save')) { $('f-save').disabled = false; $('f-save').textContent = isNew ? '등록하기' : '저장'; }
+}
+function getPosition() {
+  return new Promise((res, rej) => {
+    if (!navigator.geolocation) return rej(new Error('이 기기는 위치 기능을 지원하지 않아요'));
+    navigator.geolocation.getCurrentPosition(p => res(p.coords), e => rej(new Error(e.code === 1 ? '위치 권한을 허용해 주세요' : '위치를 찾지 못했어요')), { enableHighAccuracy: true, timeout: 12000 });
+  });
+}
+async function useMyLocation() {
+  toast('현재 위치를 찾는 중…');
+  try {
+    const c = await getPosition();
+    DRAWER.draft.lat = +c.latitude.toFixed(6); DRAWER.draft.lng = +c.longitude.toFixed(6);
+    $('f-lat').value = DRAWER.draft.lat; $('f-lng').value = DRAWER.draft.lng;
+    toast(`위치를 넣었어요 (오차 약 ${Math.round(c.accuracy)}m)`);
+  } catch (e) { toast(e.message, 'warn'); }
+}
 
-                    // 인포윈도우 생성
-                    const iwContent = `<div style="padding:8px;font-size:12px;width:180px;">
-                        <strong>[${item.id}] ${item.name}</strong><br>
-                        <span style="color:#666;">${item.location}</span><br>
-                        <span style="color:blue;">상태: ${item.status}</span>
-                    </div>`;
+/* 지도에서 위치 찍기 */
+let PICK = null, PMAP = null, PMARK = null;
+async function openPicker() {
+  const d = DRAWER.draft; const has = validLat(+d.lat) && validLng(+d.lng);
+  PICK = has ? { lat: +d.lat, lng: +d.lng } : null;
+  openModal(`
+    <div class="m-head"><h2>지도에서 위치 찍기</h2><button class="icon-btn" onclick="closeModal()">${icon('x', 20)}</button></div>
+    <div class="m-body"><p class="sub" style="margin:0 0 10px">자산이 있는 곳을 지도에서 눌러 주세요</p><div class="pmap" id="pmap"></div><div class="pick-coord" id="pick-coord">${PICK ? `${PICK.lat}, ${PICK.lng}` : '아직 선택하지 않았어요'}</div></div>
+    <div class="m-foot"><button class="btn" onclick="pickMyLocation()">${icon('crosshair', 16)} 내 위치</button><span class="sp"></span>
+      <button class="btn" onclick="closeModal()">취소</button><button class="btn primary" onclick="applyPick()">이 위치로</button></div>`, 'wide');
+  const box = $('pmap');
+  try { await loadKakao(); } catch (e) { box.style.position = 'relative'; box.innerHTML = mapFail(); return; }
+  const center = PICK ? new kakao.maps.LatLng(PICK.lat, PICK.lng) : new kakao.maps.LatLng(...CONFIG.MAP_CENTER);
+  PMAP = new kakao.maps.Map(box, { center, level: 3 });
+  PMARK = new kakao.maps.Marker({ position: center }); if (PICK) PMARK.setMap(PMAP);
+  kakao.maps.event.addListener(PMAP, 'click', e => setPick(e.latLng.getLat(), e.latLng.getLng()));
+  setTimeout(() => { PMAP.relayout(); PMAP.setCenter(center); }, 60);
+}
+function setPick(lat, lng) {
+  PICK = { lat: +lat.toFixed(6), lng: +lng.toFixed(6) };
+  $('pick-coord').textContent = `${PICK.lat}, ${PICK.lng}`;
+  if (PMAP) { const p = new kakao.maps.LatLng(PICK.lat, PICK.lng); PMARK.setPosition(p); PMARK.setMap(PMAP); PMAP.panTo(p); }
+}
+async function pickMyLocation() { try { const c = await getPosition(); setPick(c.latitude, c.longitude); } catch (e) { toast(e.message, 'warn'); } }
+function applyPick() {
+  if (!PICK) return toast('지도에서 위치를 눌러 주세요', 'warn');
+  DRAWER.draft.lat = PICK.lat; DRAWER.draft.lng = PICK.lng; closeModal(); renderDrawer();
+}
 
-                    const infowindow = new kakao.maps.InfoWindow({
-                        content: iwContent,
-                        removable: true
-                    });
+/* 모달 */
+function openModal(html, size = '') { $('modal-box').className = 'modal ' + size; $('modal-box').innerHTML = html; $('modal').classList.remove('hidden'); }
+function closeModal() { $('modal').classList.add('hidden'); $('modal-box').innerHTML = ''; PMAP = null; }
 
-                    kakao.maps.event.addListener(marker, 'click', function() {
-                        infowindow.open(kakaoMapInstance, marker);
-                    });
-                });
-            } else if (kakaoMapInstance) {
-                kakaoMapInstance.relayout();
-                kakaoMapInstance.setCenter(new kakao.maps.LatLng(36.7805, 126.5505));
-            }
-        }
+/* ═══════════════════════════════════════════
+   [6] 엑셀
+   ═══════════════════════════════════════════ */
+const XL_COLS = [['자산번호', 'id'], ['품명', 'name'], ['분류', 'category'], ['위치', 'location'], ['상태', 'status'], ['위도', 'lat'], ['경도', 'lng'], ['다음점검일', 'nextCheck'], ['렌탈반납일', 'rentalDue'], ['비고', 'note']];
+const XL_ALIAS = Object.fromEntries([...XL_COLS.map(([h, k]) => [h, k]), ['설치위치', 'location'], ['품명및규격', 'name'], ['운용상태', 'status'], ['자산관리번호', 'id']]);
+function needXLSX() { if (typeof XLSX === 'undefined') { toast('엑셀 기능을 불러오지 못했어요 · 인터넷 연결을 확인해 주세요', 'err'); return false; } return true; }
+function downloadTemplate() {
+  if (!needXLSX()) return;
+  const ws = XLSX.utils.aoa_to_sheet([XL_COLS.map(c => c[0])]);
+  ws['!cols'] = [10, 34, 10, 26, 10, 11, 11, 13, 13, 26].map(w => ({ wch: w }));
+  const guide = XLSX.utils.aoa_to_sheet([
+    ['열', '필수', '적는 방법'],
+    ['자산번호', '', '새 자산은 비워두세요 (자동으로 AUR-006 같은 번호가 붙어요). 기존 자산을 고칠 때만 적어요.'],
+    ['품명', '필수', '규격까지 함께 적어요. 예: 인버터 용접기 500A'],
+    ['분류', '필수', CATEGORIES.join(', ') + ' 중 하나'],
+    ['위치', '필수', '예: OSBL 야적장 A구역'],
+    ['상태', '', '정상, 사용중, 점검필요, 폐기 중 하나 (비우면 정상)'],
+    ['위도 / 경도', '', '예: 36.7805 / 126.5505 · 비워두고 앱에서 지도를 눌러 넣어도 돼요'],
+    ['다음점검일', '', '예: 2026-12-01'],
+    ['렌탈반납일', '', '렌탈 장비만. 예: 2026-12-31'],
+    ['비고', '', '자유 메모'],
+    [],
+    ['기존 자산 고치기', '', '자산번호와 바꿀 칸만 채우세요. 빈칸은 원래 값이 그대로 남아요.'],
+    ['팁', '', "앱의 '내보내기' 파일을 고쳐서 그대로 올려도 돼요."]
+  ]);
+  guide['!cols'] = [{ wch: 16 }, { wch: 6 }, { wch: 80 }];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, '자산입력'); XLSX.utils.book_append_sheet(wb, guide, '작성안내');
+  XLSX.writeFile(wb, 'Aurora_자산등록양식.xlsx');
+}
+function exportExcel() {
+  if (!needXLSX()) return;
+  const rows = DOC.assets.map(a => [...XL_COLS.map(([, k]) => a[k] ?? ''), a.updatedAt ? new Date(a.updatedAt).toLocaleString('ko-KR') : '']);
+  const ws = XLSX.utils.aoa_to_sheet([[...XL_COLS.map(c => c[0]), '최종변경'], ...rows]);
+  ws['!cols'] = [10, 34, 10, 26, 10, 11, 11, 13, 13, 26, 20].map(w => ({ wch: w }));
+  const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, '자산대장');
+  XLSX.writeFile(wb, `Aurora_자산대장_${todayStr()}.xlsx`);
+}
+const cellStr = v => v == null ? '' : String(v).trim();
+function cellDate(v) {
+  if (v === '' || v == null) return '';
+  if (typeof v === 'number') { const d = new Date(Math.round((v - 25569) * 864e5)); return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}`; }
+  const m = String(v).trim().match(/^(\d{4})[-./ ]\s*(\d{1,2})[-./ ]\s*(\d{1,2})\.?$/);
+  return m ? `${m[1]}-${pad(m[2])}-${pad(m[3])}` : null;
+}
+let PLAN = [];
+async function handleExcel(inp) {
+  const f = inp.files[0]; inp.value = ''; if (!f || !needXLSX()) return;
+  let rows;
+  try {
+    const wb = XLSX.read(await f.arrayBuffer(), { type: 'array' });
+    rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: '', raw: true });
+  } catch (e) { return toast('엑셀 파일을 읽을 수 없어요', 'err'); }
+  PLAN = buildPlan(rows); openPlan(f.name);
+}
+function buildPlan(rows) {
+  const byId = new Map(DOC.assets.map(a => [a.id, a])); const seen = new Set(); const out = [];
+  rows.forEach((raw, i) => {
+    const r = {}; Object.keys(raw).forEach(k => { const key = XL_ALIAS[String(k).replace(/\s/g, '')]; if (key) r[key] = raw[k]; });
+    if (!Object.values(r).some(v => cellStr(v))) return;
+    const errs = [], f = {}, id = cellStr(r.id).toUpperCase();
+    ['name', 'location', 'note'].forEach(k => { const v = cellStr(r[k]); if (v) f[k] = v; });
+    const cat = cellStr(r.category); if (cat) CATEGORIES.includes(cat) ? f.category = cat : errs.push(`분류 '${cat}'는 쓸 수 없어요`);
+    const st = cellStr(r.status); if (st) STATUSES.includes(st) ? f.status = st : errs.push(`상태 '${st}'는 쓸 수 없어요`);
+    const la = cellStr(r.lat), ln = cellStr(r.lng);
+    if (la || ln) { const a = parseFloat(la), b = parseFloat(ln); validLat(a) && validLng(b) ? (f.lat = +a.toFixed(6), f.lng = +b.toFixed(6)) : errs.push('위도/경도를 확인해 주세요'); }
+    [['nextCheck', '다음점검일'], ['rentalDue', '렌탈반납일']].forEach(([k, h]) => { if (cellStr(r[k])) { const d = cellDate(r[k]); d ? f[k] = d : errs.push(`${h} 날짜 형식(2026-12-01)을 확인해 주세요`); } });
+    let type, changes = [];
+    if (id) {
+      if (seen.has(id)) errs.push('같은 자산번호가 파일에 두 번 있어요'); seen.add(id);
+      const cur = byId.get(id);
+      if (!cur) errs.push(`${id}는 없는 자산번호예요 (새 자산은 자산번호를 비워두세요)`);
+      else { changes = Object.keys(f).filter(k => String(cur[k] ?? '') !== String(f[k])).map(k => ({ k, from: cur[k], to: f[k] })); type = changes.length ? 'update' : 'same'; }
+    } else {
+      if (!f.name) errs.push('품명이 없어요'); if (!f.location) errs.push('위치가 없어요'); if (!cat) errs.push('분류가 없어요');
+      if (!f.status) f.status = '정상'; type = 'new';
+    }
+    if (errs.length) type = 'error';
+    out.push({ line: i + 2, type, id, f, changes, errs, name: f.name || (byId.get(id) || {}).name || '' });
+  });
+  return out;
+}
+const FIELD_KO = Object.fromEntries(XL_COLS.map(([h, k]) => [k, h]));
+const TYPE_KO = { new: '신규', update: '변경', error: '오류', same: '그대로' };
+function openPlan(fname) {
+  const n = t => PLAN.filter(p => p.type === t).length; const ok = n('new') + n('update');
+  const detail = p => p.type === 'error' ? `<span style="color:var(--red)">${p.errs.map(esc).join('<br>')}</span>`
+    : p.type === 'update' ? p.changes.map(c => `<div class="chg">${FIELD_KO[c.k]}: ${esc(c.from || '(빈칸)')} → <b>${esc(c.to)}</b></div>`).join('')
+    : p.type === 'new' ? `<span class="chg">${esc(p.f.category || '')} · ${esc(p.f.location || '')} · ${esc(p.f.status)}</span>` : '<span class="muted">바뀐 내용 없음</span>';
+  openModal(`
+    <div class="m-head"><h2>엑셀 반영 미리보기</h2><button class="icon-btn" onclick="closeModal()">${icon('x', 20)}</button></div>
+    <div class="m-body">
+      <p class="sub" style="margin:0 0 8px">${esc(fname)} · ${PLAN.length}줄</p>
+      <div class="sum-chips"><span class="t-new">신규 ${n('new')}</span><span class="t-update">변경 ${n('update')}</span><span class="t-error">오류 ${n('error')}</span><span class="t-same">그대로 ${n('same')}</span></div>
+      ${PLAN.length ? `<table class="plan"><thead><tr><th>줄</th><th>구분</th><th>자산번호</th><th>품명</th><th>내용</th></tr></thead><tbody>
+        ${PLAN.map(p => `<tr><td>${p.line}</td><td><span class="tag t-${p.type}">${TYPE_KO[p.type]}</span></td><td class="mono">${p.id ? esc(p.id) : '<span class="muted">자동</span>'}</td><td>${esc(p.name)}</td><td>${detail(p)}</td></tr>`).join('')}
+      </tbody></table>` : `<div class="empty"><b>읽을 내용이 없어요</b>첫 줄이 '자산번호, 품명, 분류…' 제목인지 확인해 주세요</div>`}
+      ${n('error') ? `<p class="hint">오류가 있는 줄은 빼고 반영돼요. 엑셀을 고쳐서 다시 올리면 돼요.</p>` : ''}
+    </div>
+    <div class="m-foot"><span class="sp"></span><button class="btn" onclick="closeModal()">취소</button>
+      <button class="btn primary" id="plan-go" ${ok ? '' : 'disabled'} onclick="applyPlan()">${ok}건 반영하기</button></div>`, 'wide');
+}
+async function applyPlan() {
+  const items = PLAN.filter(p => p.type === 'new' || p.type === 'update'); if (!items.length) return;
+  $('plan-go').disabled = true; $('plan-go').textContent = '반영 중…';
+  const res = await saveChange(doc => {
+    const now = new Date().toISOString(); let added = 0, updated = 0;
+    items.forEach(p => {
+      if (p.type === 'new') { doc.assets.push({ id: nextId(doc), name: '', category: '', location: '', status: '정상', lat: '', lng: '', nextCheck: '', rentalDue: '', note: '', ...p.f, updatedAt: now }); added++; }
+      else { const a = doc.assets.find(x => x.id === p.id); if (a) { p.changes.forEach(c => a[c.k] = c.to); a.updatedAt = now; updated++; } }
+    });
+    return { added, updated };
+  }, `엑셀 반영: 신규 ${items.filter(p => p.type === 'new').length}건 · 변경 ${items.filter(p => p.type === 'update').length}건`);
+  if (res) { closeModal(); toast(`신규 ${res.added}건 · 변경 ${res.updated}건을 반영했어요`); }
+  else if ($('plan-go')) { $('plan-go').disabled = false; $('plan-go').textContent = `${items.length}건 반영하기`; }
+}
 
-        function relayoutMap() {
-            if (kakaoMapInstance) {
-                kakaoMapInstance.relayout();
-                kakaoMapInstance.setCenter(new kakao.maps.LatLng(36.7805, 126.5505));
-            }
-        }
+/* ═══════════════════════════════════════════
+   [7] 설정 · 시작
+   ═══════════════════════════════════════════ */
+function openSettings() {
+  const c = Store.cfg();
+  openModal(`
+    <div class="m-head"><h2>설정</h2><button class="icon-btn" onclick="closeModal()">${icon('x', 20)}</button></div>
+    <div class="m-body">
+      <div class="set-block">
+        <h3>데이터 저장소 (GitHub)</h3>
+        <p class="hint" style="margin:2px 0 12px">현재: <b>${Store.mode() === 'github' ? 'GitHub에 저장 중 — 모든 기기가 같은 데이터를 봐요' : '로컬 모드 — 이 기기에만 저장돼요'}</b></p>
+        <div class="set-grid">
+          <label>저장소 주인<input class="inp" id="s-owner" value="${esc(c.owner)}"></label>
+          <label>저장소 이름<input class="inp" id="s-repo" value="${esc(c.repo)}"></label>
+          <label>브랜치<input class="inp" id="s-branch" value="${esc(c.branch)}"></label>
+          <label>데이터 파일<input class="inp" id="s-path" value="${esc(c.path)}"></label>
+        </div>
+        <label class="set-one">GitHub 토큰<input class="inp" id="s-token" type="password" value="${esc(c.token)}" placeholder="github_pat_…" autocomplete="off"></label>
+        <p class="hint">토큰 만드는 곳: GitHub → Settings → Developer settings → Fine-grained tokens → Generate.<br>
+          Repository access는 <b>이 저장소만</b>, Permissions는 <b>Contents: Read and write</b> 하나만 주세요.<br>토큰은 이 기기 브라우저에만 저장되고, 코드나 데이터 파일에는 들어가지 않아요.</p>
+        <div id="s-test" class="test-res"></div>
+      </div>
+      <div class="set-block">
+        <h3>라벨 QR 주소</h3>
+        <input class="inp" id="s-qr" value="${esc(c.qrBase)}" placeholder="${esc(CONFIG.QR_BASE_DEFAULT)}">
+        <p class="hint">QR을 찍었을 때 열릴 앱 주소예요. 비워두면 지금 열린 주소(또는 기본값)를 써요.</p>
+      </div>
+    </div>
+    <div class="m-foot"><button class="btn" onclick="testConn()">연결 확인</button><span class="sp"></span>
+      <button class="btn" onclick="closeModal()">취소</button><button class="btn primary" onclick="saveSettings()">저장</button></div>`);
+}
+function readSettingsForm() {
+  return { owner: $('s-owner').value.trim(), repo: $('s-repo').value.trim(), branch: $('s-branch').value.trim() || 'main', path: $('s-path').value.trim() || 'assets.json', token: $('s-token').value.trim(), qrBase: $('s-qr').value.trim() };
+}
+async function testConn() {
+  const c = readSettingsForm(), out = $('s-test');
+  out.style.color = 'var(--sub)'; out.textContent = '확인 중…';
+  try {
+    const r = await fetch(`https://api.github.com/repos/${encodeURIComponent(c.owner)}/${encodeURIComponent(c.repo)}`, { headers: Store.headers(false, c), cache: 'no-store' });
+    if (!r.ok) throw new Error(ghErr(r.status));
+    const f = await fetch(Store.url(c) + '?ref=' + encodeURIComponent(c.branch), { headers: Store.headers(false, c), cache: 'no-store' });
+    out.style.color = 'var(--ok)';
+    out.textContent = '✓ 저장소에 연결됐어요 · ' + (f.ok ? `${c.path} 파일이 있어요` : `${c.path} 파일은 첫 저장 때 만들어져요`) + (c.token ? '' : ' (토큰이 없어 읽기만 가능)');
+  } catch (e) { out.style.color = 'var(--red)'; out.textContent = '✕ ' + e.message; }
+}
+function saveSettings() {
+  const c = readSettingsForm(); const before = Store.mode();
+  Store.saveCfg(c); Object.keys(QR_CACHE).forEach(k => delete QR_CACHE[k]);
+  closeModal(); toast('설정을 저장했어요');
+  if (before === 'local' && c.token && lsGet('aam_local')) toast('이 기기에서 만든 데이터는 다음 저장 때 GitHub에 올라가요 (GitHub에 데이터가 없을 때만)', 'warn');
+  reloadData();
+}
+function startApp() {
+  $('gate').classList.add('hidden'); $('app').classList.remove('hidden');
+  document.querySelectorAll('[data-ic]').forEach(el => el.outerHTML = icon(el.dataset.ic));
+  DOC = normalizeDoc((Store.mode() === 'local' ? lsGet('aam_local') : null) || lsGet('aam_cache') || seedDoc());
+  render(); reloadData();
+}
+window.addEventListener('hashchange', () => { closeMapInfo(); render(); });
+window.addEventListener('keydown', e => { if (e.key === 'Escape') { if (!$('modal').classList.contains('hidden')) closeModal(); else closeDrawer(); } });
+let RESIZE_T; window.addEventListener('resize', () => { clearTimeout(RESIZE_T); RESIZE_T = setTimeout(() => { if (currentView() === 'labels') updateLabelPreview(); if (MAP) MAP.relayout(); }, 150); });
 
-        // QR 코드 동적 생성
-        function generateQRCodes() {
-            const container = document.getElementById('qr-container');
-            if (!container) return;
-            container.innerHTML = '';
-
-            assetData.forEach(item => {
-                const box = document.createElement('div');
-                box.className = "border rounded-lg p-3 text-center space-y-2 bg-gray-50 flex flex-col items-center justify-center";
-                
-                const qrDiv = document.createElement('div');
-                new QRCode(qrDiv, {
-                    text: `https://sskim4912.github.io/aurora_asset_manager/?id=${item.id}`,
-                    width: 100,
-                    height: 100
-                });
-
-                box.appendChild(qrDiv);
-                box.innerHTML += `
-                    <div class="mt-2 text-xs">
-                        <p class="font-bold text-blue-900">${item.id}</p>
-                        <p class="text-gray-600 truncate w-32">${item.name}</p>
-                    </div>
-                `;
-                container.appendChild(box);
-            });
-        }
-
-        // 엑셀 파일 내보내기
-        function exportToExcel() {
-            const worksheet = XLSX.utils.json_to_sheet(assetData);
-            const workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, "자산대장");
-            XLSX.writeFile(workbook, "Aurora_Asset_Data.xlsx");
-        }
-
-        // 엑셀 업로드 처리
-        function processExcelUpload() {
-            const fileInput = document.getElementById('excel-file-input');
-            if (!fileInput.files || fileInput.files.length === 0) {
-                alert("업로드할 엑셀 파일을 선택하세요.");
-                return;
-            }
-            alert("엑셀 데이터 증분 업로드가 완료되었습니다.");
-            switchTab('dashboard');
-        }
-
-        // 로그인 모달 토글
-        function openLoginModal() { document.getElementById('login-modal').classList.remove('hidden'); }
-        function closeLoginModal() { document.getElementById('login-modal').classList.add('hidden'); }
-
-        function checkAdminLogin() {
-            const pw = document.getElementById('admin-pw-input').value;
-            if (pw === ADMIN_PASSWORD) {
-                isAdmin = true;
-                alert("관리자 로그인에 성공하였습니다.");
-                document.getElementById('auth-badge').innerText = "모드: 관리자";
-                document.getElementById('auth-badge').className = "bg-red-800 text-white text-xs px-2 py-1 rounded font-semibold";
-                document.getElementById('login-toggle-btn').classList.add('hidden');
-                closeLoginModal();
-            } else {
-                alert("암호가 일치하지 않습니다.");
-            }
-        }
-    </script>
+(function init() {
+  const p = new URLSearchParams(location.search);
+  if (p.get('id')) { PENDING_ID = p.get('id').toUpperCase(); history.replaceState(null, '', location.pathname + (location.hash || '#assets')); }
+  if (isAuthed()) startApp(); else { $('gate').classList.remove('hidden'); setTimeout(() => $('pw').focus(), 50); }
+})();
+</script>
 </body>
 </html>
