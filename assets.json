@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-11-10T06:55:48.886Z",
+  "updatedAt": "2026-11-10T06:55:58.140Z",
   "assets": [
     {
       "id": "AUR-001",
@@ -22,11 +22,11 @@
       "location": "ISBL 메인 구조물동",
       "lat": 36.7812,
       "lng": 126.5515,
-      "status": "사용중",
+      "status": "점검필요",
       "nextCheck": "2026-12-01",
       "rentalDue": "",
       "note": "",
-      "updatedAt": "2026-11-10T09:00:00+09:00"
+      "updatedAt": "2026-11-10T06:55:58.140Z"
     },
     {
       "id": "AUR-003",
