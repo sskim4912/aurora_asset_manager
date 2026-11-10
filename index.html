@@ -25,7 +25,7 @@
 <style>
 :root{
   --bg:#f4f6fa;--card:#fff;--line:#e6e9f0;--line2:#d5dae4;--text:#141a2a;--sub:#667085;--muted:#98a2b3;
-  --acc:#4338ca;--acc-d:#3730a3;--acc-bg:#eef0ff;
+  --acc:#0a5eb0;--acc-d:#084b8d;--acc-bg:#e8f1fb;
   --ok:#15803d;--ok-bg:#dcfce7;--use:#0369a1;--use-bg:#e0f2fe;--chk:#b45309;--chk-bg:#fef3c7;--off:#667085;--off-bg:#eef0f3;
   --red:#dc2626;--red-bg:#fee2e2;--r:14px;
 }
@@ -41,8 +41,8 @@ input,select,textarea{font:inherit;color:inherit}
 svg.i{flex:none;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 
 /* 로그인 */
-#gate{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:#1e1b4b;background-image:radial-gradient(circle at 20% 10%,#4338ca 0,transparent 45%),radial-gradient(circle at 90% 90%,#0e7490 0,transparent 40%)}
-.gate-card{background:#fff;border-radius:22px;padding:36px 30px 28px;width:100%;max-width:360px;box-shadow:0 24px 60px rgba(0,0,0,.3)}
+#gate{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:#eef2f7}
+.gate-card{background:#fff;border-radius:20px;padding:36px 30px 28px;width:100%;max-width:370px;box-shadow:0 12px 40px rgba(16,24,40,.12);border:1px solid var(--line)}
 .logo{width:44px;height:44px;border-radius:13px;background:linear-gradient(135deg,#4338ca,#0e7490);color:#fff;display:grid;place-items:center;font-weight:800;font-size:20px;flex:none}
 .gate-card h1{font-size:21px;margin:18px 0 2px;letter-spacing:-.02em}
 .gate-card form{margin-top:26px;display:flex;flex-direction:column;gap:12px}
@@ -54,7 +54,19 @@ svg.i{flex:none;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:roun
 @keyframes shake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
 
 /* 레이아웃 */
-#app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+#app{min-height:100vh}
+.hdr{position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:14px;background:#fff;border-bottom:1px solid var(--line);padding:0 24px;height:64px;box-shadow:0 1px 0 rgba(16,24,40,.02)}
+.hdr-logo{display:flex;align-items:center;padding-right:16px;border-right:1px solid var(--line);height:34px}
+.gs-logo{height:30px;width:auto;display:block}
+.hdr-title{display:flex;flex-direction:column;line-height:1.2;margin-right:14px}
+.hdr-title b{font-size:15.5px;letter-spacing:-.01em;color:#2b2f36}
+.hdr-title small{font-size:12px;color:var(--sub)}
+.hdr-nav{display:flex;gap:4px;height:100%}
+.hdr-nav .nav-btn{width:auto;border-radius:0;height:100%;padding:0 14px;border-bottom:3px solid transparent;font-size:15px}
+.hdr-nav .nav-btn.on{background:none;color:var(--acc);border-bottom-color:var(--acc)}
+.hdr-nav .nav-btn .cnt{margin-left:6px;background:var(--acc)}
+.hdr .sync{width:auto}
+.mobile-only{display:none!important}
 .side{background:#fff;border-right:1px solid var(--line);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;padding:20px 14px 14px}
 .brand{display:flex;gap:11px;align-items:center;padding:2px 8px 24px}
 .brand b{display:block;font-size:15px;letter-spacing:-.01em}
@@ -72,7 +84,7 @@ svg.i{flex:none;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:roun
 .dot.ok{background:#22c55e}.dot.local{background:#f59e0b}.dot.err{background:#ef4444}
 .dot.saving,.dot.loading{background:#6366f1;animation:pulse 1s infinite}
 @keyframes pulse{50%{opacity:.3}}
-main{padding:28px 34px 56px;min-width:0;max-width:1320px;width:100%}
+main{padding:22px 28px 56px;min-width:0;max-width:1400px;width:100%;margin:0 auto}
 .topbar,.tabbar{display:none}
 
 /* 공통 요소 */
@@ -109,7 +121,48 @@ h1{font-size:25px;margin:0;letter-spacing:-.025em}
 .sel{border:1px solid var(--line2);border-radius:10px;padding:9px 10px;background:#fff}
 
 /* 현황 */
-.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
+.stats{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:14px}
+.stat{cursor:pointer}
+.stat.on{border-color:var(--acc);box-shadow:0 0 0 2px var(--acc-bg)}
+.stat.alert{--c:var(--red)} .stat.gray{--c:#8a94a6} .stat.teal{--c:#0e8a80}
+.stat-sub{font-size:12px;color:var(--sub);margin-top:2px;line-height:1.5}
+.st-link{border-radius:6px;padding:1px 4px;margin:0 -2px;cursor:pointer}
+.st-link:hover,.st-link.on{background:var(--acc-bg);color:var(--acc)}
+.banner{display:flex;gap:12px;align-items:center;flex-wrap:wrap;border-radius:var(--r);padding:14px 18px;margin-bottom:14px}
+.banner.audit-on{background:#fff;border:1.5px solid var(--acc)}
+.banner.audit-due{background:var(--chk-bg);color:var(--chk);border:1px solid #f5d48a}
+.banner.audit-due b{color:#7c3a06}
+.audit-line{font-size:12.5px;color:var(--sub);margin:-4px 0 14px 2px}
+.list-head{display:flex;gap:10px;align-items:center;margin:2px 2px 10px;font-size:13px;color:var(--sub);font-weight:600}
+.list-head .chip{padding:3px 10px;font-size:12px;cursor:pointer}
+.sel-bar{position:sticky;top:72px;z-index:20;display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:#1b2433;color:#fff;border-radius:12px;padding:10px 14px;margin-bottom:10px;box-shadow:0 6px 20px rgba(16,24,40,.18)}
+.sel-bar .btn{background:#2b3648;border-color:#3b475b;color:#fff}.sel-bar .btn:hover{background:#364258}
+.sel-bar .muted{color:#9aa6ba;margin-left:6px}.sel-bar .link{color:#9cc4ff}
+.vsep{width:1px;height:20px;background:#3b475b;margin:0 4px}
+.tbl th.ck,.tbl td.ck{width:38px;padding-right:0}
+.tbl input[type=checkbox]{width:16px;height:16px;accent-color:var(--acc);cursor:pointer}
+.tbl th.sortable{cursor:pointer;user-select:none;white-space:nowrap}
+.tbl th.sortable:hover{color:var(--text)}
+.tbl th.sortable.on{color:var(--acc)}
+.tbl th .arrow{font-size:10px;margin-left:4px;opacity:.5}
+.tbl th.on .arrow{opacity:1}
+.tbl tr.picked{background:var(--acc-bg)}
+.no-coord{color:#e8a23a;font-size:9px;vertical-align:middle}
+.dd{position:relative}
+.dd-menu{display:none;position:absolute;right:0;top:calc(100% + 6px);background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 32px rgba(16,24,40,.14);padding:6px;min-width:200px;z-index:30}
+.dd-menu.open{display:block}
+.dd-menu button{display:flex;gap:8px;align-items:center;width:100%;border:0;background:none;padding:10px 12px;border-radius:8px;font-size:13.5px;font-weight:600;text-align:left}
+.dd-menu button:hover{background:#f3f5f9}
+.map-box{height:calc(100vh - 360px);min-height:420px}
+.hist{border:1px solid var(--line);border-radius:12px;overflow:hidden;font-size:13px}
+.hist>div{display:flex;justify-content:space-between;gap:10px;padding:9px 14px;border-bottom:1px solid #f0f2f6}
+.hist>div:last-child{border-bottom:0}
+.coord-state{display:flex;gap:6px;align-items:center;font-size:13.5px;color:var(--sub);background:#f6f7fa;border-radius:10px;padding:10px 12px}
+.coord-state.on{background:var(--ok-bg);color:var(--ok);font-weight:600}
+.loc-list{border:1px solid var(--line);border-radius:12px;max-height:220px;overflow:auto}
+.loc-list>div{display:flex;justify-content:space-between;gap:8px;padding:9px 12px;border-bottom:1px solid #f0f2f6;font-size:13.5px}
+.loc-list>div:last-child{border-bottom:0}
+details.adv summary{cursor:pointer;font-weight:700;font-size:14px;color:var(--sub)}
 .stat{background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:16px 18px 14px;text-align:left;position:relative;overflow:hidden}
 .stat:hover{border-color:var(--line2);box-shadow:0 3px 10px rgba(16,24,40,.06)}
 .stat::after{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--c,var(--acc))}
@@ -129,7 +182,7 @@ h1{font-size:25px;margin:0;letter-spacing:-.025em}
 
 /* 자산 목록 */
 .toolbar{display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
-.toolbar .search{flex:1 1 260px;max-width:380px}
+.toolbar .search{flex:1 1 240px;max-width:340px}
 .tbl-wrap{background:#fff;border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
 table.tbl{width:100%;border-collapse:collapse}
 .tbl th{text-align:left;font-size:12.5px;color:var(--sub);font-weight:600;padding:11px 14px;background:#fafbfc;border-bottom:1px solid var(--line)}
@@ -268,7 +321,7 @@ details[open].more summary::before{transform:rotate(90deg)}
 /* 라벨 실물 크기 (인쇄·미리보기 공통) */
 .sheet{background:#fff;display:grid;grid-auto-rows:70mm;align-content:center;justify-content:center;box-shadow:0 2px 14px rgba(16,24,40,.12);overflow:hidden}
 .paper-seg{display:inline-grid;grid-template-columns:1fr 1fr;background:#eef0f3;border-radius:11px;padding:3px;gap:3px}
-.paper-seg button{border:0;background:none;border-radius:8px;padding:7px 14px;font-weight:700;font-size:13px;color:var(--sub)}
+.paper-seg button{border:0;background:none;border-radius:8px;padding:7px 14px;font-weight:700;font-size:13px;color:var(--sub);display:inline-flex;align-items:center;gap:5px}
 .paper-seg button.on{background:#fff;color:var(--text);box-shadow:0 1px 3px rgba(16,24,40,.12)}
 .paper-seg small{font-weight:500;margin-left:4px}
 .dues{display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end}
@@ -289,35 +342,38 @@ details[open].more summary::before{transform:rotate(90deg)}
 
 /* 휴대폰 */
 @media (max-width:899px){
-  #app{grid-template-columns:1fr}
-  .side{display:none}
-  .topbar{display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:20;background:rgba(255,255,255,.95);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);padding:10px 12px 10px 16px;padding-top:calc(10px + env(safe-area-inset-top))}
-  .topbar .logo{width:32px;height:32px;font-size:15px;border-radius:9px}
-  .topbar b{font-size:15px;flex:1}
-  .topbar .sync{width:auto;padding:6px 8px}
-  .tabbar{display:grid;grid-template-columns:repeat(3,1fr);position:fixed;left:0;right:0;bottom:0;z-index:30;background:#fff;border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
-  .tab{border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 0 8px;font-size:11.5px;font-weight:600;color:var(--muted);position:relative}
-  .tab.on{color:var(--acc)}
-  .tab .cnt{position:absolute;top:5px;left:calc(50% + 6px);background:var(--red);color:#fff;font-size:10px;font-weight:700;padding:0 5px;border-radius:99px}
-  main{padding:18px 14px 96px}
+  .hdr{padding:0 10px 0 14px;height:56px;gap:8px;padding-top:env(safe-area-inset-top);height:calc(56px + env(safe-area-inset-top))}
+  .hdr-logo{border-right:0;padding-right:4px}
+  .gs-logo{height:24px}
+  .hdr-title small,.hdr-nav,.sync-text{display:none}
+  .hdr-title b{font-size:14px}
+  .hdr .sync{padding:6px 8px}
+  main{padding:14px 12px 40px}
   h1{font-size:22px}
   .page-head{align-items:center;margin-bottom:14px}
   .desktop-only{display:none!important}
-  .stats{grid-template-columns:repeat(2,1fr);gap:10px}
-  .stat .num{font-size:28px}
-  .grid2{grid-template-columns:1fr}
+  .mobile-only{display:inline-flex!important}
+  .stats{display:flex;overflow-x:auto;gap:8px;margin:0 -12px 12px;padding:0 12px 4px;scroll-snap-type:x mandatory}
+  .stat{flex:0 0 46%;scroll-snap-align:start;padding:12px 14px}
+  .stat .num{font-size:26px}
+  .banner{padding:12px 14px}
+  .banner .ri-main{flex-basis:100%;min-width:0}
+  .banner .btn{flex:1}
+  .hdr-title{min-width:0;margin-right:0}
+  .hdr-title b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13.5px}
+  .toolbar>.btn.primary{flex:1}
+  .toolbar{gap:8px}
   .toolbar .search{max-width:none;flex-basis:100%}
-  .chips{flex-wrap:nowrap;overflow-x:auto;padding-bottom:2px}
-  .toolbar .sel{display:none}
+  .toolbar .sel{flex:1 1 40%;min-width:0}
+  .toolbar .sp{display:none}
   .tbl-wrap{display:none}
   .mlist{display:block}
   .panel{width:100%}
-  .map-layout{grid-template-columns:1fr;height:calc(100vh - 205px)}
-  .map-list{display:none}
+  .map-box{height:calc(100vh - 330px);min-height:360px}
   .modal-wrap{padding:0;align-items:flex-end}
   .modal{border-radius:18px 18px 0 0;max-height:94vh}
   .set-grid{grid-template-columns:1fr}
-  #toasts{bottom:86px}
+  #toasts{bottom:24px}
 }
 @media print{
   body{background:#fff}
@@ -334,7 +390,7 @@ details[open].more summary::before{transform:rotate(90deg)}
 <!-- 로그인 화면 -->
 <div id="gate" class="hidden">
   <div class="gate-card">
-    <div class="logo">A</div>
+    <img class="gs-logo" data-logo alt="GS건설" style="height:34px">
     <h1>Aurora Asset Manager</h1>
     <p class="sub">충남 현장 v2.4 · 관리자 전용</p>
     <form onsubmit="login(event)">
@@ -346,26 +402,18 @@ details[open].more summary::before{transform:rotate(90deg)}
   </div>
 </div>
 
-<!-- 앱 -->
+<!-- 앱: 위쪽 가로 헤더 (GS건설 로고를 누르면 첫 화면) -->
 <div id="app" class="hidden">
-  <aside class="side">
-    <div class="brand"><div class="logo">A</div><div><b>Aurora Asset</b><small>충남 현장 v2.4</small></div></div>
-    <nav class="nav" id="side-nav"></nav>
-    <div class="side-foot">
-      <button class="sync" onclick="reloadData()" title="눌러서 새로고침"><span class="dot" data-sync-dot></span><span data-sync-text>불러오는 중…</span></button>
-      <button class="nav-btn" onclick="openSettings()"><span data-ic="settings"></span>설정</button>
-      <button class="nav-btn" onclick="logout()"><span data-ic="logout"></span>로그아웃</button>
-    </div>
-  </aside>
-  <div>
-    <header class="topbar">
-      <div class="logo">A</div><b>Aurora Asset</b>
-      <button class="sync" onclick="reloadData()" aria-label="동기화 상태"><span class="dot" data-sync-dot></span></button>
-      <button class="icon-btn" onclick="openSettings()" aria-label="설정"><span data-ic="settings"></span></button>
-    </header>
-    <main id="view"></main>
-  </div>
-  <nav class="tabbar" id="tab-nav"></nav>
+  <header class="hdr">
+    <a class="hdr-logo" href="#assets" onclick="goHome();return false" title="첫 화면으로"><img class="gs-logo" data-logo alt="GS건설"></a>
+    <div class="hdr-title"><b>Aurora Asset Manager</b><small>충남 현장 v2.4</small></div>
+    <nav class="hdr-nav" id="top-nav"></nav>
+    <span class="sp"></span>
+    <button class="sync" onclick="reloadData()" title="눌러서 새로고침"><span class="dot" data-sync-dot></span><span data-sync-text class="sync-text">불러오는 중…</span></button>
+    <button class="icon-btn" onclick="openSettings()" aria-label="설정" title="설정"><span data-ic="settings"></span></button>
+    <button class="icon-btn" onclick="logout()" aria-label="로그아웃" title="로그아웃"><span data-ic="logout"></span></button>
+  </header>
+  <main id="view"></main>
 </div>
 
 <div id="drawer" class="overlay hidden" onclick="if(event.target===this)closeDrawer()"><div class="panel" id="panel"></div></div>
@@ -375,6 +423,10 @@ details[open].more summary::before{transform:rotate(90deg)}
 <input type="file" id="xl-file" accept=".xlsx,.xls" hidden onchange="handleExcel(this)">
 
 <script>
+/* GS건설 로고 (작은 PNG를 코드에 넣어 둠) */
+const GS_LOGO = 'data:image/png;base64,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';
+document.querySelectorAll('[data-logo]').forEach(i => i.src = GS_LOGO);
+
 /* ═══════════════════════════════════════════
    [1] 기본 설정 — 바꿀 값은 여기서
    ═══════════════════════════════════════════ */
@@ -410,6 +462,8 @@ const BASE_CATALOG = {
   '공기구': ['드릴']
 };
 
+const LOG_MAX = 15;     // 자산별 변경 이력 보관 개수 (B5)
+function addLog(x, t, at) { x.log = [{ at: at || new Date().toISOString(), t }, ...(x.log || [])].slice(0, LOG_MAX); }
 const DATA_VERSION = 2;   // 데이터 구조 버전: 더 새 버전 데이터를 만나면 저장을 막아 덮어쓰기 사고를 방지
 function seedDoc() { return { version: 2, updatedAt: '', catalog: {}, assets: [] }; }
 
@@ -436,7 +490,9 @@ const ICONS = {
   clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
   chev: '<path d="M9 18l6-6-6-6"/>',
   check: '<path d="M20 6L9 17l-5-5"/>',
-  map: '<path d="M1 6v16l7-4 8 4 7-4V2l-7 4-8-4z"/><path d="M8 2v16M16 6v16"/>'
+  map: '<path d="M1 6v16l7-4 8 4 7-4V2l-7 4-8-4z"/><path d="M8 2v16M16 6v16"/>',
+  list: '<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>',
+  down: '<path d="M6 9l6 6 6-6"/>'
 };
 function icon(n, s = 18) { return `<svg class="i" width="${s}" height="${s}" viewBox="0 0 24 24">${ICONS[n] || ''}</svg>`; }
 function esc(v) { return String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
@@ -498,6 +554,7 @@ function normalizeDoc(d) {
   doc.catalog = doc.catalog && typeof doc.catalog === 'object' ? doc.catalog : {};
   doc.audit = doc.audit && doc.audit.checked ? doc.audit : null;          // 진행 중인 실사 {startedAt, checked:{id: 시각}}
   doc.auditLog = Array.isArray(doc.auditLog) ? doc.auditLog : [];          // 지난 실사 기록
+  doc.auditSince = doc.auditSince || '2026-11-11';                          // 첫 정기 실사 알림 기준일
   doc.assets = doc.assets.filter(a => a && a.id).map(a => {
     const num = v => v === '' || v == null || !Number.isFinite(Number(v)) ? '' : Number(v);
     let out = a.out && a.out.type ? { type: a.out.type, date: a.out.date || '', to: a.out.to || '', docNo: a.out.docNo || '', note: a.out.note || '' } : null;
@@ -507,9 +564,14 @@ function normalizeDoc(d) {
       contract: a.contract || '', acq: a.acq || '', qty: Number.isInteger(+a.qty) && +a.qty > 0 ? +a.qty : 1, unit: UNITS.includes(a.unit) ? a.unit : 'EA',
       location: a.location || '', locInit: a.locInit || a.location || '', manager: a.manager || '',
       status: normStatus(a.status) || '상', lat: num(a.lat), lng: num(a.lng),
-      nextCheck: a.nextCheck || '', rentalDue: a.rentalDue || '', note: a.note || '', out, updatedAt: a.updatedAt || ''
+      nextCheck: a.nextCheck || '', rentalDue: a.rentalDue || '', note: a.note || '', out, updatedAt: a.updatedAt || '',
+      log: Array.isArray(a.log) ? a.log.slice(0, LOG_MAX) : []
     };
   });
+  // 위치 목록: 저장된 목록 + 자산에 쓰인 위치 (B2)
+  const locs = new Set((Array.isArray(doc.locations) ? doc.locations : []).filter(Boolean));
+  doc.assets.forEach(a => { if (a.location) locs.add(a.location); });
+  doc.locations = [...locs].sort((x, y) => x.localeCompare(y, 'ko'));
   return doc;
 }
 const Store = {
@@ -587,7 +649,8 @@ const qrUrl = id => qrBase() + '?id=' + encodeURIComponent(id);
 let DOC = null;
 let DRAWER = null;          // {mode:'detail'|'form', id, draft}
 let PENDING_ID = null;      // QR로 들어온 자산번호
-const UI = { q: '', status: '전체', cat: '전체', item: '전체', mapQ: '', labQ: '', labSel: new Set(), paper: lsGet('aam_paper') === 'A3' ? 'A3' : 'A4' };
+const UI = { q: '', filter: 'all', cat: '전체', item: '전체', loc: '전체', mode: 'list', sel: new Set(),
+  sort: (lsGet('aam_sort') && lsGet('aam_sort').k) ? lsGet('aam_sort') : { k: 'id', d: 1 }, paper: lsGet('aam_paper') === 'A3' ? 'A3' : 'A4' };
 const getAsset = id => DOC.assets.find(a => a.id === id);
 const activeAssets = () => DOC.assets.filter(a => !a.out);
 // 품목 목록 = 기본 목록 + 설정에서 추가한 품목(doc.catalog: {품목: 분류})
@@ -671,206 +734,205 @@ async function login(e) {
 function logout() { localStorage.removeItem('aam_auth'); sessionStorage.removeItem('aam_auth'); location.href = location.pathname; }
 
 /* ═══════════════════════════════════════════
-   [4] 화면
+   [4] 화면 — 자산(한 페이지: 요약 카드 · 목록/지도) / 라벨 인쇄
    ═══════════════════════════════════════════ */
 const VIEWS = {
-  home: { label: '현황', icon: 'home', render: renderHome },
-  assets: { label: '자산', icon: 'box', render: renderAssets, after: updateAssetList },
-  map: { label: '지도', icon: 'pin', render: renderMap, after: initMainMap },
-  labels: { label: '라벨 인쇄', icon: 'tag', render: renderLabels, after: () => { updateLabelList(); updateLabelPreview(); }, desktop: true }
+  assets: { label: '자산', icon: 'box', render: renderAssets, after: afterAssets },
+  labels: { label: '라벨 인쇄', icon: 'tag', render: renderLabels, after: updateLabelPreview, desktop: true }
 };
-function currentView() { const h = location.hash.slice(1); return VIEWS[h] ? h : 'home'; }
+function currentView() { const h = location.hash.slice(1); return VIEWS[h] ? h : 'assets'; }
 function go(v) { if (location.hash.slice(1) === v) render(); else location.hash = v; window.scrollTo(0, 0); }
+function goHome() {   // GS 로고: 첫 화면으로
+  closeDrawer(); closeModal();
+  Object.assign(UI, { q: '', filter: 'all', cat: '전체', item: '전체', loc: '전체', mode: 'list' }); UI.sel.clear();
+  go('assets');
+}
 function render() {
   if (!DOC) return;
-  const v = currentView(); const tn = todos().length;
-  $('side-nav').innerHTML = Object.entries(VIEWS).map(([k, o]) =>
-    `<button class="nav-btn ${k === v ? 'on' : ''}" onclick="go('${k}')">${icon(o.icon)}${o.label}${k === 'home' && tn ? `<span class="cnt">${tn}</span>` : ''}</button>`).join('');
-  $('tab-nav').innerHTML = Object.entries(VIEWS).filter(([, o]) => !o.desktop).map(([k, o]) =>
-    `<button class="tab ${k === v ? 'on' : ''}" onclick="go('${k}')">${icon(o.icon, 22)}${o.label}${k === 'home' && tn ? `<span class="cnt">${tn}</span>` : ''}</button>`).join('');
+  const v = currentView();
+  $('top-nav').innerHTML = Object.entries(VIEWS).map(([k, o]) =>
+    `<button class="nav-btn ${k === v ? 'on' : ''} ${o.desktop ? 'desktop-only' : ''}" onclick="go('${k}')">${icon(o.icon)}${o.label}${k === 'labels' && UI.sel.size ? `<span class="cnt">${UI.sel.size}</span>` : ''}</button>`).join('');
+  closeMapInfo(); MAP = null;
   $('view').innerHTML = VIEWS[v].render();
   if (VIEWS[v].after) VIEWS[v].after();
 }
 
-/* ── 현황 ── */
-function todos() {   // 자산 한 개당 한 줄, 해당 일정 표시(tags)를 모아서
+/* ── 할 일: 상태 '하' + 점검일 7일 이내 + 렌탈 반납 14일 이내 ── */
+function todos() {
   const out = [];
   activeAssets().forEach(a => {
     const tags = [];
-    if (a.status === '하') tags.push({ level: 'red', text: '상태 하 · 수리·점검', rank: -1000 });
+    if (a.status === '하') tags.push({ level: 'red', text: '상태 하', rank: -1000 });
     const c = dday(a.nextCheck);
     if (c !== null && c <= 7) tags.push({ level: c < 0 ? 'red' : 'amber', text: '점검 ' + ddText(c), rank: c });
     const r = dday(a.rentalDue);
-    if (r !== null && r <= 14) tags.push({ level: r < 0 ? 'red' : 'amber', text: '렌탈 반납 ' + ddText(r), rank: r, rental: true });
-    if (!tags.length) return;
-    tags.sort((x, y) => x.rank - y.rank);
-    out.push({ a, tags, level: tags.some(t => t.level === 'red') ? 'red' : 'amber', rank: tags[0].rank, rentalOnly: tags.every(t => t.rental) });
+    if (r !== null && r <= 14) tags.push({ level: r < 0 ? 'red' : 'amber', text: '렌탈 반납 ' + ddText(r), rank: r });
+    if (tags.length) out.push({ a, tags: tags.sort((x, y) => x.rank - y.rank) });
   });
-  return out.sort((x, y) => x.rank - y.rank);
+  return out;
 }
-function renderHome() {
+
+/* ── 요약 카드 (누르면 아래 목록이 걸러져요) ── */
+function cardsHTML() {
   const act = activeAssets(); const cnt = s => act.filter(a => a.status === s).length;
-  const t = todos();
-  const recent = [...DOC.assets].sort((a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || '')).slice(0, 6);
-  const stat = (label, s, n, k) => `<button class="stat ${k}" onclick="filterBy('${s}')"><div class="lbl">${label}</div><div class="num">${n}<small>건</small></div></button>`;
-  return `
-  <div class="page-head">
-    <div><h1>현황</h1><p class="sub">${todayLabel()} · 운용 중인 자산 ${act.length}건</p></div>
-    <button class="btn primary" onclick="openForm()">${icon('plus', 16)} 자산 등록</button>
-  </div>
-  <div class="stats">
-    ${stat('전체 자산', '전체', act.length, '')}${STATUSES.map(s => stat('상태 ' + s, s, cnt(s), ST_KEY[s])).join('')}
-  </div>
-  ${outSummaryHTML()}
-  ${auditCardHTML()}
-  <div class="grid2">
-    <section class="card">
-      <h2>할 일 ${t.length ? `<span class="count">${t.length}</span>` : ''}</h2>
-      ${t.length ? t.map(x => `
-        <div class="row-item" onclick="openAsset('${x.a.id}')">
-          <span class="ri-icon ${x.level}">${icon(x.rentalOnly ? 'clock' : 'alert', 17)}</span>
-          <div class="ri-main"><div class="ri-title">${esc(dispName(x.a))}</div><div class="ri-sub">${x.a.id} · ${esc(x.a.location)}</div></div>
-          <div class="dues">${x.tags.map(g => `<span class="due ${g.level}">${g.text}</span>`).join('')}</div>
-        </div>`).join('') : `<div class="empty"><b>처리할 일이 없어요</b>점검·반납 일정이 모두 여유 있어요</div>`}
-    </section>
-    <section class="card">
-      <h2>최근 변경</h2>
-      ${recent.length ? '' : '<div class="empty"><b>아직 등록된 자산이 없어요</b>자산 메뉴에서 엑셀로 한꺼번에 올리거나 하나씩 등록하세요</div>'}${recent.map(a => `
-        <div class="row-item" onclick="openAsset('${a.id}')">
-          <div class="ri-main"><div class="ri-title">${esc(dispName(a))}</div><div class="ri-sub">${a.id} · ${relTime(a.updatedAt)}</div></div>
-          ${stBadge(a)}
-        </div>`).join('')}
-    </section>
+  const td = todos().length, ym = todayStr().slice(0, 7);
+  const outs = DOC.assets.filter(a => a.out && a.out.type !== '폐기'), disp = DOC.assets.filter(a => a.out && a.out.type === '폐기');
+  const month = l => l.filter(a => (a.out.date || '').startsWith(ym)).length;
+  const by = t => outs.filter(a => a.out.type === t).length;
+  const coord = act.filter(hasCoord).length;
+  const card = (key, label, num, sub, cls = '') => `<button class="stat ${cls} ${UI.filter === key ? 'on' : ''}" onclick="setFilter('${key}')"><div class="lbl">${label}</div><div class="num">${num}</div><div class="stat-sub">${sub}</div></button>`;
+  const st = s => `<span class="st-link ${UI.filter === 'st:' + s ? 'on' : ''}" onclick="event.stopPropagation();setFilter('st:${s}')">${s} ${cnt(s)}</span>`;
+  return `<div class="stats">
+    ${card('all', '전체 자산', `${act.length}<small>건</small>`, STATUSES.map(st).join(' · '))}
+    ${card('todo', '할 일', `${td}<small>건</small>`, '상태 하 · 점검·반납 임박', td ? 'alert' : '')}
+    ${card('out', '현장 종료', `${outs.length}<small>건</small>`, `창고 ${by('GS 자재창고 반납')} · 타현장 ${by('타현장 전용')} · 렌탈 ${by('렌탈업체 반납')}<br>이번 달 ${month(outs)}건`, 'gray')}
+    ${card('disposed', '폐기', `${disp.length}<small>건</small>`, `이번 달 ${month(disp)}건`, 'gray')}
+    ${card('nocoord', '좌표 등록', `${coord}<small>/${act.length}</small>`, `미등록 ${act.length - coord}건 · QR 찍고 넣기`, 'teal')}
   </div>`;
 }
-/* ── 이번 달 현장 종료 요약 ── */
-function outSummaryHTML() {
-  const ym = todayStr().slice(0, 7);
-  const list = DOC.assets.filter(a => a.out && (a.out.date || '').startsWith(ym));
-  const by = t => list.filter(a => a.out.type === t).length;
-  return `<div class="sum-line"><span>이번 달 현장 종료 <b>${list.length}건</b></span>${OUT_TYPES.map(t => `<span>${t.replace(' 반납', '').replace('GS ', '')} ${by(t)}</span>`).join('<span>·</span>')}
-    <span class="sp"></span><button class="link" onclick="filterBy('현장 종료')">기록 보기 ›</button></div>`;
-}
+const FILTER_KO = { all: '', todo: '할 일', out: '현장 종료', disposed: '폐기', nocoord: '좌표 미등록', unaudited: '실사 미확인', 'st:상': '상태 상', 'st:중': '상태 중', 'st:하': '상태 하' };
+function setFilter(k) { UI.filter = UI.filter === k && k !== 'all' ? 'all' : k; UI.sel.clear(); render(); }
 
-/* ── 정기 실사: 현장을 돌며 QR을 찍으면 자동 확인 ── */
+/* ── 정기 실사: 진행 중 띠 / 60일 알림 ── */
+const AUDIT_DAYS = 60;
 function auditStats() {
   const act = activeAssets(); const ck = DOC.audit ? DOC.audit.checked : {};
-  return { total: act.length, done: act.filter(a => ck[a.id]).length, noCoord: act.filter(a => !hasCoord(a)).length };
+  return { total: act.length, done: act.filter(a => ck[a.id]).length };
 }
-function auditCardHTML() {
-  const st = auditStats(); const last = DOC.auditLog[0];
+function auditDue() {
+  const base = (DOC.auditLog[0] && DOC.auditLog[0].endedAt.slice(0, 10)) || DOC.auditSince;
+  const d = new Date(base); d.setDate(d.getDate() + AUDIT_DAYS);
+  return { base, due: ymd(d), left: dday(ymd(d)) };
+}
+function auditBannerHTML() {
   if (DOC.audit) {
-    const pct = st.total ? Math.round(st.done / st.total * 100) : 0;
-    return `<section class="card audit"><div class="ri-main">
-      <h2 style="margin:0">실사 진행 중 <span class="count" style="background:var(--acc-bg);color:var(--acc)">${st.done} / ${st.total}</span></h2>
-      <div class="progress"><i style="width:${pct}%"></i></div>
-      <div class="ri-sub">${DOC.audit.startedAt.slice(0, 10)} 시작 · 휴대폰 카메라로 QR을 찍으면 자동으로 확인돼요${st.noCoord ? ` · 좌표 없음 ${st.noCoord}건` : ''}</div></div>
-      <div class="head-actions"><button class="btn" onclick="filterBy('실사 미확인')">미확인 ${st.total - st.done}건 보기</button><button class="btn primary" onclick="finishAudit()">실사 마치기</button></div></section>`;
+    const st = auditStats(), pct = st.total ? Math.round(st.done / st.total * 100) : 0;
+    return `<div class="banner audit-on"><div class="ri-main"><b>정기 실사 진행 중 · 확인 ${st.done} / ${st.total}</b>
+      <div class="progress"><i style="width:${pct}%"></i></div><div class="ri-sub">휴대폰 카메라로 자산 QR을 찍으면 자동으로 확인돼요 · ${DOC.audit.startedAt.slice(0, 10)} 시작</div></div>
+      <button class="btn" onclick="setFilter('unaudited')">미확인 ${st.total - st.done}건 보기</button><button class="btn primary" onclick="finishAudit()">실사 마치기</button></div>`;
   }
-  return `<section class="card audit"><div class="ri-main"><h2 style="margin:0 0 4px">정기 실사</h2>
-    <div class="ri-sub" style="white-space:normal">현장을 돌며 QR을 찍으면 확인 표시가 되고, 위치(좌표)도 함께 넣을 수 있어요${st.noCoord ? ` · 지금 좌표 없음 ${st.noCoord}건` : ''}</div>
-    ${last ? `<div class="ri-sub">지난 실사 ${last.endedAt.slice(0, 10)} · ${last.checked}/${last.total} 확인${last.missing.length ? ` · <button class="link" onclick="showAuditResult(0)">못 찾음 ${last.missing.length}건</button>` : ' · 모두 확인'}</div>` : ''}</div>
-    <button class="btn primary" onclick="startAudit()">실사 시작</button></section>`;
+  const d = auditDue(); const last = DOC.auditLog[0];
+  const lastTxt = last ? `지난 실사 ${last.endedAt.slice(0, 10)} · ${last.checked}/${last.total} 확인${last.missing.length ? ` · <button class="link" onclick="showAuditResult(0)">못 찾음 ${last.missing.length}건</button>` : ''}` : '아직 실사 기록이 없어요';
+  if (d.left <= 0) return `<div class="banner audit-due">${icon('alert', 18)}<div class="ri-main"><b>정기 실사 시기예요</b> <span class="ri-sub" style="display:inline">· ${AUDIT_DAYS}일마다 · ${lastTxt}</span></div><button class="btn primary" onclick="startAudit()">실사 시작</button></div>`;
+  return `<div class="audit-line">정기 실사 · 다음 예정 ${d.due} (D-${d.left}) · ${lastTxt} <button class="link" onclick="startAudit()">지금 시작</button></div>`;
 }
-async function startAudit() {
-  if (!confirm('정기 실사를 시작할까요?\n현장을 돌며 휴대폰 카메라로 자산 QR을 찍으면 하나씩 확인돼요.')) return;
-  await saveChange(doc => { doc.audit = { startedAt: new Date().toISOString(), checked: {} }; }, '정기 실사 시작', '실사를 시작했어요');
-}
-async function checkAsset(id, auto) {
-  if (!DOC.audit || DOC.audit.checked[id]) return;
-  const ok = await saveChange(doc => { if (doc.audit) doc.audit.checked[id] = new Date().toISOString(); }, `실사 확인: ${id}`, auto ? `실사 확인 ✓ ${id}` : '확인했어요');
-  if (ok && DRAWER && DRAWER.id === id) renderDrawer();
-}
-async function finishAudit() {
-  const st = auditStats(); const miss = st.total - st.done;
-  if (!confirm(`실사를 마칠까요?\n확인 ${st.done}건 · 못 찾음 ${miss}건\n못 찾은 자산 목록은 기록으로 남아요.`)) return;
-  await saveChange(doc => {
-    if (!doc.audit) return;
-    const act = doc.assets.filter(a => !a.out);
-    doc.auditLog.unshift({ startedAt: doc.audit.startedAt, endedAt: new Date().toISOString(), total: act.length,
-      checked: act.filter(a => doc.audit.checked[a.id]).length, missing: act.filter(a => !doc.audit.checked[a.id]).map(a => a.id) });
-    doc.auditLog = doc.auditLog.slice(0, 20); doc.audit = null;
-  }, `정기 실사 마침: ${st.done}/${st.total} 확인`, '실사를 마쳤어요');
-  if (UI.status === '실사 미확인') UI.status = '전체';
-}
-function showAuditResult(i) {
-  const l = DOC.auditLog[i]; if (!l) return;
-  openModal(`<div class="m-head"><h2>못 찾은 자산 ${l.missing.length}건</h2><button class="icon-btn" onclick="closeModal()">${icon('x', 20)}</button></div>
-    <div class="m-body"><p class="sub" style="margin:0 0 10px">${l.endedAt.slice(0, 10)} 실사 · ${l.checked}/${l.total} 확인</p>
-    ${l.missing.map(id => { const a = getAsset(id); return a ? `<div class="row-item" onclick="openAsset('${id}')"><div class="ri-main"><div class="ri-title">${esc(dispName(a))}</div><div class="ri-sub">${id} · ${esc(a.location)}</div></div>${stBadge(a)}</div>` : `<div class="row-item"><div class="ri-main">${esc(id)} (삭제됨)</div></div>`; }).join('')}</div>`);
-}
-async function quickLocate(id) {
-  try {
-    const c = await getPosition();
-    await saveChange(doc => { const x = doc.assets.find(y => y.id === id); if (x) { x.lat = +c.latitude.toFixed(6); x.lng = +c.longitude.toFixed(6); x.updatedAt = new Date().toISOString(); } },
-      `좌표 입력: ${id}`, `좌표를 넣었어요 (오차 약 ${Math.round(c.accuracy)}m)`);
-    renderDrawer();
-  } catch (e) { if (!e.silent) toast(e.message, 'warn'); }
-}
-function filterBy(s) { UI.status = s; UI.q = ''; UI.cat = '전체'; UI.item = '전체'; go('assets'); }
 
-/* ── 자산 ── */
+/* ── 자산 화면 ── */
 function renderAssets() {
-  const c = catalog();
-  const items = UI.cat === '전체' ? [] : c[UI.cat];
+  const c = catalog(); const items = UI.cat === '전체' ? [] : c[UI.cat];
+  const sel = (key, all, list) => `<select class="sel" onchange="UI.${key}=this.value;${key === 'cat' ? "UI.item='전체';render()" : 'refreshList()'}">${['전체', ...list].map(k => `<option ${UI[key] === k ? 'selected' : ''} value="${esc(k)}">${k === '전체' ? all : esc(k)}</option>`).join('')}</select>`;
+  const fk = FILTER_KO[UI.filter];
   return `
-  <div class="page-head">
-    <div><h1>자산</h1><p class="sub" id="asset-count"></p></div>
-    <div class="head-actions">
-      <div class="btn-group desktop-only">
-        <button class="btn" onclick="downloadTemplate()">${icon('file', 16)} 엑셀 양식</button>
-        <button class="btn" onclick="$('xl-file').click()">${icon('upload', 16)} 엑셀 올리기</button>
-        <button class="btn" onclick="exportExcel()">${icon('download', 16)} 내보내기</button>
-      </div>
-      <button class="btn primary" onclick="openForm()">${icon('plus', 16)} 등록</button>
-    </div>
-  </div>
+  ${auditBannerHTML()}
+  ${cardsHTML()}
   <div class="toolbar">
-    <label class="search">${icon('search', 16)}<input id="q" placeholder="품목, 모델, 위치, 관리번호 검색" value="${esc(UI.q)}" oninput="UI.q=this.value;updateAssetList()"></label>
-    <div class="chips">${['전체', ...STATUSES, '현장 종료', ...(DOC.audit ? ['실사 미확인'] : [])].map(s => `<button class="chip ${UI.status === s ? 'on' : ''}" onclick="UI.status='${s}';render()">${STATUSES.includes(s) ? '상태 ' + s : s}</button>`).join('')}</div>
-    <select class="sel" onchange="UI.cat=this.value;UI.item='전체';render()">${['전체', ...CATEGORIES].map(k => `<option ${UI.cat === k ? 'selected' : ''} value="${esc(k)}">${k === '전체' ? '분류 전체' : esc(k)}</option>`).join('')}</select>
-    ${items.length ? `<select class="sel" onchange="UI.item=this.value;updateAssetList()">${['전체', ...items].map(k => `<option ${UI.item === k ? 'selected' : ''} value="${esc(k)}">${k === '전체' ? '품목 전체' : esc(k)}</option>`).join('')}</select>` : ''}
+    <label class="search">${icon('search', 16)}<input id="q" placeholder="품목, 모델, 위치, 관리번호 검색" value="${esc(UI.q)}" oninput="UI.q=this.value;refreshList()"></label>
+    ${sel('cat', '분류 전체', CATEGORIES)}${items.length ? sel('item', '품목 전체', items) : ''}${sel('loc', '위치 전체', DOC.locations)}
+    <select class="sel mobile-only" onchange="setSort(this.value)">${SORTS.map(([k, l]) => `<option value="${k}" ${UI.sort.k === k ? 'selected' : ''}>정렬: ${l}</option>`).join('')}</select>
+    <span class="sp"></span>
+    <div class="paper-seg">${[['list', '목록'], ['map', '지도']].map(([k, l]) => `<button class="${UI.mode === k ? 'on' : ''}" onclick="UI.mode='${k}';render()">${icon(k === 'map' ? 'map' : 'list', 15)} ${l}</button>`).join('')}</div>
+    <div class="dd desktop-only"><button class="btn" onclick="toggleDD(this)">${icon('file', 16)} 엑셀 ${icon('down', 14)}</button>
+      <div class="dd-menu"><button onclick="downloadTemplate()">${icon('file', 16)} 엑셀 양식 받기</button><button onclick="$('xl-file').click()">${icon('upload', 16)} 엑셀 올리기</button><button onclick="exportExcel()">${icon('download', 16)} 내보내기 (전체)</button></div></div>
+    <button class="btn primary" onclick="openForm()">${icon('plus', 16)} 등록</button>
   </div>
+  <div class="list-head"><span id="asset-count"></span>${fk ? `<span class="chip on" onclick="setFilter('all')">${fk} ✕</span>` : ''}</div>
+  <div id="sel-bar"></div>
   <div id="asset-list"></div>`;
 }
+function afterAssets() { if (UI.mode === 'map') initMainMap(); else updateAssetList(); }
+function refreshList() { UI.sel.clear(); afterAssets(); }
 function filteredAssets() {
-  const q = UI.q.trim().toLowerCase();
-  return DOC.assets.filter(a =>
-    (UI.status === '전체' ? !a.out : UI.status === '현장 종료' ? !!a.out : UI.status === '실사 미확인' ? !a.out && !!DOC.audit && !DOC.audit.checked[a.id] : !a.out && a.status === UI.status) &&
-    (UI.cat === '전체' || a.category === UI.cat) && (UI.item === '전체' || a.item === UI.item) &&
-    (!q || [a.id, a.item, a.model, a.contract, a.location, a.category, a.note, a.manager, a.out && a.out.type, a.out && a.out.to, a.out && a.out.docNo].some(v => String(v || '').toLowerCase().includes(q))));
+  const q = UI.q.trim().toLowerCase(), f = UI.filter;
+  const todo = f === 'todo' ? new Set(todos().map(t => t.a.id)) : null;
+  return DOC.assets.filter(a => {
+    if (f === 'out') { if (!a.out || a.out.type === '폐기') return false; }
+    else if (f === 'disposed') { if (!a.out || a.out.type !== '폐기') return false; }
+    else {
+      if (a.out) return false;
+      if (f === 'todo' && !todo.has(a.id)) return false;
+      if (f === 'nocoord' && hasCoord(a)) return false;
+      if (f === 'unaudited' && (!DOC.audit || DOC.audit.checked[a.id])) return false;
+      if (f.startsWith('st:') && a.status !== f.slice(3)) return false;
+    }
+    return (UI.cat === '전체' || a.category === UI.cat) && (UI.item === '전체' || a.item === UI.item) && (UI.loc === '전체' || a.location === UI.loc) &&
+      (!q || [a.id, a.item, a.model, a.contract, a.location, a.category, a.note, a.manager, a.out && a.out.type, a.out && a.out.to, a.out && a.out.docNo].some(v => String(v || '').toLowerCase().includes(q)));
+  });
 }
 function schedOf(a) {
-  if (a.out) return { d: 0, t: (a.out.date || '') + ' 종료', lvl: 'gray' };
+  if (a.out) return { d: dday(a.out.date) ?? 0, t: (a.out.date || '') + ' 종료', lvl: 'gray' };
   const items = [];
   const c = dday(a.nextCheck); if (c !== null) items.push({ d: c, t: '점검 ' + ddText(c), lvl: c < 0 ? 'red' : c <= 7 ? 'amber' : 'gray' });
   const r = dday(a.rentalDue); if (r !== null) items.push({ d: r, t: '반납 ' + ddText(r), lvl: r < 0 ? 'red' : r <= 14 ? 'amber' : 'gray' });
   return items.sort((x, y) => x.d - y.d)[0] || null;
 }
+
+/* ── 정렬: 제목줄을 누르면 ▲(오름) / ▼(내림) ── */
+const SORTS = [['id', '관리번호'], ['name', '품목'], ['category', '분류'], ['location', '위치'], ['qty', '수량'], ['status', '상태'], ['sched', '일정'], ['updated', '최근 변경']];
+const SORT_VAL = {
+  id: a => a.id, name: a => dispName(a), category: a => a.category, location: a => a.location, qty: a => a.qty,
+  status: a => a.out ? 9 : STATUSES.indexOf(a.status), sched: a => { const s = schedOf(a); return s ? s.d : 99999; }, updated: a => a.updatedAt || ''
+};
+function setSort(k) { UI.sort = UI.sort.k === k ? { k, d: -UI.sort.d } : { k, d: k === 'updated' ? -1 : 1 }; lsSet('aam_sort', UI.sort); updateAssetList(); }
+function sortList(list) {
+  const f = SORT_VAL[UI.sort.k] || SORT_VAL.id, d = UI.sort.d;
+  return list.slice().sort((x, y) => { const a = f(x), b = f(y); return (typeof a === 'number' && typeof b === 'number' ? a - b : String(a).localeCompare(String(b), 'ko', { numeric: true })) * d || x.id.localeCompare(y.id); });
+}
+
 function updateAssetList() {
-  const list = filteredAssets(); const total = activeAssets().length;
-  const cntEl = $('asset-count'); if (cntEl) cntEl.textContent = `${list.length}건 표시 · 현장 보유 ${total}건`;
+  const list = sortList(filteredAssets());
+  const cntEl = $('asset-count'); if (cntEl) cntEl.textContent = `${list.length}건`;
+  updateSelBar();
   const box = $('asset-list'); if (!box) return;
-  if (!list.length) { box.innerHTML = `<div class="card empty"><b>찾는 자산이 없어요</b>검색어나 필터를 바꿔 보세요</div>`; return; }
+  if (!list.length) { box.innerHTML = `<div class="card empty"><b>해당하는 자산이 없어요</b>검색어나 필터를 바꿔 보세요</div>`; return; }
   const sch = a => { const s = schedOf(a); return s ? `<span class="due ${s.lvl}">${s.t}</span>` : '<span class="muted">—</span>'; };
+  const th = (k, l, w) => `<th ${w ? `style="width:${w}px"` : ''} class="sortable ${UI.sort.k === k ? 'on' : ''}" onclick="setSort('${k}')">${l}<span class="arrow">${UI.sort.k === k ? (UI.sort.d > 0 ? '▲' : '▼') : '↕'}</span></th>`;
+  const allOn = list.every(a => UI.sel.has(a.id));
   box.innerHTML = `
   <div class="tbl-wrap"><table class="tbl">
-    <thead><tr><th style="width:118px">관리번호</th><th>품목 · 모델</th><th style="width:130px">분류</th><th>위치</th><th style="width:70px">수량</th><th style="width:96px">상태</th><th style="width:120px">일정</th><th class="chev"></th></tr></thead>
-    <tbody>${list.map(a => `<tr onclick="openAsset('${a.id}')">
-      <td class="mono">${a.id}</td><td class="nm">${esc(a.item)}<div class="ri-sub" style="font-weight:400">${esc(shortModel(a.model))}</div></td><td>${esc(a.category)}</td><td>${esc(a.location)}</td>
-      <td class="qty">${a.qty} ${a.unit}</td><td>${stBadge(a)}</td><td>${sch(a)}</td><td class="chev">${icon('chev', 16)}</td></tr>`).join('')}</tbody>
+    <thead><tr><th class="ck"><input type="checkbox" ${allOn ? 'checked' : ''} onclick="selAll(this.checked)" aria-label="전체 선택"></th>
+      ${th('id', '관리번호', 118)}${th('name', '품목 · 모델')}${th('category', '분류', 120)}${th('location', '위치')}${th('qty', '수량', 70)}${th('status', '상태', 96)}${th('sched', '일정', 120)}${th('updated', '최종 변경', 96)}</tr></thead>
+    <tbody>${list.map(a => `<tr class="${UI.sel.has(a.id) ? 'picked' : ''}" onclick="openAsset('${a.id}')">
+      <td class="ck" onclick="event.stopPropagation()"><input type="checkbox" ${UI.sel.has(a.id) ? 'checked' : ''} onclick="selOne('${a.id}',this.checked)"></td>
+      <td class="mono">${a.id}</td><td class="nm">${esc(a.item)}<div class="ri-sub" style="font-weight:400">${esc(shortModel(a.model))}</div></td><td>${esc(a.category)}</td><td>${esc(a.location)}${hasCoord(a) ? '' : ' <span class="no-coord" title="좌표 없음">●</span>'}</td>
+      <td class="qty">${a.qty} ${a.unit}</td><td>${stBadge(a)}</td><td>${sch(a)}</td><td class="muted" style="font-size:12.5px">${relTime(a.updatedAt)}</td></tr>`).join('')}</tbody>
   </table></div>
   <div class="mlist">${list.map(a => { const s = schedOf(a); return `
     <div class="mcard" onclick="openAsset('${a.id}')">
       <div class="mc-top"><span class="mono sub" style="margin:0">${a.id} · ${esc(a.category)}</span>${stBadge(a)}</div>
       <div class="mc-name">${esc(a.item)} <span class="qty" style="font-size:13px;color:var(--sub)">${a.qty} ${a.unit}</span></div>
       ${shortModel(a.model) ? `<div class="mc-sub" style="margin-bottom:3px">${esc(shortModel(a.model))}</div>` : ''}
-      <div class="mc-sub">${icon('pin', 14)}${esc(a.location)}</div>
+      <div class="mc-sub">${icon('pin', 14)}${esc(a.location)}${hasCoord(a) ? '' : ' <span class="no-coord">● 좌표 없음</span>'}</div>
       ${s ? `<div class="mc-due"><span class="due ${s.lvl}">${s.t}</span></div>` : ''}
     </div>`; }).join('')}</div>`;
 }
 
-/* ── 지도 ── */
+/* ── 체크해서 한꺼번에: 상태 바꾸기 · 라벨 인쇄 · 현장 종료 ── */
+function selOne(id, on) { on ? UI.sel.add(id) : UI.sel.delete(id); updateAssetList(); render_navCount(); }
+function selAll(on) { filteredAssets().forEach(a => on ? UI.sel.add(a.id) : UI.sel.delete(a.id)); updateAssetList(); render_navCount(); }
+function render_navCount() { const v = currentView(); $('top-nav').querySelectorAll('.nav-btn').forEach((b, i) => { const k = Object.keys(VIEWS)[i]; const c = b.querySelector('.cnt'); if (k === 'labels') { if (c) c.remove(); if (UI.sel.size) b.insertAdjacentHTML('beforeend', `<span class="cnt">${UI.sel.size}</span>`); } }); }
+function updateSelBar() {
+  const bar = $('sel-bar'); if (!bar) return;
+  const ids = [...UI.sel]; const anyActive = ids.some(id => { const a = getAsset(id); return a && !a.out; });
+  bar.innerHTML = ids.length ? `<div class="sel-bar desktop-only">
+    <b>☑ ${ids.length}개 선택</b>
+    ${anyActive ? `<span class="muted">상태</span>${STATUSES.map(s => `<button class="btn sm" onclick="bulkStatus('${s}')">${s}</button>`).join('')}<span class="vsep"></span>` : ''}
+    <button class="btn sm" onclick="go('labels')">${icon('printer', 14)} 라벨 인쇄</button>
+    ${anyActive ? `<button class="btn sm" onclick="openOut([...UI.sel].filter(id=>!getAsset(id).out))">${icon('logout', 14)} 현장 종료</button>` : ''}
+    <span class="sp"></span><button class="link" onclick="UI.sel.clear();updateAssetList();render_navCount()">선택 해제</button></div>` : '';
+}
+async function bulkStatus(s) {
+  const ids = [...UI.sel].filter(id => { const a = getAsset(id); return a && !a.out && a.status !== s; });
+  if (!ids.length) return toast(`이미 모두 '${s}'예요`, 'warn');
+  if (!confirm(`${ids.length}개 자산의 상태를 '${s}'(으)로 바꿀까요?`)) return;
+  await saveChange(doc => { const now = new Date().toISOString(); ids.forEach(id => { const x = doc.assets.find(y => y.id === id); if (x && !x.out) { addLog(x, `상태 ${x.status} → ${s}`, now); x.status = s; x.updatedAt = now; } }); },
+    `상태 일괄 변경: ${ids.length}건 → ${s}`, `${ids.length}건을 '${s}'(으)로 바꿨어요`);
+}
+
+/* 엑셀 ▾ 같은 펼침 메뉴 */
+function toggleDD(btn) { const m = btn.nextElementSibling; const open = !m.classList.contains('open'); document.querySelectorAll('.dd-menu.open').forEach(x => x.classList.remove('open')); if (open) m.classList.add('open'); }
+document.addEventListener('click', e => { if (!e.target.closest('.dd')) document.querySelectorAll('.dd-menu.open').forEach(x => x.classList.remove('open')); });
+
+/* ── 지도 (자산 화면의 [지도] 전환: 걸러진 자산만 표시) ── */
 let KAKAO_P = null, MAP = null, MAP_INFO = null, MAP_FOCUS = null;
 function loadKakao() {
   if (window.kakao && kakao.maps && kakao.maps.LatLng) return Promise.resolve();
@@ -887,51 +949,31 @@ function loadKakao() {
   return KAKAO_P;
 }
 const mapFail = () => `<div class="map-fail">${icon('map', 30)}<b>지도를 불러오지 못했어요</b>인터넷 연결을 확인하거나, 카카오 개발자 콘솔에<br>이 사이트 주소(도메인)가 등록되어 있는지 확인해 주세요.</div>`;
-const mapAssets = () => activeAssets().filter(hasCoord);
-function renderMap() {
-  const n = mapAssets().length, all = activeAssets().length;
-  return `
-  <div class="page-head">
-    <div><h1>지도</h1><p class="sub">위치가 등록된 자산 ${n}건${all > n ? ` · 위치 없음 ${all - n}건` : ''}</p></div>
-    <div class="legend">${STATUSES.map(s => `<span class="${ST_KEY[s]}"><i></i>상태 ${s}</span>`).join('')}</div>
-  </div>
-  <div class="map-layout">
-    <aside class="map-list">
-      <label class="search">${icon('search', 16)}<input placeholder="자산 찾기" value="${esc(UI.mapQ)}" oninput="UI.mapQ=this.value;updateMapList()"></label>
-      <div class="map-items" id="map-items"></div>
-    </aside>
-    <div class="map-box"><div id="kmap"></div></div>
-  </div>`;
-}
-function updateMapList(sel) {
-  const box = $('map-items'); if (!box) return;
-  const q = UI.mapQ.trim().toLowerCase();
-  const list = mapAssets().filter(a => !q || (dispName(a) + a.location + a.id).toLowerCase().includes(q));
-  box.innerHTML = list.length ? list.map(a => `
-    <button class="mi ${ST_KEY[a.status]} ${sel === a.id ? 'on' : ''}" onclick="mapSelect('${a.id}')"><i></i>
-      <div class="ri-main"><div class="ri-title">${esc(dispName(a))}</div><div class="ri-sub">${a.id} · ${esc(a.location)}</div></div></button>`).join('')
-    : `<div class="empty" style="padding:20px">해당 자산이 없어요</div>`;
-}
 async function initMainMap() {
-  updateMapList();
-  const box = $('kmap'); if (!box) return;
-  try { await loadKakao(); } catch (e) { box.parentElement.insertAdjacentHTML('beforeend', mapFail()); return; }
-  if (!document.body.contains(box)) return;
-  MAP = new kakao.maps.Map(box, { center: new kakao.maps.LatLng(...CONFIG.MAP_CENTER), level: 4 });
+  updateSelBar();
+  const all = filteredAssets(), list = all.filter(hasCoord);
+  const cntEl = $('asset-count'); if (cntEl) cntEl.textContent = `${all.length}건 중 지도 표시 ${list.length}건${all.length > list.length ? ` · 좌표 없음 ${all.length - list.length}건` : ''}`;
+  const box = $('asset-list'); if (!box) return;
+  box.innerHTML = `<div class="legend" style="margin-bottom:8px">${STATUSES.map(s => `<span class="${ST_KEY[s]}"><i></i>상태 ${s}</span>`).join('')}</div><div class="map-box"><div id="kmap"></div></div>`;
+  const el = $('kmap');
+  if (!list.length) { el.parentElement.insertAdjacentHTML('beforeend', `<div class="map-fail">${icon('pin', 30)}<b>지도에 표시할 자산이 없어요</b>좌표가 등록된 자산만 지도에 나와요.<br>휴대폰으로 QR을 찍고 '지금 위치로 넣기'를 눌러 주세요.</div>`); }
+  try { await loadKakao(); } catch (e) { el.parentElement.insertAdjacentHTML('beforeend', mapFail()); return; }
+  if (!document.body.contains(el)) return;
+  MAP = new kakao.maps.Map(el, { center: new kakao.maps.LatLng(...CONFIG.MAP_CENTER), level: 4 });
   MAP.addControl(new kakao.maps.ZoomControl(), kakao.maps.ControlPosition.RIGHT);
   MAP_INFO = null;
-  const bounds = new kakao.maps.LatLngBounds(); const list = mapAssets();
+  const bounds = new kakao.maps.LatLngBounds();
   list.forEach(a => {
-    const el = document.createElement('button');
-    el.className = 'pin ' + ST_KEY[a.status]; el.title = dispName(a); el.setAttribute('aria-label', dispName(a));
-    el.addEventListener('click', ev => { ev.stopPropagation(); mapSelect(a.id); });
+    const pin = document.createElement('button');
+    pin.className = 'pin ' + (a.out ? 'off' : ST_KEY[a.status]); pin.title = dispName(a); pin.setAttribute('aria-label', dispName(a));
+    pin.addEventListener('click', ev => { ev.stopPropagation(); mapSelect(a.id); });
     const pos = new kakao.maps.LatLng(a.lat, a.lng);
-    new kakao.maps.CustomOverlay({ position: pos, content: el, xAnchor: .5, yAnchor: .5, zIndex: 2 }).setMap(MAP);
+    new kakao.maps.CustomOverlay({ position: pos, content: pin, xAnchor: .5, yAnchor: .5, zIndex: 2 }).setMap(MAP);
     bounds.extend(pos);
   });
   kakao.maps.event.addListener(MAP, 'click', closeMapInfo);
   setTimeout(() => {
-    MAP.relayout();
+    if (!MAP) return; MAP.relayout();
     if (MAP_FOCUS) { const f = MAP_FOCUS; MAP_FOCUS = null; mapSelect(f, 3); }
     else if (list.length > 1) MAP.setBounds(bounds, 60, 60, 60, 60);
     else if (list.length === 1) MAP.setCenter(new kakao.maps.LatLng(list[0].lat, list[0].lng));
@@ -943,7 +985,7 @@ function mapSelect(id, level) {
   closeMapInfo();
   const pos = new kakao.maps.LatLng(a.lat, a.lng);
   const el = document.createElement('div'); el.className = 'mapcard';
-  el.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center"><span class="mono" style="color:var(--sub);font-size:12px">${a.id}</span>${badge(a.status)}</div>
+  el.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center"><span class="mono" style="color:var(--sub);font-size:12px">${a.id}</span>${stBadge(a)}</div>
     <b>${esc(dispName(a))}</b><div style="color:var(--sub)">${esc(a.location)}</div>
     <button class="btn sm primary" data-open>상세 보기</button>`;
   el.addEventListener('click', e => e.stopPropagation());
@@ -954,43 +996,28 @@ function mapSelect(id, level) {
   MAP_INFO.setMap(MAP);
   if (level) MAP.setLevel(level);
   MAP.panTo(pos);
-  updateMapList(id);
 }
-function showOnMap(id) { MAP_FOCUS = id; closeDrawer(); go('map'); }
+function showOnMap(id) {
+  const a = getAsset(id); MAP_FOCUS = id; closeDrawer();
+  Object.assign(UI, { mode: 'map', q: '', cat: '전체', item: '전체', loc: '전체', filter: a && a.out ? (a.out.type === '폐기' ? 'disposed' : 'out') : 'all' });
+  go('assets');
+}
 
-/* ── 라벨 ── */
+/* ── 라벨 인쇄 (자산 목록에서 체크한 것만 · PC 전용) ── */
 function renderLabels() {
+  const n = UI.sel.size;
   return `
   <div class="page-head">
-    <div><h1>라벨 인쇄</h1><p class="sub">7×7cm · ${UI.paper} 한 장에 ${PAPER[UI.paper].per}개 · 점선을 따라 잘라 코팅하세요</p></div>
+    <div><h1>라벨 인쇄</h1><p class="sub">7×7cm · ${UI.paper} 한 장에 ${PAPER[UI.paper].per}개 · 점선을 따라 잘라 코팅하세요${n ? ` · <button class="link" onclick="go('assets')">자산 목록에서 다시 고르기</button>` : ''}</p></div>
     <div class="head-actions">
       <div class="paper-seg">${Object.keys(PAPER).map(k => `<button class="${UI.paper === k ? 'on' : ''}" onclick="setPaper('${k}')">${k}<small>${PAPER[k].per}칸</small></button>`).join('')}</div>
       <button class="btn primary" id="print-btn" onclick="printLabels()">${icon('printer', 16)} 인쇄</button>
     </div>
   </div>
-  <div class="lab-layout">
-    <section class="card lab-pick">
-      <label class="search">${icon('search', 16)}<input placeholder="자산 찾기" value="${esc(UI.labQ)}" oninput="UI.labQ=this.value;updateLabelList()"></label>
-      <div class="lab-row"><span id="lab-count"></span><div><button class="link" onclick="labAll(true)">전체 선택</button><button class="link" onclick="labAll(false)">선택 해제</button></div></div>
-      <div class="lab-items" id="lab-items"></div>
-    </section>
-    <section class="lab-preview"><p class="prev-note">미리보기 · 인쇄할 때 배율은 '100%(실제 크기)', 여백은 '없음'으로 맞춰 주세요</p><div id="lab-sheets"></div></section>
-  </div>`;
+  <p class="prev-note">미리보기 · 인쇄할 때 배율은 '100%(실제 크기)', 여백은 '없음'으로 맞춰 주세요</p>
+  <div id="lab-sheets"></div>`;
 }
-function labCandidates() {
-  const q = UI.labQ.trim().toLowerCase();
-  return activeAssets().filter(a => !q || (dispName(a) + a.location + a.id).toLowerCase().includes(q));
-}
-function updateLabelList() {
-  const box = $('lab-items'); if (!box) return;
-  box.innerHTML = labCandidates().map(a => `
-    <label class="lab-it"><input type="checkbox" ${UI.labSel.has(a.id) ? 'checked' : ''} onchange="labToggle('${a.id}',this.checked)">
-      <div class="ri-main"><div class="ri-title">${esc(dispName(a))}</div><div class="ri-sub">${a.id} · ${esc(a.location)}</div></div></label>`).join('')
-    || `<div class="empty" style="padding:20px">해당 자산이 없어요</div>`;
-}
-function labToggle(id, on) { on ? UI.labSel.add(id) : UI.labSel.delete(id); updateLabelPreview(); }
-function labAll(on) { labCandidates().forEach(a => on ? UI.labSel.add(a.id) : UI.labSel.delete(a.id)); updateLabelList(); updateLabelPreview(); }
-function selectedLabels() { return DOC.assets.filter(a => UI.labSel.has(a.id)); }
+function selectedLabels() { return sortList(DOC.assets.filter(a => UI.sel.has(a.id))); }
 const QR_CACHE = {};
 function qrData(id) {
   const key = qrUrl(id); if (QR_CACHE[key]) return QR_CACHE[key];
@@ -1023,10 +1050,9 @@ function updateLabelPreview() {
   const box = $('lab-sheets'); if (!box) return;
   const P = PAPER[UI.paper];
   const list = selectedLabels(); const pages = Math.ceil(list.length / P.per);
-  $('lab-count').textContent = `${list.length}개 선택`;
   $('print-btn').innerHTML = `${icon('printer', 16)} 인쇄${list.length ? ` (${list.length}개 · ${UI.paper} ${pages}장)` : ''}`;
   $('print-btn').disabled = !list.length;
-  if (!list.length) { box.innerHTML = `<div class="card empty"><b>인쇄할 자산을 고르세요</b>왼쪽 목록에서 체크하면 여기에 ${UI.paper} 미리보기가 나와요</div>`; return; }
+  if (!list.length) { box.innerHTML = `<div class="card empty"><b>인쇄할 자산을 먼저 고르세요</b>자산 목록 왼쪽 체크박스로 고른 뒤 [라벨 인쇄]를 누르면 여기에 미리보기가 나와요<br><br><button class="btn primary" onclick="go('assets')">자산 목록으로 가기</button></div>`; return; }
   const pw = P.w * MM, ph = P.h * MM;
   const z = Math.min(1, (box.clientWidth || 700) / pw);
   box.innerHTML = sheetsHTML(list).map(s => `<div style="width:${pw * z}px;height:${ph * z}px"><div class="sheet-scale" style="transform:scale(${z})">${s}</div></div>`).join('<div class="sheet-gap"></div>');
@@ -1039,15 +1065,52 @@ function printLabels() {
   if (UI.paper === 'A3') toast('인쇄 창에서 용지 크기를 A3로 골라 주세요');
   setTimeout(() => window.print(), 100);
 }
-function printOne(id) { UI.labSel = new Set([id]); UI.labQ = ''; closeDrawer(); go('labels'); }
+function printOne(id) { UI.sel = new Set([id]); closeDrawer(); go('labels'); }
 
+/* ── 정기 실사 동작 ── */
+async function startAudit() {
+  if (!confirm('정기 실사를 시작할까요?\n현장을 돌며 휴대폰 카메라로 자산 QR을 찍으면 하나씩 확인돼요.')) return;
+  await saveChange(doc => { doc.audit = { startedAt: new Date().toISOString(), checked: {} }; }, '정기 실사 시작', '실사를 시작했어요');
+}
+async function checkAsset(id, auto) {
+  if (!DOC.audit || DOC.audit.checked[id]) return;
+  const ok = await saveChange(doc => { if (doc.audit) doc.audit.checked[id] = new Date().toISOString(); const x = doc.assets.find(y => y.id === id); if (x) addLog(x, '실사 확인'); }, `실사 확인: ${id}`, auto ? `실사 확인 ✓ ${id}` : '확인했어요');
+  if (ok && DRAWER && DRAWER.id === id) renderDrawer();
+}
+async function finishAudit() {
+  const st = auditStats(); const miss = st.total - st.done;
+  if (!confirm(`실사를 마칠까요?\n확인 ${st.done}건 · 못 찾음 ${miss}건\n못 찾은 자산 목록은 기록으로 남아요.`)) return;
+  await saveChange(doc => {
+    if (!doc.audit) return;
+    const act = doc.assets.filter(a => !a.out);
+    doc.auditLog.unshift({ startedAt: doc.audit.startedAt, endedAt: new Date().toISOString(), total: act.length,
+      checked: act.filter(a => doc.audit.checked[a.id]).length, missing: act.filter(a => !doc.audit.checked[a.id]).map(a => a.id) });
+    doc.auditLog = doc.auditLog.slice(0, 20); doc.audit = null;
+  }, `정기 실사 마침: ${st.done}/${st.total} 확인`, '실사를 마쳤어요');
+  if (UI.filter === 'unaudited') { UI.filter = 'all'; render(); }
+}
+function showAuditResult(i) {
+  const l = DOC.auditLog[i]; if (!l) return;
+  openModal(`<div class="m-head"><h2>못 찾은 자산 ${l.missing.length}건</h2><button class="icon-btn" onclick="closeModal()">${icon('x', 20)}</button></div>
+    <div class="m-body"><p class="sub" style="margin:0 0 10px">${l.endedAt.slice(0, 10)} 실사 · ${l.checked}/${l.total} 확인</p>
+    ${l.missing.map(id => { const a = getAsset(id); return a ? `<div class="row-item" onclick="openAsset('${id}')"><div class="ri-main"><div class="ri-title">${esc(dispName(a))}</div><div class="ri-sub">${id} · ${esc(a.location)}</div></div>${stBadge(a)}</div>` : `<div class="row-item"><div class="ri-main">${esc(id)} (삭제됨)</div></div>`; }).join('')}</div>`);
+}
+async function quickLocate(id) {
+  try {
+    const c = await getPosition();
+    await saveChange(doc => { const x = doc.assets.find(y => y.id === id); if (x) { x.lat = +c.latitude.toFixed(6); x.lng = +c.longitude.toFixed(6); x.updatedAt = new Date().toISOString(); addLog(x, '좌표 입력'); } },
+      `좌표 입력: ${id}`, `좌표를 넣었어요 (오차 약 ${Math.round(c.accuracy)}m)`);
+    renderDrawer();
+  } catch (e) { if (!e.silent) toast(e.message, 'warn'); }
+}
 /* ═══════════════════════════════════════════
    [5] 자산 상세 · 등록 패널
    ═══════════════════════════════════════════ */
 function openAsset(id) { if (!getAsset(id)) return; closeModal(); DRAWER = { mode: 'detail', id }; renderDrawer(); }
 function openForm(id) {
   const a = id ? getAsset(id) : null;
-  DRAWER = { mode: 'form', id: id || null, draft: a ? { ...a } : { item: '', model: '', qty: 1, unit: 'EA', location: '', status: '상', acq: '', manager: '관리팀장', lat: '', lng: '', nextCheck: '', rentalDue: '', note: '' } };
+  const lastLoc = (lsGet('aam_recent_loc') || [])[0] || '';
+  DRAWER = { mode: 'form', id: id || null, draft: a ? { ...a } : { item: '', model: '', qty: 1, unit: 'EA', location: lastLoc, status: '상', acq: '', manager: '관리팀장', lat: '', lng: '', nextCheck: '', rentalDue: '', note: '' } };
   renderDrawer();
 }
 function closeDrawer() { DRAWER = null; $('drawer').classList.add('hidden'); }
@@ -1086,33 +1149,38 @@ function detailHTML(a) {
       ${a.manager ? row('관리자', esc(a.manager)) : ''}
       ${a.locInit && a.locInit !== a.location ? row('최초 위치', esc(a.locInit)) : ''}
       ${a.note ? row('비고', esc(a.note)) : ''}
-      ${row('최종 변경', relTime(a.updatedAt))}
     </dl>
     <div class="qr-box">${qr ? `<img src="${qr}" alt="QR">` : ''}<div><b>QR 라벨</b><p class="sub" style="margin-bottom:8px">휴대폰 카메라로 찍으면 이 화면이 열려요</p>
-      ${a.out ? '' : `<button class="btn sm desktop-only" onclick="printOne('${a.id}')">${icon('printer', 14)} 라벨 인쇄</button>`}</div></div>
+      <button class="btn sm desktop-only" onclick="printOne('${a.id}')">${icon('printer', 14)} 라벨 인쇄</button></div></div>
+    <div class="flabel" style="margin-top:20px">변경 이력</div>
+    <div class="hist">${(a.log || []).length ? a.log.map(l => `<div><span>${esc(l.t)}</span><span class="muted">${fmtAt(l.at)}</span></div>`).join('') : `<div><span class="muted">기록 없음 · 최종 변경 ${relTime(a.updatedAt)}</span></div>`}</div>
   </div>
-  <div class="p-foot"><button class="btn" onclick="openForm('${a.id}')">${icon('edit', 16)} 정보 수정</button>${a.out ? '' : `<button class="btn" onclick="openOut('${a.id}')">${icon('logout', 16)} 현장 종료 처리</button>`}</div>`;
+  <div class="p-foot"><button class="btn" onclick="openForm('${a.id}')">${icon('edit', 16)} 정보 수정</button>${a.out ? '' : `<button class="btn" onclick="openOut(['${a.id}'])">${icon('logout', 16)} 현장 종료 처리</button>`}</div>`;
 }
+function fmtAt(iso) { if (!iso) return ''; const d = new Date(iso); return `${d.getMonth() + 1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`; }
 async function setStatus(id, s) {
   const a = getAsset(id); if (!a || a.status === s) return;
   document.querySelectorAll('.seg button').forEach(b => b.disabled = true);
-  await saveChange(doc => { const x = doc.assets.find(y => y.id === id); if (x) { x.status = s; x.updatedAt = new Date().toISOString(); } }, `상태 변경: ${id} → ${s}`, `상태를 '${s}'(으)로 바꿨어요`);
+  await saveChange(doc => { const x = doc.assets.find(y => y.id === id); if (x) { addLog(x, `상태 ${x.status} → ${s}`); x.status = s; x.updatedAt = new Date().toISOString(); } }, `상태 변경: ${id} → ${s}`, `상태를 '${s}'(으)로 바꿨어요`);
   renderDrawer();
 }
 
-/* 현장 종료 처리 (GS 자재창고 반납 · 타현장 전용 · 렌탈업체 반납 · 폐기) */
+/* 현장 종료 처리 (GS 자재창고 반납 · 타현장 전용 · 렌탈업체 반납 · 폐기) — 하나 또는 여러 개 */
 let OUT = null;
 const OUT_TO = { 'GS 자재창고 반납': ['받는 곳', 'GS 자재창고'], '타현장 전용': ['받는 현장', '예: ○○현장'], '렌탈업체 반납': ['렌탈업체', '예: ○○렌탈'], '폐기': ['', ''] };
-function openOut(id) {
-  OUT = { id, type: '', date: todayStr(), to: '', docNo: '', note: '' };
+function openOut(ids) {
+  ids = (Array.isArray(ids) ? ids : [ids]).filter(id => { const a = getAsset(id); return a && !a.out; });
+  if (!ids.length) return toast('현장 종료할 자산이 없어요 (이미 처리됨)', 'warn');
+  OUT = { ids, type: '', date: todayStr(), to: '', docNo: '', note: '' };
   renderOut();
 }
 function renderOut() {
-  const a = getAsset(OUT.id); const [toLabel, toPh] = OUT_TO[OUT.type] || ['', ''];
+  const [toLabel, toPh] = OUT_TO[OUT.type] || ['', ''];
+  const one = OUT.ids.length === 1 ? getAsset(OUT.ids[0]) : null;
   openModal(`
-    <div class="m-head"><h2>현장 종료 처리</h2><button class="icon-btn" onclick="closeModal()">${icon('x', 20)}</button></div>
+    <div class="m-head"><h2>현장 종료 처리${one ? '' : ` · ${OUT.ids.length}개`}</h2><button class="icon-btn" onclick="closeModal()">${icon('x', 20)}</button></div>
     <div class="m-body">
-      <p class="sub" style="margin:0 0 14px">${a.id} · ${esc(dispName(a))}<br>처리하면 현황·목록·지도·라벨에서 빠지고 기록만 남아요. '현장 복귀'로 되돌릴 수 있어요.</p>
+      <p class="sub" style="margin:0 0 14px">${one ? `${one.id} · ${esc(dispName(one))}` : OUT.ids.slice(0, 6).join(', ') + (OUT.ids.length > 6 ? ` 외 ${OUT.ids.length - 6}개` : '')}<br>처리하면 목록·지도·라벨에서 빠지고 기록만 남아요. '현장 복귀'로 되돌릴 수 있어요.</p>
       <div class="field"><div class="flabel">구분<em>*</em></div>
         <div class="seg two" style="margin:0">${OUT_TYPES.map(t => `<button type="button" class="off ${OUT.type === t ? 'on' : ''}" onclick="OUT.type='${t}';OUT.to=${t === 'GS 자재창고 반납' ? "'GS 자재창고'" : "''"};renderOut()">${t}</button>`).join('')}</div></div>
       <div class="field"><div class="flabel">일자</div><input class="inp" type="date" value="${esc(OUT.date)}" oninput="OUT.date=this.value"></div>
@@ -1124,16 +1192,17 @@ function renderOut() {
 }
 async function saveOut() {
   if (!OUT.type) return toast('구분을 골라 주세요', 'warn');
-  const o = { type: OUT.type, date: OUT.date || todayStr(), to: OUT.to.trim(), docNo: OUT.docNo.trim(), note: OUT.note.trim() }; const id = OUT.id;
+  const o = { type: OUT.type, date: OUT.date || todayStr(), to: OUT.to.trim(), docNo: OUT.docNo.trim(), note: OUT.note.trim() }; const ids = OUT.ids;
   $('out-go').disabled = true; $('out-go').textContent = '저장 중…';
-  const res = await saveChange(doc => { const x = doc.assets.find(y => y.id === id); if (x) { x.out = o; x.updatedAt = new Date().toISOString(); } return id; },
-    `현장 종료: ${id} → ${o.type}${o.docNo ? ' (반출증 ' + o.docNo + ')' : ''}`, `'${o.type}'(으)로 처리했어요`);
-  if (res) { closeModal(); openAsset(id); } else if ($('out-go')) { $('out-go').disabled = false; $('out-go').textContent = '처리하기'; }
+  const logT = `현장 종료: ${o.type}${o.to && o.type !== 'GS 자재창고 반납' ? ' (' + o.to + ')' : ''}${o.docNo ? ' · 반출증 ' + o.docNo : ''}`;
+  const res = await saveChange(doc => { const now = new Date().toISOString(); ids.forEach(id => { const x = doc.assets.find(y => y.id === id); if (x && !x.out) { x.out = { ...o }; x.updatedAt = now; addLog(x, logT, now); } }); return true; },
+    `현장 종료: ${ids.length === 1 ? ids[0] : ids.length + '건'} → ${o.type}${o.docNo ? ' (반출증 ' + o.docNo + ')' : ''}`, `${ids.length > 1 ? ids.length + '건을 ' : ''}'${o.type}'(으)로 처리했어요`);
+  if (res) { closeModal(); UI.sel.clear(); if (ids.length === 1) openAsset(ids[0]); else render(); } else if ($('out-go')) { $('out-go').disabled = false; $('out-go').textContent = '처리하기'; }
 }
 async function restoreAsset(id) {
   const a = getAsset(id); if (!a || !a.out) return;
   if (!confirm(`${a.id} ${dispName(a)}\n'${a.out.type}' 처리를 취소하고 현장으로 되돌릴까요?`)) return;
-  await saveChange(doc => { const x = doc.assets.find(y => y.id === id); if (x) { x.out = null; x.updatedAt = new Date().toISOString(); } }, `현장 복귀: ${id}`, '현장으로 되돌렸어요');
+  await saveChange(doc => { const x = doc.assets.find(y => y.id === id); if (x) { addLog(x, `현장 복귀 (${x.out ? x.out.type : ''} 취소)`); x.out = null; x.updatedAt = new Date().toISOString(); } }, `현장 복귀: ${id}`, '현장으로 되돌렸어요');
   renderDrawer();
 }
 
@@ -1141,13 +1210,31 @@ function itemOptions(sel) {
   const c = catalog();
   return `<option value="">품목을 고르세요</option>` + CATEGORIES.map(k => `<optgroup label="${esc(k)}">${c[k].map(it => `<option ${sel === it ? 'selected' : ''} value="${esc(it)}">${esc(it)}</option>`).join('')}</optgroup>`).join('');
 }
+/* 위치: 목록에서 고르기 (최근 쓴 위치가 맨 위) + 새 위치 추가 (B2) */
+function locOptions(sel) {
+  const recent = (lsGet('aam_recent_loc') || []).filter(l => DOC.locations.includes(l)).slice(0, 5);
+  const extra = sel && !DOC.locations.includes(sel) ? [sel] : [];
+  return `<option value="">위치를 고르세요</option>`
+    + (extra.length ? `<optgroup label="새 위치">${extra.map(l => `<option selected value="${esc(l)}">${esc(l)}</option>`).join('')}</optgroup>` : '')
+    + (recent.length ? `<optgroup label="최근 쓴 위치">${recent.map(l => `<option value="${esc(l)}" ${sel === l ? 'selected' : ''}>${esc(l)}</option>`).join('')}</optgroup>` : '')
+    + `<optgroup label="전체">${DOC.locations.map(l => `<option value="${esc(l)}" ${sel === l && !recent.includes(l) ? 'selected' : ''}>${esc(l)}</option>`).join('')}</optgroup>`
+    + `<option value="__new">+ 새 위치 추가…</option>`;
+}
+function pickLoc(selEl) {
+  if (selEl.value !== '__new') { DRAWER.draft.location = selEl.value; return; }
+  const name = (prompt('새 위치 이름 (건물 · 층 · 실 순서)\n예: 본관 2층 회의실, 식당동, 야적장 A구역') || '').trim().replace(/\s+/g, ' ');
+  if (name) DRAWER.draft.location = name;
+  renderDrawer();
+}
+function rememberLoc(l) { if (!l) return; lsSet('aam_recent_loc', [l, ...(lsGet('aam_recent_loc') || []).filter(x => x !== l)].slice(0, 8)); }
 function formHTML() {
   const d = DRAWER.draft, isNew = !DRAWER.id;
   const bind = k => `oninput="DRAWER.draft.${k}=this.value"`;
   const moreOpen = d.nextCheck || d.rentalDue || d.note || d.acq;
-  const segBtns = (key, list, cls) => list.map(v => `<button type="button" class="${cls ? cls(v) : 'use'} ${d[key] === v ? 'on' : ''}" onclick="DRAWER.draft.${key}='${v}';this.parentNode.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b===this))">${v}</button>`).join('');
+  const segBtns = (key, list) => list.map(v => `<button type="button" class="use ${d[key] === v ? 'on' : ''}" onclick="DRAWER.draft.${key}='${v}';this.parentNode.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b===this))">${v}</button>`).join('');
+  const has = validLat(+d.lat) && validLng(+d.lng) && d.lat !== '';
   return `
-  <div class="p-head"><div><div class="mono" style="color:var(--sub);font-size:13px">${isNew ? '관리번호는 자동으로 붙어요' : DRAWER.id}</div><h2>${isNew ? '자산 등록' : '정보 수정'}</h2></div>
+  <div class="p-head"><div><div class="mono" style="color:var(--sub);font-size:13px">${isNew ? '관리번호는 자동으로 붙어요 · 상태는 상으로 시작' : DRAWER.id}</div><h2>${isNew ? '자산 등록' : '정보 수정'}</h2></div>
     <button class="icon-btn" onclick="${isNew ? 'closeDrawer()' : `openAsset('${DRAWER.id}')`}" aria-label="닫기">${icon('x', 20)}</button></div>
   <div class="p-body">
     <div class="field"><div class="flabel">품목<em>*</em> <span class="muted" style="font-weight:500" id="f-cat">${d.item ? '· ' + esc(catOf(d.item)) : ''}</span></div>
@@ -1156,11 +1243,9 @@ function formHTML() {
     <div class="field"><div class="flabel">모델·상세 <span class="muted" style="font-weight:500">('기타'는 필수)</span></div><input class="inp" value="${esc(d.model)}" ${bind('model')} placeholder="예: 캐리어 40평형"></div>
     <div class="field"><div class="flabel">수량<em>*</em></div>
       <div class="coord-row"><input class="inp" type="number" min="1" step="1" inputmode="numeric" value="${esc(d.qty)}" ${bind('qty')}><div class="seg" style="margin:0">${segBtns('unit', UNITS)}</div></div></div>
-    <div class="field"><div class="flabel">위치<em>*</em></div><input class="inp" value="${esc(d.location)}" ${bind('location')} placeholder="예: 본관 2층 회의실"></div>
-    <div class="field"><div class="flabel">상태</div>
-      <div class="seg" style="margin:0">${segBtns('status', STATUSES, v => ST_KEY[v])}</div></div>
+    <div class="field"><div class="flabel">위치<em>*</em></div><select class="inp" onchange="pickLoc(this)">${locOptions(d.location)}</select></div>
     <div class="field"><div class="flabel">지도 위치 <span class="muted" style="font-weight:500">(선택)</span></div>
-      <div class="coord-row"><input class="inp" id="f-lat" inputmode="decimal" value="${esc(d.lat)}" ${bind('lat')} placeholder="위도 36.78…"><input class="inp" id="f-lng" inputmode="decimal" value="${esc(d.lng)}" ${bind('lng')} placeholder="경도 126.55…"></div>
+      <div class="coord-state ${has ? 'on' : ''}">${has ? `${icon('check', 16)} 좌표 등록됨 <span class="muted">(${(+d.lat).toFixed(5)}, ${(+d.lng).toFixed(5)})</span><span class="sp"></span><button type="button" class="link" onclick="DRAWER.draft.lat='';DRAWER.draft.lng='';renderDrawer()">지우기</button>` : '좌표 없음 — 아래 버튼으로 넣어요'}</div>
       <div class="coord-btns"><button type="button" class="btn" onclick="useMyLocation()">${icon('crosshair', 16)} 지금 내 위치</button><button type="button" class="btn" onclick="openPicker()">${icon('pin', 16)} 지도에서 찍기</button></div></div>
     <details class="more" ${moreOpen ? 'open' : ''}><summary>추가 정보 (선택)</summary>
       <div class="field"><div class="flabel">취득 구분</div><select class="inp" onchange="DRAWER.draft.acq=this.value"><option value="">—</option>${ACQ_TYPES.map(t => `<option ${(d.acq || acqOf(d.contract)) === t ? 'selected' : ''}>${t}</option>`).join('')}</select></div>
@@ -1175,6 +1260,7 @@ function formHTML() {
     <button class="btn primary" id="f-save" onclick="saveForm()">${isNew ? '등록하기' : '저장'}</button></div>`;
 }
 function formError(msg) { toast(msg, 'warn'); }
+const EDIT_KO = { item: '품목', model: '모델', qty: '수량', unit: '단위', location: '위치', acq: '취득 구분', manager: '관리자', nextCheck: '다음 점검', rentalDue: '렌탈 반납', note: '비고' };
 async function saveForm() {
   const d = DRAWER.draft, id = DRAWER.id, isNew = !id;
   const qty = Number(d.qty);
@@ -1183,22 +1269,23 @@ async function saveForm() {
   if (!Number.isInteger(qty) || qty < 1) return formError('수량은 1 이상의 정수로 넣어 주세요');
   if (d.item === '기타' && !String(d.model).trim()) return formError("품목이 '기타'면 모델·상세에 무엇인지 적어 주세요");
   let lat = '', lng = '';
-  if (String(d.lat).trim() || String(d.lng).trim()) {
-    lat = parseFloat(d.lat); lng = parseFloat(d.lng);
-    if (!validLat(lat) || !validLng(lng)) return formError('좌표가 올바르지 않아요 (예: 36.7805 / 126.5505)');
-    lat = +lat.toFixed(6); lng = +lng.toFixed(6);
-  }
-  const fields = { item: d.item, category: catOf(d.item), model: String(d.model).trim(), qty, unit: d.unit || 'EA', location: String(d.location).trim(), status: d.status || '상',
+  if (String(d.lat).trim() && String(d.lng).trim()) { lat = +(+d.lat).toFixed(6); lng = +(+d.lng).toFixed(6); if (!validLat(lat) || !validLng(lng)) { lat = ''; lng = ''; } }
+  const fields = { item: d.item, category: catOf(d.item), model: String(d.model).trim(), qty, unit: d.unit || 'EA', location: String(d.location).trim(),
     acq: d.acq || '', manager: String(d.manager || '').trim(), lat, lng, nextCheck: d.nextCheck || '', rentalDue: d.rentalDue || '', note: String(d.note || '').trim() };
   $('f-save').disabled = true; $('f-save').textContent = '저장 중…';
   const res = await saveChange(doc => {
     const now = new Date().toISOString();
-    if (isNew) { const nid = nextId(doc); doc.assets.push({ id: nid, contract: '', locInit: fields.location, out: null, ...fields, updatedAt: now }); return nid; }
+    if (!doc.locations.includes(fields.location)) doc.locations.push(fields.location);
+    if (isNew) { const nid = nextId(doc); const x = { id: nid, contract: '', locInit: fields.location, out: null, status: '상', log: [], ...fields, updatedAt: now }; addLog(x, '등록', now); doc.assets.push(x); return nid; }
     const a = doc.assets.find(x => x.id === id); if (!a) throw new Error('자산을 찾을 수 없어요');
+    const ch = Object.keys(EDIT_KO).filter(k => String(a[k] ?? '') !== String(fields[k] ?? '')).map(k => k === 'location' || k === 'qty' ? `${EDIT_KO[k]} ${a[k] || '-'} → ${fields[k]}` : EDIT_KO[k]);
+    if (String(a.lat) !== String(fields.lat) || String(a.lng) !== String(fields.lng)) ch.push(fields.lat === '' ? '좌표 지움' : '좌표 변경');
+    if (ch.length) addLog(a, '수정: ' + ch.join(', '), now);
     Object.assign(a, fields, { updatedAt: now }); return id;
   }, isNew ? `자산 등록: ${fields.item}${fields.model ? ' ' + shortModel(fields.model) : ''}` : `자산 수정: ${id}`, isNew ? '등록했어요' : '저장했어요');
-  if (res) openAsset(res); else if ($('f-save')) { $('f-save').disabled = false; $('f-save').textContent = isNew ? '등록하기' : '저장'; }
+  if (res) { rememberLoc(fields.location); openAsset(res); } else if ($('f-save')) { $('f-save').disabled = false; $('f-save').textContent = isNew ? '등록하기' : '저장'; }
 }
+
 /* 위치 권한: 휴대폰 보안 기능이라 앱이 대신 허용할 수는 없음.
    → 처음엔 '허용'을 누르라고 미리 알려주고, 거부돼 있으면 기기별로 켜는 방법을 바로 보여줌 */
 const IS_IOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
@@ -1246,8 +1333,7 @@ function showLocGuide() {
 async function useMyLocation() {
   try {
     const c = await getPosition();
-    DRAWER.draft.lat = +c.latitude.toFixed(6); DRAWER.draft.lng = +c.longitude.toFixed(6);
-    $('f-lat').value = DRAWER.draft.lat; $('f-lng').value = DRAWER.draft.lng;
+    DRAWER.draft.lat = +c.latitude.toFixed(6); DRAWER.draft.lng = +c.longitude.toFixed(6); renderDrawer();
     toast(`위치를 넣었어요 (오차 약 ${Math.round(c.accuracy)}m)`);
   } catch (e) { if (!e.silent) toast(e.message, 'warn'); }
 }
@@ -1446,8 +1532,9 @@ async function applyPlan() {
         const id = p.id || nextId(doc);
         if (doc.assets.some(x => x.id === id)) { skipped++; return; }
         doc.assets.push({ id, category: '', item: '', model: '', contract: '', acq: '', qty: 1, unit: 'EA', location: '', locInit: p.f.locInit || p.f.location || '', manager: '',
-          status: '상', lat: '', lng: '', nextCheck: '', rentalDue: '', note: '', out: null, ...p.f, updatedAt: now }); added++;
-      } else { const a = doc.assets.find(x => x.id === p.id); if (a) { p.changes.forEach(c => a[c.k] = p.f[c.k]); a.updatedAt = now; updated++; } }
+          status: '상', lat: '', lng: '', nextCheck: '', rentalDue: '', note: '', out: null, ...p.f, log: [{ at: now, t: '엑셀로 등록' }], updatedAt: now }); added++;
+      } else { const a = doc.assets.find(x => x.id === p.id); if (a) { p.changes.forEach(c => a[c.k] = p.f[c.k]); addLog(a, '엑셀 수정: ' + p.changes.map(c => FIELD_KO[c.k] || c.k).join(', '), now); a.updatedAt = now; updated++; } }
+      if (p.f.location && !doc.locations.includes(p.f.location)) doc.locations.push(p.f.location);
     });
     return { added, updated, skipped };
   }, `엑셀 반영: 신규 ${nNew}건 · 변경 ${nUp}건`);
@@ -1460,27 +1547,16 @@ async function applyPlan() {
    ═══════════════════════════════════════════ */
 function openSettings() {
   const c = Store.cfg();
+  const locCount = l => DOC.assets.filter(a => a.location === l).length;
   openModal(`
     <div class="m-head"><h2>설정</h2><button class="icon-btn" onclick="closeModal()">${icon('x', 20)}</button></div>
     <div class="m-body">
       <div class="set-block">
-        <h3>데이터 저장소 (GitHub)</h3>
-        <p class="hint" style="margin:2px 0 12px">현재: <b>${Store.mode() === 'github' ? 'GitHub에 저장 중 — 모든 기기가 같은 데이터를 봐요' : '로컬 모드 — 이 기기에만 저장돼요'}</b></p>
-        <div class="set-grid">
-          <label>저장소 주인<input class="inp" id="s-owner" value="${esc(c.owner)}"></label>
-          <label>저장소 이름<input class="inp" id="s-repo" value="${esc(c.repo)}"></label>
-          <label>브랜치<input class="inp" id="s-branch" value="${esc(c.branch)}"></label>
-          <label>데이터 파일<input class="inp" id="s-path" value="${esc(c.path)}"></label>
-        </div>
-        <label class="set-one">GitHub 토큰<input class="inp" id="s-token" type="password" value="${esc(c.token)}" placeholder="github_pat_…" autocomplete="off"></label>
-        <p class="hint">토큰 만드는 곳: GitHub → Settings → Developer settings → Fine-grained tokens → Generate.<br>
-          Repository access는 <b>이 저장소만</b>, Permissions는 <b>Contents: Read and write</b> 하나만 주세요.<br>토큰은 이 기기 브라우저에만 저장되고, 코드나 데이터 파일에는 들어가지 않아요.</p>
+        <h3>GitHub 토큰</h3>
+        <p class="hint" style="margin:2px 0 10px">현재: <b>${Store.mode() === 'github' ? 'GitHub에 저장 중 — 모든 기기가 같은 데이터를 봐요' : '로컬 모드 — 이 기기에만 저장돼요'}</b></p>
+        <input class="inp" id="s-token" type="password" value="${esc(c.token)}" placeholder="github_pat_…" autocomplete="off">
+        <p class="hint">토큰은 이 기기 브라우저에만 저장되고, 코드나 데이터 파일에는 들어가지 않아요.</p>
         <div id="s-test" class="test-res"></div>
-      </div>
-      <div class="set-block">
-        <h3>라벨 QR 주소</h3>
-        <input class="inp" id="s-qr" value="${esc(c.qrBase)}" placeholder="${esc(CONFIG.QR_BASE_DEFAULT)}">
-        <p class="hint">QR을 찍었을 때 열릴 앱 주소예요. 비워두면 지금 열린 주소(또는 기본값)를 써요.</p>
       </div>
       <div class="set-block">
         <h3>품목 추가</h3>
@@ -1490,16 +1566,46 @@ function openSettings() {
         ${Object.keys(DOC.catalog || {}).length ? `<p class="hint">추가한 품목: ${Object.entries(DOC.catalog).map(([it, k]) => `${esc(it)} (${esc(k)})`).join(', ')}</p>` : ''}
       </div>
       <div class="set-block">
-        <h3>엑셀 내보내기 · 보유부서</h3>
-        <div class="set-grid">
-          <label>보유부서 코드<input class="inp" id="s-dept" value="${esc(c.deptCode || '')}" placeholder="비워도 돼요"></label>
+        <h3>위치 관리</h3>
+        <p class="hint" style="margin:2px 0 10px">이름을 바꾸면 그 위치의 자산이 한꺼번에 바뀌어요. 이름 규칙: <b>건물 · 층 · 실</b> (예: 본관 2층 회의실)</p>
+        <div class="loc-list">${DOC.locations.map((l, i) => `<div><span>${esc(l)} <span class="muted">${locCount(l)}건</span></span><span><button class="link" onclick="renameLoc(${i})">이름 바꾸기</button>${locCount(l) ? '' : ` · <button class="link" style="color:var(--red)" onclick="removeLoc(${i})">삭제</button>`}</span></div>`).join('')}</div>
+        <button class="btn" style="margin-top:8px;width:100%" onclick="addLoc()">${icon('plus', 16)} 위치 추가</button>
+      </div>
+      <details class="set-block adv"><summary>고급 설정 (평소에는 바꾸지 마세요)</summary>
+        <div class="set-grid" style="margin-top:10px">
+          <label>저장소 주인<input class="inp" id="s-owner" value="${esc(c.owner)}"></label>
+          <label>저장소 이름<input class="inp" id="s-repo" value="${esc(c.repo)}"></label>
+          <label>브랜치<input class="inp" id="s-branch" value="${esc(c.branch)}"></label>
+          <label>데이터 파일<input class="inp" id="s-path" value="${esc(c.path)}"></label>
+        </div>
+        <label class="set-one">라벨 QR 주소<input class="inp" id="s-qr" value="${esc(c.qrBase)}" placeholder="${esc(CONFIG.QR_BASE_DEFAULT)}"></label>
+        <div class="set-grid" style="margin-top:10px">
+          <label>보유부서 코드 (내보내기용)<input class="inp" id="s-dept" value="${esc(c.deptCode || '')}" placeholder="비워도 돼요"></label>
           <label>보유부서명<input class="inp" id="s-dept-name" value="${esc(c.deptName || 'Aurora Project(충남)')}"></label>
         </div>
-        <p class="hint">내보내기 파일의 보유부서 칸에만 들어가요. 이 기기에만 저장되고 공개 데이터에는 들어가지 않아요.</p>
-      </div>
+        <p class="hint">보유부서는 엑셀 내보내기 파일에만 들어가요. 이 기기에만 저장되고 공개 데이터에는 들어가지 않아요.</p>
+      </details>
     </div>
     <div class="m-foot"><button class="btn" onclick="testConn()">연결 확인</button><span class="sp"></span>
       <button class="btn" onclick="closeModal()">취소</button><button class="btn primary" onclick="saveSettings()">저장</button></div>`);
+}
+async function addLoc() {
+  const name = (prompt('새 위치 이름 (건물 · 층 · 실 순서)\n예: 본관 2층 회의실, 식당동, 야적장 A구역') || '').trim().replace(/\s+/g, ' ');
+  if (!name) return; if (DOC.locations.includes(name)) return toast('이미 있는 위치예요', 'warn');
+  if (await saveChange(doc => { doc.locations.push(name); return true; }, `위치 추가: ${name}`, `'${name}' 위치를 추가했어요`)) openSettings();
+}
+async function renameLoc(i) {
+  const old = DOC.locations[i]; const name = (prompt(`'${old}'의 새 이름`, old) || '').trim().replace(/\s+/g, ' ');
+  if (!name || name === old) return;
+  const n = DOC.assets.filter(a => a.location === old).length;
+  if (!confirm(`'${old}' → '${name}'\n이 위치의 자산 ${n}건이 함께 바뀌어요.`)) return;
+  if (await saveChange(doc => { const now = new Date().toISOString(); doc.locations = doc.locations.filter(l => l !== old && l !== name).concat(name);
+      doc.assets.forEach(a => { if (a.location === old) { addLog(a, `위치 이름 변경 ${old} → ${name}`, now); a.location = name; a.updatedAt = now; } }); return true; },
+    `위치 이름 변경: ${old} → ${name} (${n}건)`, `위치 이름을 바꿨어요 (${n}건)`)) { if (UI.loc === old) UI.loc = name; openSettings(); }
+}
+async function removeLoc(i) {
+  const l = DOC.locations[i]; if (DOC.assets.some(a => a.location === l)) return toast('자산이 있는 위치는 지울 수 없어요', 'warn');
+  if (await saveChange(doc => { doc.locations = doc.locations.filter(x => x !== l); return true; }, `위치 삭제: ${l}`, '위치를 지웠어요')) openSettings();
 }
 function readSettingsForm() {
   return { owner: $('s-owner').value.trim(), repo: $('s-repo').value.trim(), branch: $('s-branch').value.trim() || 'main', path: $('s-path').value.trim() || 'assets.json', token: $('s-token').value.trim(), qrBase: $('s-qr').value.trim(), deptCode: $('s-dept').value.trim(), deptName: $('s-dept-name').value.trim() };
@@ -1535,13 +1641,13 @@ function startApp() {
   DOC = normalizeDoc((Store.mode() === 'local' ? lsGet('aam_local') : null) || lsGet('aam_cache') || seedDoc());
   render(); reloadData();
 }
-window.addEventListener('hashchange', () => { closeMapInfo(); render(); });
+window.addEventListener('hashchange', () => { render(); });
 window.addEventListener('keydown', e => { if (e.key === 'Escape') { if (!$('modal').classList.contains('hidden')) closeModal(); else closeDrawer(); } });
 let RESIZE_T; window.addEventListener('resize', () => { clearTimeout(RESIZE_T); RESIZE_T = setTimeout(() => { if (currentView() === 'labels') updateLabelPreview(); if (MAP) MAP.relayout(); }, 150); });
 
 (function init() {
   const p = new URLSearchParams(location.search);
-  if (p.get('id')) { PENDING_ID = p.get('id').toUpperCase(); history.replaceState(null, '', location.pathname + (location.hash || '#assets')); }
+  if (p.get('id')) { PENDING_ID = p.get('id').toUpperCase(); history.replaceState(null, '', location.pathname + '#assets'); }
   if (isAuthed()) startApp(); else { $('gate').classList.remove('hidden'); setTimeout(() => $('pw').focus(), 50); }
 })();
 </script>
