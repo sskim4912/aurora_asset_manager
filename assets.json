@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "updatedAt": "2026-11-10T23:33:06.788Z",
+  "updatedAt": "2026-11-10T23:50:41.525Z",
   "catalog": {},
   "assets": [
     {
@@ -22,8 +22,15 @@
       "rentalDue": "",
       "note": "",
       "out": null,
-      "updatedAt": "2026-11-10T09:00:00+09:00",
-      "log": []
+      "updatedAt": "2026-11-10T23:50:41.525Z",
+      "log": [
+        {
+          "at": "2026-11-10T23:50:41.525Z",
+          "t": "사진 갱신"
+        }
+      ],
+      "photoAt": "2026-11-10T23:50:41.525Z",
+      "thumb": "data:image/jpeg;base64,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"
     },
     {
       "id": "AURORA-002",
@@ -45,7 +52,9 @@
       "note": "",
       "out": null,
       "updatedAt": "2026-11-10T09:00:00+09:00",
-      "log": []
+      "log": [],
+      "photoAt": "",
+      "thumb": ""
     },
     {
       "id": "AURORA-003",
@@ -67,7 +76,9 @@
       "note": "",
       "out": null,
       "updatedAt": "2026-11-10T09:00:00+09:00",
-      "log": []
+      "log": [],
+      "photoAt": "",
+      "thumb": ""
     },
     {
       "id": "AURORA-004",
@@ -89,7 +100,9 @@
       "note": "",
       "out": null,
       "updatedAt": "2026-11-10T09:00:00+09:00",
-      "log": []
+      "log": [],
+      "photoAt": "",
+      "thumb": ""
     },
     {
       "id": "AURORA-005",
@@ -111,7 +124,9 @@
       "note": "",
       "out": null,
       "updatedAt": "2026-11-10T09:00:00+09:00",
-      "log": []
+      "log": [],
+      "photoAt": "",
+      "thumb": ""
     },
     {
       "id": "AURORA-006",
@@ -133,7 +148,9 @@
       "note": "",
       "out": null,
       "updatedAt": "2026-11-10T09:00:00+09:00",
-      "log": []
+      "log": [],
+      "photoAt": "",
+      "thumb": ""
     },
     {
       "id": "AURORA-007",
@@ -155,7 +172,9 @@
       "note": "",
       "out": null,
       "updatedAt": "2026-11-10T09:00:00+09:00",
-      "log": []
+      "log": [],
+      "photoAt": "",
+      "thumb": ""
     },
     {
       "id": "AURORA-008",
@@ -177,7 +196,9 @@
       "note": "",
       "out": null,
       "updatedAt": "2026-11-10T09:00:00+09:00",
-      "log": []
+      "log": [],
+      "photoAt": "",
+      "thumb": ""
     },
     {
       "id": "AURORA-009",
@@ -199,7 +220,9 @@
       "note": "",
       "out": null,
       "updatedAt": "2026-11-10T09:00:00+09:00",
-      "log": []
+      "log": [],
+      "photoAt": "",
+      "thumb": ""
     },
     {
       "id": "AURORA-010",
@@ -221,7 +244,9 @@
       "note": "",
       "out": null,
       "updatedAt": "2026-11-10T09:00:00+09:00",
-      "log": []
+      "log": [],
+      "photoAt": "",
+      "thumb": ""
     },
     {
       "id": "AURORA-011",
@@ -243,7 +268,9 @@
       "note": "",
       "out": null,
       "updatedAt": "2026-11-10T09:00:00+09:00",
-      "log": []
+      "log": [],
+      "photoAt": "",
+      "thumb": ""
     },
     {
       "id": "AURORA-012",
@@ -265,7 +292,9 @@
       "note": "",
       "out": null,
       "updatedAt": "2026-11-10T09:00:00+09:00",
-      "log": []
+      "log": [],
+      "photoAt": "",
+      "thumb": ""
     },
     {
       "id": "AURORA-013",
@@ -287,7 +316,9 @@
       "note": "",
       "out": null,
       "updatedAt": "2026-11-10T09:00:00+09:00",
-      "log": []
+      "log": [],
+      "photoAt": "",
+      "thumb": ""
     },
     {
       "id": "AURORA-014",
@@ -309,7 +340,9 @@
       "note": "",
       "out": null,
       "updatedAt": "2026-11-10T09:00:00+09:00",
-      "log": []
+      "log": [],
+      "photoAt": "",
+      "thumb": ""
     },
     {
       "id": "AURORA-015",
@@ -331,7 +364,9 @@
       "note": "",
       "out": null,
       "updatedAt": "2026-11-10T09:00:00+09:00",
-      "log": []
+      "log": [],
+      "photoAt": "",
+      "thumb": ""
     },
     {
       "id": "AURORA-016",
@@ -353,7 +388,9 @@
       "note": "",
       "out": null,
       "updatedAt": "2026-11-10T09:00:00+09:00",
-      "log": []
+      "log": [],
+      "photoAt": "",
+      "thumb": ""
     },
     {
       "id": "AURORA-017",
@@ -375,7 +412,9 @@
       "note": "",
       "out": null,
       "updatedAt": "2026-11-10T09:00:00+09:00",
-      "log": []
+      "log": [],
+      "photoAt": "",
+      "thumb": ""
     },
     {
       "id": "AURORA-018",
@@ -397,7 +436,9 @@
       "note": "",
       "out": null,
       "updatedAt": "2026-11-10T09:00:00+09:00",
-      "log": []
+      "log": [],
+      "photoAt": "",
+      "thumb": ""
     },
     {
       "id": "AURORA-019",
@@ -419,7 +460,9 @@
       "note": "",
       "out": null,
       "updatedAt": "2026-11-10T09:00:00+09:00",
-      "log": []
+      "log": [],
+      "photoAt": "",
+      "thumb": ""
     },
     {
       "id": "AURORA-020",
@@ -441,7 +484,9 @@
       "note": "",
       "out": null,
       "updatedAt": "2026-11-10T09:00:00+09:00",
-      "log": []
+      "log": [],
+      "photoAt": "",
+      "thumb": ""
     },
     {
       "id": "AURORA-021",
@@ -463,7 +508,9 @@
       "note": "",
       "out": null,
       "updatedAt": "2026-11-10T09:00:00+09:00",
-      "log": []
+      "log": [],
+      "photoAt": "",
+      "thumb": ""
     },
     {
       "id": "AURORA-022",
@@ -485,7 +532,9 @@
       "note": "",
       "out": null,
       "updatedAt": "2026-11-10T09:00:00+09:00",
-      "log": []
+      "log": [],
+      "photoAt": "",
+      "thumb": ""
     },
     {
       "id": "AURORA-023",
@@ -507,7 +556,9 @@
       "note": "",
       "out": null,
       "updatedAt": "2026-11-10T09:00:00+09:00",
-      "log": []
+      "log": [],
+      "photoAt": "",
+      "thumb": ""
     },
     {
       "id": "AURORA-024",
@@ -529,7 +580,9 @@
       "note": "",
       "out": null,
       "updatedAt": "2026-11-10T09:00:00+09:00",
-      "log": []
+      "log": [],
+      "photoAt": "",
+      "thumb": ""
     },
     {
       "id": "AURORA-025",
@@ -551,7 +604,9 @@
       "note": "",
       "out": null,
       "updatedAt": "2026-11-10T09:00:00+09:00",
-      "log": []
+      "log": [],
+      "photoAt": "",
+      "thumb": ""
     },
     {
       "id": "AURORA-026",
@@ -573,7 +628,9 @@
       "note": "",
       "out": null,
       "updatedAt": "2026-11-10T09:00:00+09:00",
-      "log": []
+      "log": [],
+      "photoAt": "",
+      "thumb": ""
     },
     {
       "id": "AURORA-027",
@@ -595,7 +652,9 @@
       "note": "",
       "out": null,
       "updatedAt": "2026-11-10T09:00:00+09:00",
-      "log": []
+      "log": [],
+      "photoAt": "",
+      "thumb": ""
     },
     {
       "id": "AURORA-028",
@@ -617,7 +676,9 @@
       "note": "",
       "out": null,
       "updatedAt": "2026-11-10T09:00:00+09:00",
-      "log": []
+      "log": [],
+      "photoAt": "",
+      "thumb": ""
     },
     {
       "id": "AURORA-029",
@@ -639,7 +700,9 @@
       "note": "",
       "out": null,
       "updatedAt": "2026-11-10T09:00:00+09:00",
-      "log": []
+      "log": [],
+      "photoAt": "",
+      "thumb": ""
     },
     {
       "id": "AURORA-030",
@@ -661,7 +724,9 @@
       "note": "",
       "out": null,
       "updatedAt": "2026-11-10T09:00:00+09:00",
-      "log": []
+      "log": [],
+      "photoAt": "",
+      "thumb": ""
     },
     {
       "id": "AURORA-031",
@@ -683,7 +748,9 @@
       "note": "",
       "out": null,
       "updatedAt": "2026-11-10T09:00:00+09:00",
-      "log": []
+      "log": [],
+      "photoAt": "",
+      "thumb": ""
     },
     {
       "id": "AURORA-032",
@@ -705,7 +772,9 @@
       "note": "",
       "out": null,
       "updatedAt": "2026-11-10T09:00:00+09:00",
-      "log": []
+      "log": [],
+      "photoAt": "",
+      "thumb": ""
     },
     {
       "id": "AURORA-033",
@@ -727,7 +796,9 @@
       "note": "",
       "out": null,
       "updatedAt": "2026-11-10T09:00:00+09:00",
-      "log": []
+      "log": [],
+      "photoAt": "",
+      "thumb": ""
     },
     {
       "id": "AURORA-034",
@@ -749,7 +820,9 @@
       "note": "",
       "out": null,
       "updatedAt": "2026-11-10T09:00:00+09:00",
-      "log": []
+      "log": [],
+      "photoAt": "",
+      "thumb": ""
     },
     {
       "id": "AURORA-035",
@@ -771,7 +844,9 @@
       "note": "",
       "out": null,
       "updatedAt": "2026-11-10T09:00:00+09:00",
-      "log": []
+      "log": [],
+      "photoAt": "",
+      "thumb": ""
     },
     {
       "id": "AURORA-036",
@@ -793,7 +868,9 @@
       "note": "",
       "out": null,
       "updatedAt": "2026-11-10T09:00:00+09:00",
-      "log": []
+      "log": [],
+      "photoAt": "",
+      "thumb": ""
     },
     {
       "id": "AURORA-037",
@@ -815,7 +892,9 @@
       "note": "",
       "out": null,
       "updatedAt": "2026-11-10T09:00:00+09:00",
-      "log": []
+      "log": [],
+      "photoAt": "",
+      "thumb": ""
     },
     {
       "id": "AURORA-038",
@@ -837,7 +916,9 @@
       "note": "",
       "out": null,
       "updatedAt": "2026-11-10T09:00:00+09:00",
-      "log": []
+      "log": [],
+      "photoAt": "",
+      "thumb": ""
     },
     {
       "id": "AURORA-039",
@@ -859,7 +940,9 @@
       "note": "",
       "out": null,
       "updatedAt": "2026-11-10T09:00:00+09:00",
-      "log": []
+      "log": [],
+      "photoAt": "",
+      "thumb": ""
     },
     {
       "id": "AURORA-040",
@@ -881,7 +964,9 @@
       "note": "",
       "out": null,
       "updatedAt": "2026-11-10T09:00:00+09:00",
-      "log": []
+      "log": [],
+      "photoAt": "",
+      "thumb": ""
     },
     {
       "id": "AURORA-041",
@@ -903,7 +988,9 @@
       "note": "",
       "out": null,
       "updatedAt": "2026-11-10T09:00:00+09:00",
-      "log": []
+      "log": [],
+      "photoAt": "",
+      "thumb": ""
     },
     {
       "id": "AURORA-042",
@@ -925,7 +1012,9 @@
       "note": "",
       "out": null,
       "updatedAt": "2026-11-10T09:00:00+09:00",
-      "log": []
+      "log": [],
+      "photoAt": "",
+      "thumb": ""
     },
     {
       "id": "AURORA-043",
@@ -947,7 +1036,9 @@
       "note": "",
       "out": null,
       "updatedAt": "2026-11-10T09:00:00+09:00",
-      "log": []
+      "log": [],
+      "photoAt": "",
+      "thumb": ""
     },
     {
       "id": "AURORA-044",
@@ -969,7 +1060,9 @@
       "note": "",
       "out": null,
       "updatedAt": "2026-11-10T09:00:00+09:00",
-      "log": []
+      "log": [],
+      "photoAt": "",
+      "thumb": ""
     },
     {
       "id": "AURORA-045",
@@ -991,7 +1084,9 @@
       "note": "",
       "out": null,
       "updatedAt": "2026-11-10T09:00:00+09:00",
-      "log": []
+      "log": [],
+      "photoAt": "",
+      "thumb": ""
     },
     {
       "id": "AURORA-046",
@@ -1013,7 +1108,9 @@
       "note": "",
       "out": null,
       "updatedAt": "2026-11-10T09:00:00+09:00",
-      "log": []
+      "log": [],
+      "photoAt": "",
+      "thumb": ""
     },
     {
       "id": "AURORA-047",
@@ -1035,7 +1132,9 @@
       "note": "",
       "out": null,
       "updatedAt": "2026-11-10T09:00:00+09:00",
-      "log": []
+      "log": [],
+      "photoAt": "",
+      "thumb": ""
     },
     {
       "id": "AURORA-048",
@@ -1057,7 +1156,9 @@
       "note": "",
       "out": null,
       "updatedAt": "2026-11-10T09:00:00+09:00",
-      "log": []
+      "log": [],
+      "photoAt": "",
+      "thumb": ""
     },
     {
       "id": "AURORA-049",
@@ -1079,7 +1180,9 @@
       "note": "",
       "out": null,
       "updatedAt": "2026-11-10T09:00:00+09:00",
-      "log": []
+      "log": [],
+      "photoAt": "",
+      "thumb": ""
     },
     {
       "id": "AURORA-050",
@@ -1101,7 +1204,9 @@
       "note": "",
       "out": null,
       "updatedAt": "2026-11-10T09:00:00+09:00",
-      "log": []
+      "log": [],
+      "photoAt": "",
+      "thumb": ""
     },
     {
       "id": "AURORA-051",
@@ -1123,7 +1228,9 @@
       "note": "",
       "out": null,
       "updatedAt": "2026-11-10T09:00:00+09:00",
-      "log": []
+      "log": [],
+      "photoAt": "",
+      "thumb": ""
     },
     {
       "id": "AURORA-052",
@@ -1145,7 +1252,9 @@
       "note": "",
       "out": null,
       "updatedAt": "2026-11-10T09:00:00+09:00",
-      "log": []
+      "log": [],
+      "photoAt": "",
+      "thumb": ""
     },
     {
       "id": "AURORA-053",
@@ -1167,7 +1276,9 @@
       "note": "",
       "out": null,
       "updatedAt": "2026-11-10T09:00:00+09:00",
-      "log": []
+      "log": [],
+      "photoAt": "",
+      "thumb": ""
     },
     {
       "id": "AURORA-054",
@@ -1189,7 +1300,9 @@
       "note": "",
       "out": null,
       "updatedAt": "2026-11-10T09:00:00+09:00",
-      "log": []
+      "log": [],
+      "photoAt": "",
+      "thumb": ""
     },
     {
       "id": "AURORA-055",
@@ -1211,7 +1324,9 @@
       "note": "",
       "out": null,
       "updatedAt": "2026-11-10T09:00:00+09:00",
-      "log": []
+      "log": [],
+      "photoAt": "",
+      "thumb": ""
     },
     {
       "id": "AURORA-056",
@@ -1233,7 +1348,9 @@
       "note": "",
       "out": null,
       "updatedAt": "2026-11-10T09:00:00+09:00",
-      "log": []
+      "log": [],
+      "photoAt": "",
+      "thumb": ""
     },
     {
       "id": "AURORA-057",
@@ -1255,7 +1372,9 @@
       "note": "",
       "out": null,
       "updatedAt": "2026-11-10T09:00:00+09:00",
-      "log": []
+      "log": [],
+      "photoAt": "",
+      "thumb": ""
     },
     {
       "id": "AURORA-058",
@@ -1277,7 +1396,9 @@
       "note": "",
       "out": null,
       "updatedAt": "2026-11-10T09:00:00+09:00",
-      "log": []
+      "log": [],
+      "photoAt": "",
+      "thumb": ""
     },
     {
       "id": "AURORA-059",
@@ -1299,7 +1420,9 @@
       "note": "",
       "out": null,
       "updatedAt": "2026-11-10T09:00:00+09:00",
-      "log": []
+      "log": [],
+      "photoAt": "",
+      "thumb": ""
     },
     {
       "id": "AURORA-060",
@@ -1321,7 +1444,9 @@
       "note": "",
       "out": null,
       "updatedAt": "2026-11-10T09:00:00+09:00",
-      "log": []
+      "log": [],
+      "photoAt": "",
+      "thumb": ""
     },
     {
       "id": "AURORA-061",
@@ -1343,7 +1468,9 @@
       "note": "",
       "out": null,
       "updatedAt": "2026-11-10T09:00:00+09:00",
-      "log": []
+      "log": [],
+      "photoAt": "",
+      "thumb": ""
     },
     {
       "id": "AURORA-062",
@@ -1365,7 +1492,9 @@
       "note": "",
       "out": null,
       "updatedAt": "2026-11-10T09:00:00+09:00",
-      "log": []
+      "log": [],
+      "photoAt": "",
+      "thumb": ""
     },
     {
       "id": "AURORA-063",
@@ -1387,7 +1516,9 @@
       "note": "",
       "out": null,
       "updatedAt": "2026-11-10T09:00:00+09:00",
-      "log": []
+      "log": [],
+      "photoAt": "",
+      "thumb": ""
     },
     {
       "id": "AURORA-064",
@@ -1409,7 +1540,9 @@
       "note": "",
       "out": null,
       "updatedAt": "2026-11-10T09:00:00+09:00",
-      "log": []
+      "log": [],
+      "photoAt": "",
+      "thumb": ""
     },
     {
       "id": "AURORA-065",
@@ -1431,7 +1564,9 @@
       "note": "",
       "out": null,
       "updatedAt": "2026-11-10T09:00:00+09:00",
-      "log": []
+      "log": [],
+      "photoAt": "",
+      "thumb": ""
     },
     {
       "id": "AURORA-066",
@@ -1453,7 +1588,9 @@
       "note": "",
       "out": null,
       "updatedAt": "2026-11-10T09:00:00+09:00",
-      "log": []
+      "log": [],
+      "photoAt": "",
+      "thumb": ""
     },
     {
       "id": "AURORA-067",
@@ -1475,7 +1612,9 @@
       "note": "",
       "out": null,
       "updatedAt": "2026-11-10T09:00:00+09:00",
-      "log": []
+      "log": [],
+      "photoAt": "",
+      "thumb": ""
     },
     {
       "id": "AURORA-068",
@@ -1497,7 +1636,9 @@
       "note": "",
       "out": null,
       "updatedAt": "2026-11-10T09:00:00+09:00",
-      "log": []
+      "log": [],
+      "photoAt": "",
+      "thumb": ""
     },
     {
       "id": "AURORA-069",
@@ -1519,7 +1660,9 @@
       "note": "",
       "out": null,
       "updatedAt": "2026-11-10T09:00:00+09:00",
-      "log": []
+      "log": [],
+      "photoAt": "",
+      "thumb": ""
     },
     {
       "id": "AURORA-070",
@@ -1541,7 +1684,9 @@
       "note": "",
       "out": null,
       "updatedAt": "2026-11-10T09:00:00+09:00",
-      "log": []
+      "log": [],
+      "photoAt": "",
+      "thumb": ""
     },
     {
       "id": "AURORA-071",
@@ -1563,7 +1708,9 @@
       "note": "",
       "out": null,
       "updatedAt": "2026-11-10T09:00:00+09:00",
-      "log": []
+      "log": [],
+      "photoAt": "",
+      "thumb": ""
     },
     {
       "id": "AURORA-072",
@@ -1585,7 +1732,9 @@
       "note": "",
       "out": null,
       "updatedAt": "2026-11-10T09:00:00+09:00",
-      "log": []
+      "log": [],
+      "photoAt": "",
+      "thumb": ""
     },
     {
       "id": "AURORA-073",
@@ -1607,7 +1756,9 @@
       "note": "",
       "out": null,
       "updatedAt": "2026-11-10T09:00:00+09:00",
-      "log": []
+      "log": [],
+      "photoAt": "",
+      "thumb": ""
     },
     {
       "id": "AURORA-074",
@@ -1629,7 +1780,9 @@
       "note": "",
       "out": null,
       "updatedAt": "2026-11-10T09:00:00+09:00",
-      "log": []
+      "log": [],
+      "photoAt": "",
+      "thumb": ""
     },
     {
       "id": "AURORA-075",
@@ -1651,7 +1804,9 @@
       "note": "",
       "out": null,
       "updatedAt": "2026-11-10T09:00:00+09:00",
-      "log": []
+      "log": [],
+      "photoAt": "",
+      "thumb": ""
     },
     {
       "id": "AURORA-076",
@@ -1673,7 +1828,9 @@
       "note": "",
       "out": null,
       "updatedAt": "2026-11-10T09:00:00+09:00",
-      "log": []
+      "log": [],
+      "photoAt": "",
+      "thumb": ""
     },
     {
       "id": "AURORA-077",
@@ -1695,7 +1852,9 @@
       "note": "",
       "out": null,
       "updatedAt": "2026-11-10T09:00:00+09:00",
-      "log": []
+      "log": [],
+      "photoAt": "",
+      "thumb": ""
     },
     {
       "id": "AURORA-078",
@@ -1717,7 +1876,9 @@
       "note": "",
       "out": null,
       "updatedAt": "2026-11-10T09:00:00+09:00",
-      "log": []
+      "log": [],
+      "photoAt": "",
+      "thumb": ""
     },
     {
       "id": "AURORA-079",
@@ -1739,7 +1900,9 @@
       "note": "",
       "out": null,
       "updatedAt": "2026-11-10T09:00:00+09:00",
-      "log": []
+      "log": [],
+      "photoAt": "",
+      "thumb": ""
     }
   ],
   "audit": {
