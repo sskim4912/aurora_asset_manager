@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-11-10T06:55:39.829Z",
+  "updatedAt": "2026-11-10T06:55:48.886Z",
   "assets": [
     {
       "id": "AUR-001",
@@ -35,11 +35,11 @@
       "location": "OSBL B구역 외곽",
       "lat": 36.7795,
       "lng": 126.549,
-      "status": "정상",
+      "status": "점검필요",
       "nextCheck": "",
       "rentalDue": "2026-11-20",
       "note": "",
-      "updatedAt": "2026-11-10T09:00:00+09:00"
+      "updatedAt": "2026-11-10T06:55:48.886Z"
     },
     {
       "id": "AUR-004",
