@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>오로라 현장 비품 관리 시스템</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- QRCode.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <!-- SheetJS (xlsx) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- Firebase SDK (v9 Compat) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+    <!-- Naver Maps API (Replace YOUR_CLIENT_ID with real NCP Client ID) -->
+    <script type="text/javascript" src="https://oapi.map.naver.com/openapi/v3/maps.js?ncpClientId=YOUR_CLIENT_ID"></script>
+
+    <style>
+        @media print {
+            body * { visibility: hidden; }
+            #printArea, #printArea * { visibility: visible; }
+            #printArea { position: absolute; left: 0; top: 0; width: 100%; }
+            .page-break { page-break-after: always; break-after: page; }
+            .qr-card { break-inside: avoid; page-break-inside: avoid; }
+        }
+        .a3-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 7cm);
+            gap: 0.5cm;
+            justify-content: center;
+        }
+        .qr-box {
+            width: 7cm;
+            height: 7cm;
+            border: 3px solid #000;
+            padding: 0.4cm;
+            box-sizing: border-box;
+            background: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans min-h-screen">
+
+    <!-- LOGIN MODAL -->
+    <div id="loginModal" class="fixed inset-0 bg-slate-900/80 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 text-center">
+            <div class="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 text-white text-2xl">
+                <i class="fa-solid fa-shield-halved"></i>
+            </div>
+            <h2 class="text-2xl font-bold text-slate-900 mb-2">관리자 로그인</h2>
+            <p class="text-slate-500 text-sm mb-6">오로라 현장 스마트 비품 관리 시스템</p>
+            <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4">
+                <input type="password" id="adminPassword" placeholder="관리자 비밀번호 입력" required
+                    class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none text-center text-lg">
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition duration-200">
+                    시스템 접속
+                </button>
+            </form>
+            <p id="loginError" class="text-red-500 text-xs mt-3 hidden">비밀번호가 올바르지 않습니다.</p>
+        </div>
+    </div>
+
+    <!-- MAIN APP WRAPPER -->
+    <div id="app" class="hidden min-h-screen flex flex-col">
+
+        <!-- HEADER -->
+        <header class="bg-slate-900 text-white shadow-lg sticky top-0 z-40">
+            <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+                <div class="flex items-center space-x-3">
+                    <i class="fa-solid fa-boxes-stacked text-blue-400 text-2xl"></i>
+                    <h1 class="font-bold text-lg md:text-xl tracking-tight">AURORA ASSET MANAGER</h1>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <span id="userInfo" class="text-xs bg-slate-800 text-slate-300 px-3 py-1.5 rounded-full border border-slate-700">관리자 인증됨</span>
+                    <button onclick="logout()" class="text-xs text-slate-400 hover:text-white px-2 py-1"><i class="fa-solid fa-right-from-bracket"></i></button>
+                </div>
+            </div>
+
+            <!-- TAB NAVIGATION -->
+            <nav class="bg-slate-800 border-t border-slate-700">
+                <div class="max-w-7xl mx-auto px-4 flex space-x-1 md:space-x-4 overflow-x-auto">
+                    <button onclick="switchTab('dashboard')" id="tab-dashboard" class="tab-btn px-4 py-3 font-semibold text-sm border-b-2 border-blue-500 text-blue-400 flex items-center space-x-2">
+                        <i class="fa-solid fa-table-list"></i><span>통합 대시보드</span>
+                    </button>
+                    <button onclick="switchTab('map')" id="tab-map" class="tab-btn px-4 py-3 font-semibold text-sm border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center space-x-2">
+                        <i class="fa-solid fa-map-location-dot"></i><span>지도 위치 보기</span>
+                    </button>
+                    <button onclick="switchTab('upload')" id="tab-upload" class="tab-btn px-4 py-3 font-semibold text-sm border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center space-x-2">
+                        <i class="fa-solid fa-file-excel"></i><span>엑셀 증분 업로드 & QR 출력</span>
+                    </button>
+                    <button onclick="switchTab('mobile-scan')" id="tab-mobile-scan" class="tab-btn px-4 py-3 font-semibold text-sm border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center space-x-2">
+                        <i class="fa-solid fa-qrcode"></i><span>모바일 스캔 (시연)</span>
+                    </button>
+                </div>
+            </nav>
+        </header>
+
+        <!-- MAIN CONTENT CONTAINER -->
+        <main class="max-w-7xl mx-auto px-4 py-6 flex-1 w-full">
+
+            <!-- TAB 1: DASHBOARD -->
+            <section id="sec-dashboard" class="space-y-6">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+                    <div class="flex items-center space-x-3 w-full md:w-auto">
+                        <div class="relative w-full md:w-80">
+                            <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-400"></i>
+                            <input type="text" id="searchInput" oninput="renderDashboardTable()" placeholder="관리번호, 품명 검색..."
+                                class="w-full pl-9 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                        </div>
+                        <select id="zoneFilter" onchange="renderDashboardTable()" class="py-2 px-3 border border-slate-300 rounded-lg text-sm bg-white focus:outline-none">
+                            <option value="">전체 구역</option>
+                            <option value="OSBL">OSBL</option>
+                            <option value="ISBL">ISBL</option>
+                            <option value="메인 사무실">메인 사무실</option>
+                            <option value="자재창고">자재창고</option>
+                            <option value="기타">기타</option>
+                        </select>
+                    </div>
+                    <div class="flex items-center space-x-2 w-full md:w-auto justify-end">
+                        <button onclick="exportToExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center space-x-2 shadow">
+                            <i class="fa-solid fa-file-export"></i><span>최종 엑셀 다운로드</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ASSET TABLE -->
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold uppercase text-xs">
+                                <tr>
+                                    <th class="py-3 px-4">관리번호</th>
+                                    <th class="py-3 px-4">품명</th>
+                                    <th class="py-3 px-4">규격</th>
+                                    <th class="py-3 px-4">현재 구역</th>
+                                    <th class="py-3 px-4">최신 사진</th>
+                                    <th class="py-3 px-4">최종 갱신일</th>
+                                    <th class="py-3 px-4">상태</th>
+                                </tr>
+                            </thead>
+                            <tbody id="assetTableBody" class="divide-y divide-slate-100">
+                                <!-- Dynamic rows -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 2: NAVER MAP -->
+            <section id="sec-map" class="hidden space-y-4">
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex justify-between items-center">
+                    <h2 class="font-bold text-slate-800 flex items-center space-x-2">
+                        <i class="fa-solid fa-map-pin text-red-500"></i>
+                        <span>현장 비품 GPS 정밀 시각화</span>
+                    </h2>
+                    <span class="text-xs text-slate-500">마커 클릭 시 사진 및 정밀 위치 팝업</span>
+                </div>
+                <div id="map" class="w-full h-[600px] rounded-xl shadow-inner border border-slate-300 bg-slate-200"></div>
+            </section>
+
+            <!-- TAB 3: INCREMENTAL EXCEL UPLOAD & A3 QR PRINT -->
+            <section id="sec-upload" class="hidden space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Excel Incremental Upload Card -->
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 space-y-4">
+                        <h3 class="font-bold text-slate-800 text-base flex items-center space-x-2">
+                            <i class="fa-solid fa-file-circle-plus text-blue-600"></i>
+                            <span>1. 엑셀 스마트 증분 업로드</span>
+                        </h3>
+                        <p class="text-xs text-slate-500 leading-relaxed">
+                            기존 업로드 리스트에 새 행을 추가하여 다시 업로드하세요. 중복된 관리번호(ID)는 스킵되며, 빈 칸은 <code class="bg-slate-100 px-1 py-0.5 rounded">AURORA-XXX</code>로 자동 채번됩니다.
+                        </p>
+                        <input type="file" id="excelFileInput" accept=".xlsx, .xls" class="block w-full text-sm text-slate-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer">
+                        <button onclick="processExcelUpload()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg text-sm transition">
+                            증분 업로드 실행
+                        </button>
+                    </div>
+
+                    <!-- QR Print Action Card -->
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 space-y-4">
+                        <h3 class="font-bold text-slate-800 text-base flex items-center space-x-2">
+                            <i class="fa-solid fa-print text-emerald-600"></i>
+                            <span>2. A3 규격 7cm x 7cm QR 라벨 일괄 출력</span>
+                        </h3>
+                        <p class="text-xs text-slate-500 leading-relaxed">
+                            등록된 전체 자산의 라벨을 A3 용지 규격에 맞춰 7cm x 7cm 진한 바둑판 형태로 인쇄합니다. 다중 페이지도 깨짐 없이 출력됩니다.
+                        </p>
+                        <button onclick="prepareAndPrintQR()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-lg text-sm transition flex items-center justify-center space-x-2">
+                            <i class="fa-solid fa-print"></i><span>A3 라벨 인쇄 미리보기 및 출력</span>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 4: MOBILE SCAN SIMULATOR -->
+            <section id="sec-mobile-scan" class="hidden max-w-md mx-auto bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden space-y-4 p-6">
+                <div class="text-center border-b border-slate-100 pb-4">
+                    <span class="bg-blue-100 text-blue-800 text-xs font-bold px-2.5 py-1 rounded-full uppercase">Mobile UI View</span>
+                    <h3 id="mobileAssetId" class="text-xl font-bold text-slate-900 mt-2">AURORA-001</h3>
+                    <p id="mobileAssetName" class="text-slate-600 text-sm">LG 30평형 공기청정기</p>
+                </div>
+
+                <!-- Asset Thumbnail -->
+                <div class="relative group cursor-pointer" onclick="openPhotoModal(currentActiveAsset.photo)">
+                    <img id="mobileAssetPhoto" src="https://images.unsplash.com/photo-1585771724684-38269d6639fd?w=500" class="w-full h-48 object-cover rounded-xl shadow-inner">
+                    <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition rounded-xl flex items-center justify-center text-white text-sm font-semibold">
+                        <i class="fa-solid fa-magnifying-glass-plus mr-1"></i> 크게 보기
+                    </div>
+                </div>
+
+                <!-- Asset Info Card -->
+                <div class="bg-slate-50 p-4 rounded-xl space-y-2 text-sm">
+                    <div class="flex justify-between"><span class="text-slate-500">현재 구역:</span><span id="mobileAssetZone" class="font-bold text-blue-600">메인 사무실</span></div>
+                    <div class="flex justify-between"><span class="text-slate-500">담당자:</span><span id="mobileAssetManager" class="font-medium text-slate-800">관리팀장 (010-9445-4912)</span></div>
+                    <div class="flex justify-between"><span class="text-slate-500">GPS 좌표:</span><span id="mobileAssetGPS" class="text-xs text-slate-600">36.7891, 126.4561</span></div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="space-y-3 pt-2">
+                    <button onclick="triggerLocationChange()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow text-sm flex items-center justify-center space-x-2">
+                        <i class="fa-solid fa-location-dot"></i><span>📍 위치 이동 등록 (알람 발생)</span>
+                    </button>
+                    <button onclick="document.getElementById('photoInput').click()" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-3 rounded-xl shadow text-sm flex items-center justify-center space-x-2">
+                        <i class="fa-solid fa-camera"></i><span>📷 최신 상태 사진 갱신</span>
+                    </button>
+                    <input type="file" id="photoInput" accept="image/*" capture="environment" class="hidden" onchange="handlePhotoUpload(event)">
+                </div>
+
+                <!-- Zone Selector (Hidden until clicked) -->
+                <div id="zoneSelectorBox" class="hidden bg-amber-50 border border-amber-200 p-4 rounded-xl space-y-3">
+                    <p class="text-xs font-bold text-amber-900">새로운 5대 구역을 선택하세요 (GPS 자동 수집):</p>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="selectZone('OSBL')" class="bg-white border border-slate-300 py-2 rounded-lg text-sm font-bold text-slate-700 hover:bg-blue-50 hover:border-blue-500">OSBL</button>
+                        <button onclick="selectZone('ISBL')" class="bg-white border border-slate-300 py-2 rounded-lg text-sm font-bold text-slate-700 hover:bg-blue-50 hover:border-blue-500">ISBL</button>
+                        <button onclick="selectZone('메인 사무실')" class="bg-white border border-slate-300 py-2 rounded-lg text-sm font-bold text-slate-700 hover:bg-blue-50 hover:border-blue-500">메인 사무실</button>
+                        <button onclick="selectZone('자재창고')" class="bg-white border border-slate-300 py-2 rounded-lg text-sm font-bold text-slate-700 hover:bg-blue-50 hover:border-blue-500">자재창고</button>
+                        <button onclick="selectZone('기타')" class="col-span-2 bg-white border border-slate-300 py-2 rounded-lg text-sm font-bold text-slate-700 hover:bg-blue-50 hover:border-blue-500">기타 / 야외</button>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- PHOTO MODAL (INTERACTION MODAL) -->
+    <div id="photoModal" class="fixed inset-0 bg-black/90 z-50 hidden flex items-center justify-center p-4 cursor-pointer" onclick="closePhotoModal()">
+        <div class="relative max-w-3xl w-full">
+            <img id="modalImage" src="" class="w-full max-h-[85vh] object-contain rounded-lg shadow-2xl">
+            <p class="text-white/70 text-center text-xs mt-3">화면을 다시 터치/클릭하면 닫힙니다.</p>
+        </div>
+    </div>
+
+    <!-- PRINT CONTAINER (FOR PRINT ONLY) -->
+    <div id="printArea" class="hidden">
+        <div id="qrPrintGrid" class="a3-grid p-4"></div>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // 1. Initial Mock Assets Database
+        let assets = [
+            { id: "AURORA-001", name: "LG 30평형 공기청정기", spec: "AS300DWFR", zone: "메인 사무실", manager: "관리팀장", lat: 36.7891, lng: 126.4561, photo: "https://images.unsplash.com/photo-1585771724684-38269d6639fd?w=500", date: "2026-11-05", status: "양호" },
+            { id: "AURORA-002", name: "스마트 컨테이너 사무실", spec: "3m x 6m", zone: "OSBL", manager: "한동준 PD", lat: 36.7895, lng: 126.4572, photo: "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=500", date: "2026-11-04", status: "양호" },
+            { id: "AURORA-003", name: "디젤 이동식 발전기", spec: "50kVA", zone: "ISBL", manager: "우성민 CM", lat: 36.7888, lng: 126.4550, photo: "https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=500", date: "2026-11-03", status: "점검필요" },
+            { id: "AURORA-004", name: "75인치 회의용 TV", spec: "4K UHD", zone: "메인 사무실", manager: "민병인 DCM", lat: 36.7892, lng: 126.4563, photo: "https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?w=500", date: "2026-11-02", status: "양호" },
+            { id: "AURORA-005", name: "산업용 온풍기", spec: "18형", zone: "자재창고", manager: "조영욱 PM", lat: 36.7882, lng: 126.4580, photo: "https://images.unsplash.com/photo-1618941723637-f831f28b7596?w=500", date: "2026-11-01", status: "양호" }
+        ];
+
+        let currentActiveAsset = assets[0];
+        let mapInstance = null;
+
+        // 2. Authentication (Password: 230880)
+        function handleLogin(e) {
+            e.preventDefault();
+            const pw = document.getElementById('adminPassword').value;
+            if (pw === "230880") {
+                document.getElementById('loginModal').classList.add('hidden');
+                document.getElementById('app').classList.remove('hidden');
+                renderDashboardTable();
+            } else {
+                document.getElementById('loginError').classList.remove('hidden');
+            }
+        }
+
+        function logout() {
+            location.reload();
+        }
+
+        // 3. Tab Switching
+        function switchTab(tabId) {
+            ['dashboard', 'map', 'upload', 'mobile-scan'].forEach(id => {
+                document.getElementById(`sec-${id}`).classList.add('hidden');
+                const btn = document.getElementById(`tab-${id}`);
+                btn.classList.remove('border-blue-500', 'text-blue-400');
+                btn.classList.add('border-transparent', 'text-slate-400');
+            });
+
+            document.getElementById(`sec-${tabId}`).classList.remove('hidden');
+            const activeBtn = document.getElementById(`tab-${tabId}`);
+            activeBtn.classList.add('border-blue-500', 'text-blue-400');
+            activeBtn.classList.remove('border-transparent', 'text-slate-400');
+
+            if (tabId === 'map') {
+                initNaverMap();
+            }
+        }
+
+        // 4. Render Dashboard Table
+        function renderDashboardTable() {
+            const tbody = document.getElementById('assetTableBody');
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const zone = document.getElementById('zoneFilter').value;
+
+            const filtered = assets.filter(a => {
+                const matchSearch = a.id.toLowerCase().includes(search) || a.name.toLowerCase().includes(search);
+                const matchZone = !zone || a.zone === zone;
+                return matchSearch && matchZone;
+            });
+
+            tbody.innerHTML = filtered.map(a => `
+                <tr class="hover:bg-slate-50 transition">
+                    <td class="py-3 px-4 font-bold text-blue-600">${a.id}</td>
+                    <td class="py-3 px-4 font-medium text-slate-800">${a.name}</td>
+                    <td class="py-3 px-4 text-slate-500">${a.spec}</td>
+                    <td class="py-3 px-4"><span class="px-2.5 py-1 bg-slate-100 text-slate-700 rounded-full font-semibold text-xs">${a.zone}</span></td>
+                    <td class="py-3 px-4">
+                        <img src="${a.photo}" class="w-10 h-10 object-cover rounded-lg cursor-pointer hover:opacity-80" onclick="openPhotoModal('${a.photo}')">
+                    </td>
+                    <td class="py-3 px-4 text-xs text-slate-500">${a.date}</td>
+                    <td class="py-3 px-4">
+                        <span class="px-2 py-1 text-xs rounded font-bold ${a.status === '양호' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}">${a.status}</span>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // 5. Naver Map Visualization
+        function initNaverMap() {
+            if (typeof naver === 'undefined' || !naver.maps) {
+                console.log("Naver Maps API not loaded. Using fallback map rendering.");
+                return;
+            }
+
+            if (!mapInstance) {
+                mapInstance = new naver.maps.Map('map', {
+                    center: new naver.maps.LatLng(36.7891, 126.4561),
+                    zoom: 16
+                });
+            }
+
+            assets.forEach(a => {
+                const marker = new naver.maps.Marker({
+                    position: new naver.maps.LatLng(a.lat, a.lng),
+                    map: mapInstance,
+                    title: a.name
+                });
+
+                const contentString = `
+                    <div class="p-3 bg-white rounded-xl shadow-xl border border-slate-200" style="width:200px;">
+                        <img src="${a.photo}" class="w-full h-24 object-cover rounded-lg mb-2 cursor-pointer" onclick="openPhotoModal('${a.photo}')">
+                        <p class="font-bold text-blue-600 text-sm">${a.id}</p>
+                        <p class="font-semibold text-slate-800 text-xs">${a.name}</p>
+                        <p class="text-xs text-slate-500 mt-1">📍 ${a.zone}</p>
+                    </div>
+                `;
+
+                const infowindow = new naver.maps.InfoWindow({ content: contentString });
+
+                naver.maps.Event.addListener(marker, "click", function() {
+                    if (infowindow.getMap()) {
+                        infowindow.close();
+                    } else {
+                        infowindow.open(mapInstance, marker);
+                    }
+                });
+            });
+        }
+
+        // 6. Mobile Scan & Geofencing / Location Update
+        function triggerLocationChange() {
+            if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+            playAudioAlert();
+
+            alert("🚨 비품 위치 이동이 감지되었습니다! 새로운 구역을 선택하세요.");
+            document.getElementById('zoneSelectorBox').classList.remove('hidden');
+        }
+
+        function playAudioAlert() {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = ctx.createOscillator();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(880, ctx.currentTime);
+            osc.connect(ctx.destination);
+            osc.start();
+            osc.stop(ctx.currentTime + 0.3);
+        }
+
+        function selectZone(selectedZone) {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(pos => {
+                    currentActiveAsset.lat = pos.coords.latitude;
+                    currentActiveAsset.lng = pos.coords.longitude;
+                });
+            }
+            currentActiveAsset.zone = selectedZone;
+            currentActiveAsset.date = new Date().toISOString().split('T')[0];
+
+            document.getElementById('mobileAssetZone').innerText = selectedZone;
+            document.getElementById('zoneSelectorBox').classList.add('hidden');
+            renderDashboardTable();
+            alert(`✅ ${currentActiveAsset.id}의 위치가 [${selectedZone}] 구역 및 실시간 GPS로 갱신되었습니다.`);
+        }
+
+        function handlePhotoUpload(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    currentActiveAsset.photo = evt.target.result;
+                    document.getElementById('mobileAssetPhoto').src = evt.target.result;
+                    renderDashboardTable();
+                    alert("📷 최신 비품 상태 사진이 등록되었습니다.");
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // 7. Photo Modal
+        function openPhotoModal(src) {
+            document.getElementById('modalImage').src = src;
+            document.getElementById('photoModal').classList.remove('hidden');
+        }
+
+        function closePhotoModal() {
+            document.getElementById('photoModal').classList.add('hidden');
+        }
+
+        // 8. Excel Incremental Upload (SheetJS)
+        function processExcelUpload() {
+            const fileInput = document.getElementById('excelFileInput');
+            if (!fileInput.files.length) return alert("엑셀 파일을 선택하세요.");
+
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+
+            reader.onload = function(e) {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                const rows = XLSX.utils.sheet_to_json(firstSheet);
+
+                let addedCount = 0;
+                rows.forEach(row => {
+                    const existing = assets.find(a => a.id === row['관리번호']);
+                    if (!existing) {
+                        const newId = row['관리번호'] || `AURORA-0${assets.length + 1}`;
+                        assets.push({
+                            id: newId,
+                            name: row['품명'] || "신규 비품",
+                            spec: row['규격'] || "-",
+                            zone: row['현재구역'] || "기타",
+                            manager: row['담당자'] || "관리팀",
+                            lat: 36.7891,
+                            lng: 126.4561,
+                            photo: "https://images.unsplash.com/photo-1585771724684-38269d6639fd?w=500",
+                            date: new Date().toISOString().split('T')[0],
+                            status: "양호"
+                        });
+                        addedCount++;
+                    }
+                });
+
+                renderDashboardTable();
+                alert(`🎉 증분 업로드 완료: 신규 ${addedCount}건 추가됨 (중복 무시 처리됨).`);
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        // 9. Excel Export
+        function exportToExcel() {
+            const wsData = assets.map(a => ({
+                '관리번호': a.id,
+                '품명': a.name,
+                '규격': a.spec,
+                '현재구역': a.zone,
+                '담당자': a.manager,
+                'GPS_위도': a.lat,
+                'GPS_경도': a.lng,
+                '최종갱신일': a.date,
+                '상태': a.status
+            }));
+
+            const ws = XLSX.utils.json_to_sheet(wsData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "비품현황");
+            XLSX.writeFile(wb, `오로라현장_비품관리_최종_${new Date().toISOString().split('T')[0]}.xlsx`);
+        }
+
+        // 10. A3 QR Print Preparation
+        function prepareAndPrintQR() {
+            const printGrid = document.getElementById('qrPrintGrid');
+            printGrid.innerHTML = '';
+
+            assets.forEach(a => {
+                const card = document.createElement('div');
+                card.className = 'qr-card flex justify-center items-center mb-2';
+
+                const box = document.createElement('div');
+                box.className = 'qr-box';
+
+                const title = document.createElement('p');
+                title.className = 'font-bold text-xs text-center border-b border-black pb-1 w-full';
+                title.innerText = a.name;
+
+                const qrDiv = document.createElement('div');
+                qrDiv.className = 'my-auto';
+
+                new QRCode(qrDiv, {
+                    text: `https://aurora.project.com/scan?id=${a.id}`,
+                    width: 140,
+                    height: 140,
+                    colorDark : "#000000",
+                    colorLight : "#ffffff",
+                    correctLevel : QRCode.CorrectLevel.H
+                });
+
+                const idLabel = document.createElement('p');
+                idLabel.className = 'font-black text-sm text-center border-t border-black pt-1 w-full tracking-wider';
+                idLabel.innerText = a.id;
+
+                box.appendChild(title);
+                box.appendChild(qrDiv);
+                box.appendChild(idLabel);
+                card.appendChild(box);
+                printGrid.appendChild(card);
+            });
+
+            document.getElementById('printArea').classList.remove('hidden');
+            window.print();
+            document.getElementById('printArea').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
