@@ -1,0 +1,71 @@
+{
+  "version": 1,
+  "updatedAt": "2026-11-10T06:54:12.332Z",
+  "assets": [
+    {
+      "id": "AUR-001",
+      "name": "OSBL 메인 배관 파이프 자재 (STS 304)",
+      "category": "자재",
+      "location": "OSBL 야적장 A구역",
+      "lat": 36.7801,
+      "lng": 126.5502,
+      "status": "사용중",
+      "nextCheck": "",
+      "rentalDue": "",
+      "note": "",
+      "updatedAt": "2026-11-10T06:54:12.332Z"
+    },
+    {
+      "id": "AUR-002",
+      "name": "인버터 용접기 500A",
+      "category": "장비",
+      "location": "ISBL 메인 구조물동",
+      "lat": 36.7812,
+      "lng": 126.5515,
+      "status": "사용중",
+      "nextCheck": "2026-12-01",
+      "rentalDue": "",
+      "note": "",
+      "updatedAt": "2026-11-10T09:00:00+09:00"
+    },
+    {
+      "id": "AUR-003",
+      "name": "고소작업대 (렌탈 장비)",
+      "category": "장비",
+      "location": "OSBL B구역 외곽",
+      "lat": 36.7795,
+      "lng": 126.549,
+      "status": "정상",
+      "nextCheck": "",
+      "rentalDue": "2026-11-20",
+      "note": "",
+      "updatedAt": "2026-11-10T09:00:00+09:00"
+    },
+    {
+      "id": "AUR-004",
+      "name": "현장 전력 분배전반 #3",
+      "category": "전기설비",
+      "location": "변전실 인근",
+      "lat": 36.782,
+      "lng": 126.5522,
+      "status": "점검필요",
+      "nextCheck": "2026-11-05",
+      "rentalDue": "",
+      "note": "차단기 발열 확인 필요",
+      "updatedAt": "2026-11-10T09:00:00+09:00"
+    },
+    {
+      "id": "AUR-005",
+      "name": "품질 검사용 레이저 측정기",
+      "category": "측정기",
+      "location": "품질관리 사무실",
+      "lat": 36.7808,
+      "lng": 126.5498,
+      "status": "정상",
+      "nextCheck": "2026-11-14",
+      "rentalDue": "",
+      "note": "",
+      "updatedAt": "2026-11-10T09:00:00+09:00"
+    }
+  ]
+}
