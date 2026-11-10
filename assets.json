@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "updatedAt": "2026-11-10T09:00:00+09:00",
+  "updatedAt": "2026-11-10T21:41:45.983Z",
   "catalog": {},
   "assets": [
     {
@@ -1663,6 +1663,9 @@
       "updatedAt": "2026-11-10T09:00:00+09:00"
     }
   ],
-  "audit": null,
+  "audit": {
+    "startedAt": "2026-11-10T21:41:45.983Z",
+    "checked": {}
+  },
   "auditLog": []
 }
