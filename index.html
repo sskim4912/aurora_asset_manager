@@ -181,6 +181,10 @@ h1{font-size:25px;margin:0;letter-spacing:-.025em}
 .scan-tags span{background:#fff;border-radius:7px;padding:3px 8px;font-size:12px;font-weight:700;color:var(--ok)}
 .scan-tags span.warn{color:var(--chk)}
 .scan-done{background:var(--acc);color:#fff;border-radius:12px;padding:12px;text-align:center;font-weight:800;margin-bottom:10px}
+.shutter-row{display:flex;justify-content:space-between;align-items:center;margin:14px 4px 4px}
+.shutter{width:72px;height:72px;border-radius:50%;border:5px solid var(--acc);background:#fff;box-shadow:inset 0 0 0 4px #fff,inset 0 0 0 40px var(--acc-bg)}
+.shutter:active{transform:scale(.94)}
+.scanner.photo-mode .scan-frame{display:none}
 .scan-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .scan-btns .btn:only-child{grid-column:1/-1}
 .scan-sub-btns{text-align:center;margin-top:10px}
@@ -1452,7 +1456,7 @@ async function openScanner() {
   SCAN = { stream: null, timer: null, watch: null, pos: null, last: { id: '', at: 0 }, busy: false, detector: null };
   // 위치: 스캐너가 열려 있는 동안 계속 받아 두었다가 찍는 순간 사용
   if (navigator.geolocation) SCAN.watch = navigator.geolocation.watchPosition(
-    p => { if (SCAN) SCAN.pos = { lat: p.coords.latitude, lng: p.coords.longitude, acc: p.coords.accuracy, at: Date.now() }; scanGpsInfo(); },
+    p => { if (SCAN) SCAN.pos = { lat: p.coords.latitude, lng: p.coords.longitude, acc: p.coords.accuracy, at: Date.now() }; scanGpsInfo(); savePendingLoc(); },
     e => { if (SCAN) SCAN.gpsErr = e.code === 1 ? '위치 권한 꺼짐' : '위치 찾는 중…'; scanGpsInfo(); },
     { enableHighAccuracy: true, maximumAge: 5000, timeout: 20000 });
   try {
@@ -1491,7 +1495,7 @@ async function scanLoop() {
   }
   if (SCAN) SCAN.timer = setTimeout(scanLoop, 180);
 }
-function resumeScan() { if (!SCAN) return; SCAN.busy = false; SCAN.photoFor = null; scanUI('scan'); scanLoop(); }
+function resumeScan() { if (!SCAN) return; SCAN.busy = false; SCAN.photoFor = null; SCAN.photoMode = false; $('scanner').classList.remove('photo-mode'); scanUI('scan'); scanLoop(); }
 
 /* 스캔 결과 처리: 실사 확인 · 미발견 해제 · 위치 저장을 한 번에 저장 */
 async function onScan(id) {
@@ -1499,11 +1503,24 @@ async function onScan(id) {
   if (navigator.vibrate) navigator.vibrate(80);
   const a = getAsset(id);
   if (!a) { scanUI('unknown', { id }); return; }
-  const r = await recordCheck(id, SCAN.pos, 'QR');
-  SCAN.photoFor = id;
+  scanUI('saving', { a });
+  const fresh = SCAN.pos && Date.now() - SCAN.pos.at < 30000 ? SCAN.pos : null;
+  const r = await recordCheck(id, fresh, 'QR');
+  if (!SCAN) return;
+  if (!fresh && !a.out) { r.loc = 'wait'; SCAN.pendingLoc = id; }   // 위치를 아직 못 잡았으면, 잡히는 대로 저장
+  SCAN.photoFor = id; SCAN.lastRes = { id, r };
   scanUI('result', { a: getAsset(id) || a, r });
 }
+async function savePendingLoc() {   // 스캔 뒤 GPS가 잡히면 위치만 저장
+  if (!SCAN || !SCAN.pendingLoc || !SCAN.pos || SCAN.savingLoc) return;
+  const id = SCAN.pendingLoc; SCAN.pendingLoc = null; SCAN.savingLoc = true;
+  const r = await recordCheck(id, SCAN.pos, 'QR');
+  if (!SCAN) return; SCAN.savingLoc = false;
+  if (SCAN.lastRes && SCAN.lastRes.id === id) { SCAN.lastRes.r.loc = r.loc; SCAN.lastRes.r.acc = r.acc; if (!SCAN.photoMode) scanUI('result', { a: getAsset(id), r: SCAN.lastRes.r }); }
+}
 async function recordCheck(id, pos, how) {
+  // 다른 기기에서 바뀐 내용(실사 시작 등)을 놓치지 않게 최신 데이터를 먼저 읽어요
+  if (Store.mode() === 'github') { try { DOC = await Store.load(); } catch (e) {} }
   const a = getAsset(id); if (!a) return {};
   const needAudit = !!DOC.audit && !a.out && !DOC.audit.checked[id];
   const needFound = !a.out && missingIds().has(id);
@@ -1554,19 +1571,29 @@ function scanUI(mode, d = {}) {
     box.innerHTML = `<div class="scan-msg">자산의 QR 라벨을 네모 안에 맞춰 주세요</div><div id="scan-gps" class="scan-gps"></div>${auditProgressHTML()}`;
     scanGpsInfo(); return;
   }
+  if (mode === 'saving') { box.innerHTML = `<div class="scan-res ok"><b>${esc(d.a.id)}</b><div class="scan-name">${esc(dispName(d.a))}</div><div class="ri-sub">저장하는 중…</div></div>`; return; }
+  if (mode === 'photo') {
+    box.innerHTML = `<div class="scan-msg">📸 QR 말고 <b>장비 전체</b>가 보이게<br>한두 걸음 물러서서 화면을 맞춘 뒤 셔터를 누르세요</div>
+      <div class="shutter-row"><button class="btn" onclick="cancelPhoto()">취소</button><button class="shutter" id="shutter" onclick="takePhoto()" aria-label="촬영"></button><span style="width:64px"></span></div>
+      <p class="scan-note">사진은 공개 저장소에 올라가요 · 사람 얼굴·도면·출입시설이 나오지 않게 찍어 주세요</p>`; return;
+  }
+  if (mode === 'photo-done') {
+    box.innerHTML = `<div class="scan-res ok" style="display:flex;gap:12px;align-items:center"><img src="${d.src}" style="width:72px;height:72px;object-fit:cover;border-radius:10px"><div><b>✓ 사진 저장됨</b><div class="ri-sub">${esc(d.id)} · 상세 화면에서 볼 수 있어요</div></div></div>
+      <div class="scan-btns"><button class="btn lg primary" onclick="resumeScan()">다음 스캔</button></div>${auditProgressHTML()}`; return;
+  }
   if (mode === 'unknown') {
     box.innerHTML = `<div class="scan-res bad"><b>등록되지 않은 QR이에요</b><div class="ri-sub">${esc(d.id)}</div></div><div class="scan-btns"><button class="btn lg primary" onclick="resumeScan()">다음 스캔</button></div>`; return;
   }
   const { a, r } = d;
-  const locTxt = { new: `📍 좌표 저장 (오차 ${r.acc}m)`, move: `📍 위치 갱신 (오차 ${r.acc}m)`, same: '📍 위치 그대로', keep: `📍 오차 커서 기존 위치 유지 (${r.acc}m)`, bad: `📍 오차가 너무 커서 저장 안 함 (${r.acc}m)`, none: '📍 위치 정보 없음' }[r.loc];
+  const locTxt = { new: `📍 좌표 저장 (오차 ${r.acc}m)`, move: `📍 위치 갱신 (오차 ${r.acc}m)`, same: '📍 위치 그대로', keep: `📍 오차 커서 기존 위치 유지 (${r.acc}m)`, bad: `📍 오차가 너무 커서 저장 안 함 (${r.acc}m)`, none: '📍 위치 정보 없음', wait: '📍 위치 찾는 중… (잡히면 자동 저장)' }[r.loc];
   const tags = [r.audit && '✓ 실사 확인', r.found && '✓ 미발견 → 찾음', a.out && `현장 종료: ${a.out.type}`].filter(Boolean);
   box.innerHTML = `
     <div class="scan-res ok"><div class="scan-res-top"><b>${esc(a.id)}</b>${stBadge(a)}</div><div class="scan-name">${esc(dispName(a))}</div>
       <div class="ri-sub">${esc(a.location)}</div>
-      <div class="scan-tags">${tags.map(t => `<span>${esc(t)}</span>`).join('')}<span class="${r.loc === 'keep' || r.loc === 'bad' ? 'warn' : ''}">${locTxt}</span></div></div>
+      <div class="scan-tags">${tags.map(t => `<span>${esc(t)}</span>`).join('')}<span class="${r.loc === 'keep' || r.loc === 'bad' || r.loc === 'wait' ? 'warn' : ''}">${locTxt}</span></div></div>
     ${r.done ? '<div class="scan-done">🎉 실사 완료! 모든 자산을 확인했어요</div>' : ''}
     <div class="scan-btns">
-      ${a.out ? '' : `<button class="btn lg" onclick="takePhoto()" id="photo-btn">📸 사진 찍기</button>`}
+      ${a.out ? '' : `<button class="btn lg" onclick="photoMode()">📸 장비 사진 찍기</button>`}
       <button class="btn lg primary" onclick="resumeScan()">다음 스캔</button>
     </div>
     <div class="scan-sub-btns"><button class="link" onclick="const id='${a.id}';closeScanner();openAsset(id)">상세 보기</button></div>
@@ -1575,17 +1602,24 @@ function scanUI(mode, d = {}) {
 }
 
 /* 사진: 지금 카메라 화면을 그대로 찍어 저장 (최신 1장만 유지) */
-async function takePhoto() {
+function photoMode() {   // QR을 찍은 화면 그대로가 아니라, 장비 전체를 다시 맞춘 뒤 찍게 함
   if (!SCAN || !SCAN.photoFor) return;
   if (Store.mode() !== 'github') return toast('사진은 GitHub 연결(설정의 토큰) 후에 저장돼요', 'warn');
+  SCAN.photoMode = true; $('scanner').classList.add('photo-mode'); scanUI('photo');
+}
+function cancelPhoto() { if (!SCAN) return; SCAN.photoMode = false; $('scanner').classList.remove('photo-mode'); scanUI('result', { a: getAsset(SCAN.lastRes.id), r: SCAN.lastRes.r }); }
+async function takePhoto() {
+  if (!SCAN || !SCAN.photoFor) return;
   const id = SCAN.photoFor, v = $('scan-video');
-  const btn = $('photo-btn'); if (btn) { btn.disabled = true; btn.textContent = '저장 중…'; }
+  const btn = $('shutter'); if (btn) btn.disabled = true;
   if (navigator.vibrate) navigator.vibrate(40);
   const { full, thumb } = snapImages(v);
   PHOTO_LOCAL[id] = full;
+  $('scan-panel').innerHTML = `<div class="scan-msg">사진 저장하는 중…</div>`;
   const ok = await savePhoto(id, full, thumb);
-  if (btn) btn.textContent = ok ? '✓ 사진 저장됨' : '📸 다시 찍기', btn && (btn.disabled = ok);
-  if (ok) setTimeout(() => { if (SCAN && SCAN.photoFor === id) resumeScan(); }, 900);
+  if (!SCAN) return;
+  SCAN.photoMode = false; $('scanner').classList.remove('photo-mode');
+  if (ok) scanUI('photo-done', { id, src: full }); else scanUI('photo');
 }
 function snapImages(src) {
   const w0 = src.videoWidth || src.naturalWidth, h0 = src.videoHeight || src.naturalHeight;
