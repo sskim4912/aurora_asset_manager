@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-11-10T08:50:38.404Z",
+  "updatedAt": "2026-11-10T08:50:51.733Z",
   "assets": [
     {
       "id": "AUR-001",
@@ -61,11 +61,11 @@
       "location": "품질관리 사무실",
       "lat": 36.996449,
       "lng": 126.379084,
-      "status": "점검필요",
+      "status": "폐기",
       "nextCheck": "2026-11-14",
       "rentalDue": "",
       "note": "",
-      "updatedAt": "2026-11-10T08:50:10.114Z"
+      "updatedAt": "2026-11-10T08:50:51.733Z"
     }
   ]
 }
