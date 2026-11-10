@@ -6,9 +6,9 @@
     <title>Aurora Asset Manager</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- SheetJS (Excel Export/Import) -->
+    <!-- SheetJS (Excel) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <!-- Kakao Maps API (발급받은 JavaScript 키 적용) -->
+    <!-- Kakao Maps API -->
     <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=77c97bf1b0283e37f4ca3c548d45e5e6"></script>
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col">
@@ -17,149 +17,150 @@
     <header class="bg-blue-900 text-white shadow-md">
         <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
             <h1 class="text-xl font-bold">Aurora Asset Manager (충남 현장)</h1>
-            <div id="auth-status" class="text-sm">
-                <span id="user-role-display" class="bg-blue-800 px-2 py-1 rounded">모드: 일반 사용자</span>
-                <button onclick="toggleLoginModal()" id="login-btn" class="ml-2 bg-blue-600 hover:bg-blue-500 px-3 py-1 rounded text-xs">관리자 로그인</button>
+            <div class="flex items-center space-x-3">
+                <span id="auth-badge" class="bg-blue-800 text-xs px-2 py-1 rounded">모드: 일반 사용자</span>
+                <button onclick="openLoginModal()" id="login-toggle-btn" class="bg-blue-600 hover:bg-blue-500 text-xs px-3 py-1 rounded">관리자 로그인</button>
             </div>
         </div>
     </header>
 
+    <!-- 네비게이션 탭 -->
+    <nav class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 flex space-x-6 py-3 text-sm font-semibold">
+            <button onclick="switchTab('dashboard')" id="btn-dashboard" class="text-blue-600 border-b-2 border-blue-600 pb-1">📊 통합 대시보드</button>
+            <button onclick="switchTab('map')" id="btn-map" class="text-gray-500 hover:text-blue-600 pb-1">🗺️ 현장 지도 보기 (Kakao)</button>
+            <button onclick="switchTab('excel')" id="btn-excel" class="text-gray-500 hover:text-blue-600 pb-1">📁 엑셀 증분 업로드 & QR</button>
+        </div>
+    </nav>
+
     <!-- 메인 컨테이너 -->
-    <main class="max-w-7xl mx-auto px-4 py-6 flex-grow w-full grid grid-cols-1 md:grid-cols-4 gap-6">
-
-        <!-- 사이드바 네비게이션 -->
-        <aside class="bg-white p-4 rounded-lg shadow-md md:col-span-1 h-fit space-y-2">
-            <button onclick="switchTab('dashboard')" class="w-full text-left px-4 py-2 rounded bg-blue-50 text-blue-900 font-semibold hover:bg-blue-100 transition">📊 대시보드 & 자산 현황</button>
-            <button onclick="switchTab('map')" class="w-full text-left px-4 py-2 rounded hover:bg-gray-100 transition">🗺️ 현장 지도 (Kakao)</button>
-        </aside>
-
-        <!-- 콘텐츠 영역 -->
-        <section class="bg-white p-6 rounded-lg shadow-md md:col-span-3">
-
-            <!-- 1. 대시보드 탭 -->
-            <div id="tab-dashboard" class="space-y-4">
-                <h2 class="text-lg font-bold text-gray-800">자산 목록 및 관리</h2>
-                <div class="flex justify-between items-center">
-                    <p class="text-sm text-gray-500">충남 오로라 프로젝트 현장 자산 관리 대장입니다.</p>
-                    <div id="admin-actions" class="hidden space-x-2">
-                        <button onclick="alert('엑셀 다운로드 기능 연동됨')" class="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-500">엑셀 내보내기</button>
-                    </div>
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse border border-gray-200 text-sm">
-                        <thead>
-                            <tr class="bg-gray-50">
-                                <th class="border border-gray-200 p-2">자산 번호</th>
-                                <th class="border border-gray-200 p-2">품명 및 규격</th>
-                                <th class="border border-gray-200 p-2">위치</th>
-                                <th class="border border-gray-200 p-2">상태</th>
-                            </tr>
-                        </thead>
-                        <tbody id="asset-table-body">
-                            <tr>
-                                <td class="border border-gray-200 p-2">AUR-001</td>
-                                <td class="border border-gray-200 p-2">배관 자재 (STS 304)</td>
-                                <td class="border border-gray-200 p-2">OSBL 야적장</td>
-                                <td class="border border-gray-200 p-2 text-green-600 font-semibold">정상</td>
-                            </tr>
-                            <tr>
-                                <td class="border border-gray-200 p-2">AUR-002</td>
-                                <td class="border border-gray-200 p-2">용접기 (Inverter)</td>
-                                <td class="border border-gray-200 p-2">ISBL 메인동</td>
-                                <td class="border border-gray-200 p-2 text-blue-600 font-semibold">사용중</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+    <main class="max-w-7xl mx-auto px-4 py-6 flex-grow w-full">
+        
+        <!-- 1. 대시보드 탭 -->
+        <div id="tab-dashboard" class="space-y-4">
+            <div class="flex justify-between items-center">
+                <h2 class="text-lg font-bold text-gray-800">현장 자산 관리 대장</h2>
+                <span class="text-sm text-gray-500">충남 오로라 프로젝트 통합 자산 현황</span>
             </div>
-
-            <!-- 2. 지도 탭 (Kakao Maps) -->
-            <div id="tab-map" class="hidden space-y-4">
-                <h2 class="text-lg font-bold text-gray-800">현장 위치 지도</h2>
-                <p class="text-sm text-gray-500">카카오 지도를 통해 현장 내 주요 자산 및 구역 위치를 확인합니다.</p>
-                <!-- 지도가 그려질 영역 -->
-                <div id="kakao-map" class="w-full h-[450px] rounded-lg border border-gray-300"></div>
+            <div class="bg-white rounded-lg shadow p-4 overflow-x-auto">
+                <table class="w-full text-left border-collapse text-sm">
+                    <thead>
+                        <tr class="bg-gray-50 text-gray-700">
+                            <th class="p-2 border">자산번호</th>
+                            <th class="p-2 border">품명 및 규격</th>
+                            <th class="p-2 border">설치 위치</th>
+                            <th class="p-2 border">상태</th>
+                        </tr>
+                    </thead>
+                    <tbody id="asset-table-body">
+                        <tr>
+                            <td class="p-2 border">AUR-001</td>
+                            <td class="p-2 border">배관 자재 (STS 304)</td>
+                            <td class="p-2 border">OSBL 야적장</td>
+                            <td class="p-2 border text-green-600 font-semibold">정상</td>
+                        </tr>
+                        <tr>
+                            <td class="p-2 border">AUR-002</td>
+                            <td class="p-2 border">용접기 (Inverter)</td>
+                            <td class="p-2 border">ISBL 메인동</td>
+                            <td class="p-2 border text-blue-600 font-semibold">사용중</td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
+        </div>
 
-        </section>
+        <!-- 2. 지도 탭 (Kakao Maps) -->
+        <div id="tab-map" class="hidden space-y-4">
+            <h2 class="text-lg font-bold text-gray-800">현장 위치 지도 (카카오 맵)</h2>
+            <p class="text-sm text-gray-500">카카오 지도를 통해 충남 현장 내 자산 위치를 실시간으로 확인합니다.</p>
+            <div id="kakao-map" class="w-full h-[500px] rounded-lg border shadow-inner"></div>
+        </div>
+
+        <!-- 3. 엑셀 업로드 탭 -->
+        <div id="tab-excel" class="hidden space-y-4">
+            <h2 class="text-lg font-bold text-gray-800">엑셀 증분 업로드 및 QR 출력</h2>
+            <p class="text-sm text-gray-500">자산 데이터 엑셀 파일을 업로드하고 QR코드를 생성합니다.</p>
+            <div class="bg-white p-6 rounded-lg shadow border space-y-3">
+                <input type="file" id="excel-file-input" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+            </div>
+        </div>
+
     </main>
 
     <!-- 관리자 로그인 모달 -->
-    <div id="login-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center">
+    <div id="login-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
         <div class="bg-white p-6 rounded-lg shadow-lg w-80 space-y-4">
-            <h3 class="text-md font-bold text-gray-800">관리자 암호 입력</h3>
-            <input type="password" id="admin-pw-input" placeholder="암호를 입력하세요" class="w-full border border-gray-300 p-2 rounded text-sm">
+            <h3 class="text-md font-bold text-gray-800">관리자 인증</h3>
+            <input type="password" id="admin-pw" placeholder="관리자 암호를 입력하세요" class="w-full border p-2 rounded text-sm">
             <div class="flex justify-end space-x-2">
-                <button onclick="toggleLoginModal()" class="px-3 py-1 bg-gray-300 rounded text-sm">취소</button>
-                <button onclick="checkAdminLogin()" class="px-3 py-1 bg-blue-900 text-white rounded text-sm">확인</button>
+                <button onclick="closeLoginModal()" class="px-3 py-1 bg-gray-200 rounded text-sm">취소</button>
+                <button onclick="verifyAdmin()" class="px-3 py-1 bg-blue-900 text-white rounded text-sm">확인</button>
             </div>
         </div>
     </div>
 
-    <!-- 스크립트 로직 -->
     <script>
-        let isAdmin = false;
-        const ADMIN_PASSWORD = "230880";
+        let mapInitialized = false;
+        let kakaoMapObj = null;
 
-        // 탭 전환 기능
-        function switchTab(tabName) {
+        function switchTab(tab) {
             document.getElementById('tab-dashboard').classList.add('hidden');
             document.getElementById('tab-map').classList.add('hidden');
+            document.getElementById('tab-excel').classList.add('hidden');
 
-            if (tabName === 'dashboard') {
+            document.getElementById('btn-dashboard').className = "text-gray-500 hover:text-blue-600 pb-1";
+            document.getElementById('btn-map').className = "text-gray-500 hover:text-blue-600 pb-1";
+            document.getElementById('btn-excel').className = "text-gray-500 hover:text-blue-600 pb-1";
+
+            if (tab === 'dashboard') {
                 document.getElementById('tab-dashboard').classList.remove('hidden');
-            } else if (tabName === 'map') {
+                document.getElementById('btn-dashboard').className = "text-blue-600 border-b-2 border-blue-600 pb-1 font-semibold";
+            } else if (tab === 'map') {
                 document.getElementById('tab-map').classList.remove('hidden');
-                // 지도가 탭 전환 후 정상적으로 그려지도록 레이아웃 재조정 트리거
+                document.getElementById('btn-map').className = "text-blue-600 border-b-2 border-blue-600 pb-1 font-semibold";
+                
+                // 지도 탭이 열릴 때 카카오맵 렌더링 리프레시
                 setTimeout(() => {
-                    if (window.kakaoMap) {
-                        window.kakaoMap.relayout();
-                        // 충남 현장 부근 기본 좌표 설정
-                        let moveLatLon = new kakao.maps.LatLng(36.78, 126.55);
-                        window.kakaoMap.setCenter(moveLatLon);
+                    if (!mapInitialized) {
+                        const container = document.getElementById('kakao-map');
+                        const options = {
+                            center: new kakao.maps.LatLng(36.78, 126.55),
+                            level: 3
+                        };
+                        kakaoMapObj = new kakao.maps.Map(container, options);
+
+                        // 마커 추가
+                        const markerPosition = new kakao.maps.LatLng(36.78, 126.55);
+                        const marker = new kakao.maps.Marker({ position: markerPosition });
+                        marker.setMap(kakaoMapObj);
+                        mapInitialized = true;
+                    } else if (kakaoMapObj) {
+                        kakaoMapObj.relayout();
+                        kakaoMapObj.setCenter(new kakao.maps.LatLng(36.78, 126.55));
                     }
                 }, 200);
+            } else if (tab === 'excel') {
+                document.getElementById('tab-excel').classList.remove('hidden');
+                document.getElementById('btn-excel').className = "text-blue-600 border-b-2 border-blue-600 pb-1 font-semibold";
             }
         }
 
-        // 로그인 모달 토글
-        function toggleLoginModal() {
-            const modal = document.getElementById('login-modal');
-            modal.classList.toggle('hidden');
-        }
+        function openLoginModal() { document.getElementById('login-modal').classList.remove('hidden'); }
+        function closeLoginModal() { document.getElementById('login-modal').classList.add('hidden'); }
 
-        // 관리자 로그인 검증
-        function checkAdminLogin() {
-            const inputVal = document.getElementById('admin-pw-input').value;
-            if (inputVal === ADMIN_PASSWORD) {
-                isAdmin = true;
+        function verifyAdmin() {
+            const pw = document.getElementById('admin-pw').value;
+            if (pw === "230880") {
                 alert("관리자 권한이 활성화되었습니다.");
-                document.getElementById('user-role-displayinnerText', '모드: 관리자');
-                document.getElementById('user-role-display').className = "bg-red-800 px-2 py-1 rounded text-white";
-                document.getElementById('login-btn').classList.add('hidden');
-                document.getElementById('admin-actions').classList.remove('hidden');
-                toggleLoginModal();
+                document.getElementById('auth-badge').innerText = "모드: 관리자";
+                document.getElementById('auth-badge').className = "bg-red-800 text-white text-xs px-2 py-1 rounded";
+                document.getElementById('login-toggle-btn').classList.add('hidden');
+                closeLoginModal();
             } else {
-                alert("암호가 일치하지 않습니다.");
+                alert("암호가 올바르지 않습니다.");
             }
         }
-
-        // 카카오 지도 초기화
-        window.onload = function() {
-            const container = document.getElementById('kakao-map');
-            const options = {
-                center: new kakao.maps.LatLng(36.78, 126.55), // 충남 현장 부근 기본 위경도
-                level: 3
-            };
-            window.kakaoMap = new kakao.maps.Map(container, options);
-
-            // 마커 추가 예시
-            const markerPosition = new kakao.maps.LatLng(36.78, 126.55);
-            const marker = new kakao.maps.Marker({
-                position: markerPosition
-            });
-            marker.setMap(window.kakaoMap);
-        };
     </script>
 </body>
 </html>
