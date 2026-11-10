@@ -211,6 +211,8 @@ details[open].more summary::before{transform:rotate(90deg)}
 .chg{color:var(--sub)} .chg b{color:var(--use)}
 .pmap{width:100%;height:56vh;min-height:300px;border-radius:12px;background:#e9edf3;overflow:hidden}
 .pick-coord{margin-top:10px;font-size:13.5px;color:var(--sub)}
+.guide{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:10px;font-size:14.5px;line-height:1.55}
+.guide b{color:var(--acc)}
 
 /* 지도 */
 .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--sub);font-weight:600}
@@ -997,20 +999,57 @@ async function saveForm() {
   }, isNew ? `자산 등록: ${fields.name}` : `자산 수정: ${id}`, isNew ? '등록했어요' : '저장했어요');
   if (res) openAsset(res); else if ($('f-save')) { $('f-save').disabled = false; $('f-save').textContent = isNew ? '등록하기' : '저장'; }
 }
-function getPosition() {
-  return new Promise((res, rej) => {
-    if (!navigator.geolocation) return rej(new Error('이 기기는 위치 기능을 지원하지 않아요'));
-    navigator.geolocation.getCurrentPosition(p => res(p.coords), e => rej(new Error(e.code === 1 ? '위치 권한을 허용해 주세요' : '위치를 찾지 못했어요')), { enableHighAccuracy: true, timeout: 12000 });
-  });
+/* 위치 권한: 휴대폰 보안 기능이라 앱이 대신 허용할 수는 없음.
+   → 처음엔 '허용'을 누르라고 미리 알려주고, 거부돼 있으면 기기별로 켜는 방법을 바로 보여줌 */
+const IS_IOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const IS_ANDROID = /Android/.test(navigator.userAgent);
+const silentErr = () => Object.assign(new Error(''), { silent: true });
+async function geoState() { try { return (await navigator.permissions.query({ name: 'geolocation' })).state; } catch (e) { return 'unknown'; } }
+async function getPosition() {
+  if (!navigator.geolocation) throw new Error('이 기기는 위치 기능을 지원하지 않아요');
+  const st = await geoState();
+  if (st === 'denied') { showLocGuide(); throw silentErr(); }
+  if (st === 'prompt' || (st === 'unknown' && !lsGet('aam_geo_ok'))) toast("잠시 후 뜨는 창에서 '허용'을 눌러 주세요");
+  else toast('현재 위치를 찾는 중…');
+  return new Promise((res, rej) => navigator.geolocation.getCurrentPosition(
+    p => { lsSet('aam_geo_ok', 1); res(p.coords); },
+    e => {
+      if (e.code === 1) { lsSet('aam_geo_ok', 0); showLocGuide(); return rej(silentErr()); }
+      rej(new Error(e.code === 3 ? '위치를 찾는 데 시간이 오래 걸려요 · 실외에서 다시 시도해 주세요' : '위치를 찾지 못했어요 · 휴대폰의 위치(GPS)가 켜져 있는지 확인해 주세요'));
+    }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }));
+}
+function showLocGuide() {
+  const steps = IS_IOS ? [
+    "아이폰 <b>설정 → 개인정보 보호 및 보안 → 위치 서비스</b>를 켜요",
+    "같은 화면 아래 <b>Safari 웹사이트</b> → <b>'앱을 사용하는 동안'</b>을 골라요",
+    "<b>설정 → 앱 → Safari → 위치</b> → <b>'허용'</b>을 골라요 (이렇게 해두면 다시 묻지 않아요)",
+    "이 화면으로 돌아와 <b>다시 시도</b>를 눌러요"
+  ] : IS_ANDROID ? [
+    "화면 맨 위 <b>주소창 왼쪽 아이콘</b>(자물쇠 또는 조절 모양)을 눌러요",
+    "<b>권한</b>(또는 사이트 설정) → <b>위치</b> → <b>'허용'</b>으로 바꿔요",
+    "휴대폰 위쪽을 내려 <b>빠른 설정의 '위치'</b>가 켜져 있는지 확인해요",
+    "<b>다시 시도</b>를 눌러요"
+  ] : [
+    "주소창 왼쪽 <b>아이콘</b>(자물쇠 또는 조절 모양)을 눌러요",
+    "<b>위치</b>를 <b>'허용'</b>으로 바꿔요",
+    "<b>다시 시도</b>를 눌러요"
+  ];
+  openModal(`
+    <div class="m-head"><h2>위치 권한을 켜 주세요</h2><button class="icon-btn" onclick="closeModal()">${icon('x', 20)}</button></div>
+    <div class="m-body">
+      <p class="sub" style="margin:0 0 14px">위치 권한은 휴대폰 보안 기능이라 앱이 대신 켤 수 없어요.<br><b>한 번만 '허용'</b>해 두면 다음부터는 묻지 않아요.</p>
+      <ol class="guide">${steps.map(s => `<li>${s}</li>`).join('')}</ol>
+      <p class="hint">위치 대신 <b>'지도에서 찍기'</b>로 넣어도 돼요.</p>
+    </div>
+    <div class="m-foot"><span class="sp"></span><button class="btn" onclick="closeModal()">닫기</button><button class="btn primary" onclick="closeModal();if(DRAWER&&DRAWER.mode==='form')useMyLocation()">다시 시도</button></div>`);
 }
 async function useMyLocation() {
-  toast('현재 위치를 찾는 중…');
   try {
     const c = await getPosition();
     DRAWER.draft.lat = +c.latitude.toFixed(6); DRAWER.draft.lng = +c.longitude.toFixed(6);
     $('f-lat').value = DRAWER.draft.lat; $('f-lng').value = DRAWER.draft.lng;
     toast(`위치를 넣었어요 (오차 약 ${Math.round(c.accuracy)}m)`);
-  } catch (e) { toast(e.message, 'warn'); }
+  } catch (e) { if (!e.silent) toast(e.message, 'warn'); }
 }
 
 /* 지도에서 위치 찍기 */
@@ -1036,7 +1075,7 @@ function setPick(lat, lng) {
   $('pick-coord').textContent = `${PICK.lat}, ${PICK.lng}`;
   if (PMAP) { const p = new kakao.maps.LatLng(PICK.lat, PICK.lng); PMARK.setPosition(p); PMARK.setMap(PMAP); PMAP.panTo(p); }
 }
-async function pickMyLocation() { try { const c = await getPosition(); setPick(c.latitude, c.longitude); } catch (e) { toast(e.message, 'warn'); } }
+async function pickMyLocation() { try { const c = await getPosition(); setPick(c.latitude, c.longitude); } catch (e) { if (!e.silent) toast(e.message, 'warn'); } }
 function applyPick() {
   if (!PICK) return toast('지도에서 위치를 눌러 주세요', 'warn');
   DRAWER.draft.lat = PICK.lat; DRAWER.draft.lng = PICK.lng; closeModal(); renderDrawer();
