@@ -163,6 +163,41 @@ h1{font-size:25px;margin:0;letter-spacing:-.025em}
 .dd-menu button{display:flex;gap:8px;align-items:center;width:100%;border:0;background:none;padding:10px 12px;border-radius:8px;font-size:13.5px;font-weight:600;text-align:left}
 .dd-menu button:hover{background:#f3f5f9}
 .map-box{height:calc(100vh - 360px);min-height:420px}
+.fab{position:fixed;right:16px;bottom:calc(18px + env(safe-area-inset-bottom));z-index:35;border:0;border-radius:99px;background:var(--acc);color:#fff;font-weight:800;font-size:15px;padding:14px 20px 14px 16px;box-shadow:0 8px 24px rgba(10,94,176,.4);align-items:center;gap:8px}
+.fab svg{width:22px;height:22px}
+.scanner{position:fixed;inset:0;z-index:80;background:#000;color:#fff;display:flex;flex-direction:column}
+.scan-top{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;padding-top:calc(12px + env(safe-area-inset-top))}
+.scan-view{position:relative;flex:1;min-height:0;overflow:hidden}
+.scan-view video{width:100%;height:100%;object-fit:cover}
+.scan-frame{position:absolute;left:50%;top:50%;width:62vw;height:62vw;max-width:300px;max-height:300px;transform:translate(-50%,-50%);border:3px solid rgba(255,255,255,.9);border-radius:18px;box-shadow:0 0 0 2000px rgba(0,0,0,.35)}
+.scan-panel{background:#fff;color:var(--text);border-radius:18px 18px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom));max-height:58vh;overflow:auto}
+.scan-msg{font-weight:700;text-align:center;margin-bottom:6px}
+.scan-gps{font-size:12.5px;text-align:center;color:var(--sub)}.scan-gps.ok{color:var(--ok)}.scan-gps.warn{color:var(--chk)}
+.scan-res{border-radius:12px;padding:12px 14px;margin-bottom:10px}
+.scan-res.ok{background:var(--ok-bg)}.scan-res.bad{background:var(--red-bg);color:var(--red)}
+.scan-res-top{display:flex;justify-content:space-between;align-items:center}
+.scan-name{font-size:17px;font-weight:800;margin:4px 0 2px}
+.scan-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.scan-tags span{background:#fff;border-radius:7px;padding:3px 8px;font-size:12px;font-weight:700;color:var(--ok)}
+.scan-tags span.warn{color:var(--chk)}
+.scan-done{background:var(--acc);color:#fff;border-radius:12px;padding:12px;text-align:center;font-weight:800;margin-bottom:10px}
+.scan-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.scan-btns .btn:only-child{grid-column:1/-1}
+.scan-sub-btns{text-align:center;margin-top:10px}
+.scan-note{font-size:11.5px;color:var(--sub);text-align:center;margin:8px 0 0}
+.scan-prog{margin-top:12px;border-top:1px solid var(--line);padding-top:10px;font-size:13px}
+.scan-left{font-size:12px;color:var(--sub)}
+.asset-photo{position:relative;border-radius:12px;overflow:hidden;margin-bottom:14px;background:#eef1f5;aspect-ratio:4/3}
+.asset-photo img{width:100%;height:100%;object-fit:cover;display:block}
+.asset-photo span{position:absolute;right:8px;bottom:8px;background:rgba(0,0,0,.55);color:#fff;font-size:11.5px;border-radius:6px;padding:2px 7px}
+.asset-photo.err img{display:none}.asset-photo.err::after{content:"사진을 불러오는 중이거나 없어요";position:absolute;inset:0;display:grid;place-items:center;color:var(--sub);font-size:13px}
+.photo-pick{display:flex;justify-content:center;align-items:center;gap:6px;margin-top:10px;border:1px dashed var(--line2);border-radius:10px;padding:10px;font-weight:700;font-size:13.5px;color:var(--acc);cursor:pointer}
+.thumb{width:36px;height:36px;border-radius:8px;object-fit:cover;flex:none;background:#eef1f5}
+.nm-wrap{display:flex;gap:10px;align-items:center}
+.mcard.has-thumb{position:relative;padding-right:72px}
+.mcard.has-thumb>.thumb{position:absolute;right:14px;bottom:14px;width:48px;height:48px}
+.loc-groups{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:10px;font-size:13px}
+.loc-groups .chip b{margin-left:3px}
 .hist{border:1px solid var(--line);border-radius:12px;overflow:hidden;font-size:13px}
 .hist>div{display:flex;justify-content:space-between;gap:10px;padding:9px 14px;border-bottom:1px solid #f0f2f6}
 .hist>div:last-child{border-bottom:0}
@@ -423,6 +458,14 @@ details[open].more summary::before{transform:rotate(90deg)}
     <button class="icon-btn" onclick="logout()" aria-label="로그아웃" title="로그아웃"><span data-ic="logout"></span></button>
   </header>
   <main id="view"></main>
+  <button class="fab mobile-only" onclick="openScanner()" aria-label="QR 스캔"><span data-ic="qr"></span><span>QR 스캔</span></button>
+</div>
+
+<!-- QR 스캐너 (휴대폰) -->
+<div id="scanner" class="scanner hidden">
+  <div class="scan-top"><b>QR 스캔</b><button class="icon-btn" onclick="closeScanner()" aria-label="닫기" style="color:#fff"><span data-ic="x"></span></button></div>
+  <div class="scan-view"><video id="scan-video" playsinline muted></video><div class="scan-frame"></div><canvas id="scan-canvas" hidden></canvas></div>
+  <div class="scan-panel" id="scan-panel"></div>
 </div>
 
 <div id="drawer" class="overlay hidden" onclick="if(event.target===this)closeDrawer()"><div class="panel" id="panel"></div></div>
@@ -501,7 +544,9 @@ const ICONS = {
   check: '<path d="M20 6L9 17l-5-5"/>',
   map: '<path d="M1 6v16l7-4 8 4 7-4V2l-7 4-8-4z"/><path d="M8 2v16M16 6v16"/>',
   list: '<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>',
-  down: '<path d="M6 9l6 6 6-6"/>'
+  down: '<path d="M6 9l6 6 6-6"/>',
+  camera: '<path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>',
+  qr: '<path d="M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h3v3h-3zM18 18h3v3h-3zM14 18h2M18 14h3"/>'
 };
 function icon(n, s = 18) { return `<svg class="i" width="${s}" height="${s}" viewBox="0 0 24 24">${ICONS[n] || ''}</svg>`; }
 function esc(v) { return String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
@@ -574,7 +619,7 @@ function normalizeDoc(d) {
       location: a.location || '', locInit: a.locInit || a.location || '', manager: a.manager || '',
       status: normStatus(a.status) || '상', lat: num(a.lat), lng: num(a.lng),
       nextCheck: a.nextCheck || '', rentalDue: a.rentalDue || '', note: a.note || '', out, updatedAt: a.updatedAt || '',
-      log: Array.isArray(a.log) ? a.log.slice(0, LOG_MAX) : []
+      log: Array.isArray(a.log) ? a.log.slice(0, LOG_MAX) : [], photoAt: a.photoAt || '', thumb: a.thumb || ''
     };
   });
   // 위치 목록: 저장된 목록 + 자산에 쓰인 위치 (B2)
@@ -617,6 +662,19 @@ const Store = {
     }
     const { doc } = await this.readRemote();
     return doc || normalizeDoc(lsGet('aam_local') || lsGet('aam_cache') || seedDoc());
+  },
+  async putFile(path, b64, message) {   // 사진 등 파일 올리기 (같은 이름이면 교체)
+    const c = this.cfg();
+    const url = `https://api.github.com/repos/${encodeURIComponent(c.owner)}/${encodeURIComponent(c.repo)}/contents/${path.split('/').map(encodeURIComponent).join('/')}`;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const g = await fetch(url + '?ref=' + encodeURIComponent(c.branch) + '&_=' + Date.now(), { headers: this.headers(false, c), cache: 'no-store' });
+      const sha = g.ok ? (await g.json()).sha : null;
+      const body = { message: message + ' (Aurora 앱)', content: b64, branch: c.branch }; if (sha) body.sha = sha;
+      const r = await fetch(url, { method: 'PUT', headers: this.headers(true, c), body: JSON.stringify(body) });
+      if (r.ok) return true;
+      if ((r.status === 409 || r.status === 422) && attempt === 0) continue;
+      throw new Error(ghErr(r.status));
+    }
   },
   async commit(mutator, message) {
     if (this.mode() === 'local') {
@@ -702,9 +760,10 @@ async function reloadData() {
   }
   catch (e) { DOC = DOC || normalizeDoc(lsGet('aam_cache') || seedDoc()); setSync('err', e.message); toast('데이터를 불러오지 못했어요 · ' + e.message, 'err'); }
   render(); if (DRAWER) renderDrawer();
+  if (Store.mode() === 'github' && !Store.tokenBad) autoStartAudit();
   if (PENDING_ID) {
     const id = PENDING_ID; PENDING_ID = null;
-    if (getAsset(id)) { openAsset(id); const a = getAsset(id); if (DOC.audit && !a.out && !DOC.audit.checked[id]) checkAsset(id, true); }
+    if (getAsset(id)) { openAsset(id); qrOpened(id); }
     else toast(`${id} 자산을 찾을 수 없어요`, 'warn');
   }
 }
@@ -765,7 +824,7 @@ function render() {
 
 /* ── 할 일: 상태 '하' + 점검일 7일 이내 + 렌탈 반납 14일 이내 ── */
 function todos() {
-  const out = [];
+  const out = []; const miss = missingIds();
   activeAssets().forEach(a => {
     const tags = [];
     if (a.status === '하') tags.push({ level: 'red', text: '상태 하', rank: -1000 });
@@ -773,6 +832,7 @@ function todos() {
     if (c !== null && c <= 7) tags.push({ level: c < 0 ? 'red' : 'amber', text: '점검 ' + ddText(c), rank: c });
     const r = dday(a.rentalDue);
     if (r !== null && r <= 14) tags.push({ level: r < 0 ? 'red' : 'amber', text: '렌탈 반납 ' + ddText(r), rank: r });
+    if (miss.has(a.id)) tags.push({ level: 'red', text: '실사 미발견', rank: -900 });
     if (tags.length) out.push({ a, tags: tags.sort((x, y) => x.rank - y.rank) });
   });
   return out;
@@ -790,7 +850,7 @@ function cardsHTML() {
   const st = s => `<span class="st-link ${UI.filter === 'st:' + s ? 'on' : ''}" onclick="event.stopPropagation();setFilter('st:${s}')">${s} ${cnt(s)}</span>`;
   return `<div class="stats">
     ${card('all', '전체 자산', `${act.length}<small>건</small>`, STATUSES.map(st).join(' · '))}
-    ${card('todo', '할 일', `${td}<small>건</small>`, '상태 하 · 점검·반납 임박', td ? 'alert' : '')}
+    ${card('todo', '할 일', `${td}<small>건</small>`, '상태 하 · 점검·반납 임박 · 실사 미발견', td ? 'alert' : '')}
     ${card('out', '현장 종료', `${outs.length}<small>건</small>`, `창고 ${by('GS 자재창고 반납')} · 타현장 ${by('타현장 전용')} · 렌탈 ${by('렌탈업체 반납')}<br>이번 달 ${month(outs)}건`, 'gray')}
     ${card('disposed', '폐기', `${disp.length}<small>건</small>`, `이번 달 ${month(disp)}건`, 'gray')}
     ${auditCardHTML(act.length - coord)}
@@ -892,6 +952,8 @@ function sortList(list) {
   return list.slice().sort((x, y) => { const a = f(x), b = f(y); return (typeof a === 'number' && typeof b === 'number' ? a - b : String(a).localeCompare(String(b), 'ko', { numeric: true })) * d || x.id.localeCompare(y.id); });
 }
 
+let LOC_GRP = [];
+function toggleLocGrp(i) { const l = LOC_GRP[i]; UI.loc = UI.loc === l ? '전체' : l; render(); }
 function updateAssetList() {
   const list = sortList(filteredAssets());
   const cntEl = $('asset-count'); if (cntEl) cntEl.textContent = `${list.length}건`;
@@ -901,17 +963,18 @@ function updateAssetList() {
   const sch = a => { const s = schedOf(a); return s ? `<span class="due ${s.lvl}">${s.t}</span>` : '<span class="muted">—</span>'; };
   const th = (k, l, w) => `<th ${w ? `style="width:${w}px"` : ''} class="sortable ${UI.sort.k === k ? 'on' : ''}" onclick="setSort('${k}')">${l}<span class="arrow">${UI.sort.k === k ? (UI.sort.d > 0 ? '▲' : '▼') : '↕'}</span></th>`;
   const allOn = list.every(a => UI.sel.has(a.id));
-  box.innerHTML = `
+  const grp = UI.filter === 'unaudited' || UI.filter === 'nocoord' ? missingByLoc(list) : []; LOC_GRP = grp.map(g => g[0]);
+  box.innerHTML = (grp.length > 1 || UI.loc !== '전체' && grp.length ? `<div class="loc-groups"><span class="muted">위치별:</span>${grp.map(([l, n], i) => `<button class="chip ${UI.loc === l ? 'on' : ''}" onclick="toggleLocGrp(${i})">${esc(l)} <b>${n}</b></button>`).join('')}</div>` : '') + `
   <div class="tbl-wrap"><table class="tbl">
     <thead><tr><th class="ck"><input type="checkbox" ${allOn ? 'checked' : ''} onclick="selAll(this.checked)" aria-label="전체 선택"></th>
       ${th('id', '관리번호', 118)}${th('name', '품목 · 모델')}${th('category', '분류', 120)}${th('location', '위치')}${th('qty', '수량', 70)}${th('status', '상태', 96)}${th('sched', '일정', 120)}${th('updated', '최종 변경', 96)}</tr></thead>
     <tbody>${list.map(a => `<tr class="${UI.sel.has(a.id) ? 'picked' : ''}" onclick="openAsset('${a.id}')">
       <td class="ck" onclick="event.stopPropagation()"><input type="checkbox" ${UI.sel.has(a.id) ? 'checked' : ''} onclick="selOne('${a.id}',this.checked)"></td>
-      <td class="mono">${a.id}</td><td class="nm">${esc(a.item)}<div class="ri-sub" style="font-weight:400">${esc(shortModel(a.model))}</div></td><td>${esc(a.category)}</td><td>${esc(a.location)}${hasCoord(a) ? '' : ' <span class="no-coord" title="좌표 없음">●</span>'}</td>
+      <td class="mono">${a.id}</td><td class="nm"><div class="nm-wrap">${a.thumb ? `<img class="thumb" src="${a.thumb}" alt="">` : ''}<div>${esc(a.item)}<div class="ri-sub" style="font-weight:400">${esc(shortModel(a.model))}</div></div></div></td><td>${esc(a.category)}</td><td>${esc(a.location)}${hasCoord(a) ? '' : ' <span class="no-coord" title="좌표 없음">●</span>'}</td>
       <td class="qty">${a.qty} ${a.unit}</td><td>${stBadge(a)}</td><td>${sch(a)}</td><td class="muted" style="font-size:12.5px">${relTime(a.updatedAt)}</td></tr>`).join('')}</tbody>
   </table></div>
   <div class="mlist">${list.map(a => { const s = schedOf(a); return `
-    <div class="mcard" onclick="openAsset('${a.id}')">
+    <div class="mcard ${a.thumb ? 'has-thumb' : ''}" onclick="openAsset('${a.id}')">${a.thumb ? `<img class="thumb" src="${a.thumb}" alt="">` : ''}
       <div class="mc-top"><span class="mono sub" style="margin:0">${a.id} · ${esc(a.category)}</span>${stBadge(a)}</div>
       <div class="mc-name">${esc(a.item)} <span class="qty" style="font-size:13px;color:var(--sub)">${a.qty} ${a.unit}</span></div>
       ${shortModel(a.model) ? `<div class="mc-sub" style="margin-bottom:3px">${esc(shortModel(a.model))}</div>` : ''}
@@ -1083,22 +1146,26 @@ async function startAudit() {
   if (!confirm('정기 실사를 시작할까요?\n현장을 돌며 휴대폰 카메라로 자산 QR을 찍으면 하나씩 확인돼요.')) return;
   await saveChange(doc => { doc.audit = { startedAt: new Date().toISOString(), checked: {} }; }, '정기 실사 시작', '실사를 시작했어요');
 }
-async function checkAsset(id, auto) {
-  if (!DOC.audit || DOC.audit.checked[id]) return;
-  const ok = await saveChange(doc => { if (doc.audit) doc.audit.checked[id] = new Date().toISOString(); const x = doc.assets.find(y => y.id === id); if (x) addLog(x, '실사 확인'); }, `실사 확인: ${id}`, auto ? `실사 확인 ✓ ${id}` : '확인했어요');
-  if (ok && DRAWER && DRAWER.id === id) renderDrawer();
+function closeAuditDoc(doc, now) {   // 실사 마감 (직접 [마치기] 또는 모두 확인되면 자동)
+  if (!doc.audit) return;
+  const act = doc.assets.filter(a => !a.out);
+  doc.auditLog.unshift({ startedAt: doc.audit.startedAt, endedAt: now || new Date().toISOString(), total: act.length,
+    checked: act.filter(a => doc.audit.checked[a.id]).length, missing: act.filter(a => !doc.audit.checked[a.id]).map(a => a.id) });
+  doc.auditLog = doc.auditLog.slice(0, 20); doc.audit = null;
 }
 async function finishAudit() {
   const st = auditStats(); const miss = st.total - st.done;
-  if (!confirm(`실사를 마칠까요?\n확인 ${st.done}건 · 못 찾음 ${miss}건\n못 찾은 자산 목록은 기록으로 남아요.`)) return;
-  await saveChange(doc => {
-    if (!doc.audit) return;
-    const act = doc.assets.filter(a => !a.out);
-    doc.auditLog.unshift({ startedAt: doc.audit.startedAt, endedAt: new Date().toISOString(), total: act.length,
-      checked: act.filter(a => doc.audit.checked[a.id]).length, missing: act.filter(a => !doc.audit.checked[a.id]).map(a => a.id) });
-    doc.auditLog = doc.auditLog.slice(0, 20); doc.audit = null;
-  }, `정기 실사 마침: ${st.done}/${st.total} 확인`, '실사를 마쳤어요');
+  if (!confirm(`실사를 마칠까요?\n확인 ${st.done}건 · 못 찾음 ${miss}건\n못 찾은 자산은 '할 일'에 '실사 미발견'으로 남아요.`)) return;
+  await saveChange(doc => closeAuditDoc(doc), `정기 실사 마침: ${st.done}/${st.total} 확인`, '실사를 마쳤어요');
   if (UI.filter === 'unaudited') { UI.filter = 'all'; render(); }
+}
+/* 지난 실사에서 못 찾은 자산 (찾으면 QR로 확인 → 목록에서 빠짐) */
+function missingIds() { const l = DOC.auditLog[0]; return new Set(l ? l.missing.filter(id => { const a = getAsset(id); return a && !a.out; }) : []); }
+function missingByLoc(list) { const m = {}; list.forEach(a => m[a.location || '(위치 없음)'] = (m[a.location || '(위치 없음)'] || 0) + 1); return Object.entries(m).sort((x, y) => y[1] - x[1]); }
+/* 60일이 되면 실사 자동 시작 */
+async function autoStartAudit() {
+  if (DOC.audit || auditDue().left > 0 || !activeAssets().length) return;
+  await saveChange(doc => { if (!doc.audit) doc.audit = { startedAt: new Date().toISOString(), checked: {}, auto: true }; }, '정기 실사 자동 시작 (60일)', '정기 실사가 시작됐어요');
 }
 function showAuditResult(i) {
   const l = DOC.auditLog[i]; if (!l) return;
@@ -1141,8 +1208,7 @@ function detailHTML(a) {
   <div class="p-head"><div><div class="mono" style="color:var(--sub);font-size:13px">${a.id} · ${esc(a.category)}</div><h2>${esc(a.item)}${sm ? `<div style="font-size:15px;font-weight:600;color:var(--sub);margin-top:2px">${esc(sm)}</div>` : ''}</h2></div>
     <button class="icon-btn" onclick="closeDrawer()" aria-label="닫기">${icon('x', 20)}</button></div>
   <div class="p-body">
-    ${DOC.audit && !a.out ? (DOC.audit.checked[a.id] ? `<div class="audit-banner done">${icon('check', 16)} 실사 확인됨 · ${relTime(DOC.audit.checked[a.id])}</div>`
-      : `<div class="audit-banner">실사 중 · 아직 확인 전<span class="sp"></span><button class="btn sm primary" onclick="checkAsset('${a.id}')">확인했어요</button></div>`) : ''}
+    ${photoUrl(a) ? `<div class="asset-photo"><img src="${photoUrl(a)}" alt="" loading="lazy" onerror="this.parentNode.classList.add('err')"><span>사진 ${fmtAt(a.photoAt) || '방금'}</span></div>` : ''}
     ${!a.out && !hasCoord(a) ? `<div class="audit-banner" style="background:#fff7ed;color:var(--chk)">좌표가 없어요<span class="sp"></span><button class="btn sm" onclick="quickLocate('${a.id}')">${icon('crosshair', 14)} 지금 위치로 넣기</button></div>` : ''}
     ${a.out ? `<div class="out-banner"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b>${esc(a.out.type)}</b><button class="btn sm" onclick="restoreAsset('${a.id}')">현장 복귀</button></div>
       <div class="ri-sub">${[a.out.date, a.out.to, a.out.docNo && '반출증 ' + a.out.docNo, a.out.note].filter(Boolean).map(esc).join(' · ') || '세부 기록 없음'}</div></div>`
@@ -1163,6 +1229,8 @@ function detailHTML(a) {
     </dl>
     <div class="qr-box">${qr ? `<img src="${qr}" alt="QR">` : ''}<div><b>QR 라벨</b><p class="sub" style="margin-bottom:8px">휴대폰 카메라로 찍으면 이 화면이 열려요</p>
       <button class="btn sm desktop-only" onclick="printOne('${a.id}')">${icon('printer', 14)} 라벨 인쇄</button></div></div>
+    ${a.out ? '' : `<label class="photo-pick">${icon('camera', 16)} ${photoUrl(a) ? '사진 바꾸기' : '사진 넣기'}<input type="file" accept="image/*" capture="environment" hidden onchange="pickPhoto('${a.id}',this)"></label>`}
+    ${(DOC.audit && !a.out && !DOC.audit.checked[a.id]) || missingIds().has(a.id) ? `<p class="hint" style="text-align:center;margin-top:12px">QR이 안 읽혀요 → <button class="link" onclick="checkAsset('${a.id}')">직접 확인</button></p>` : ''}
     <div class="flabel" style="margin-top:20px">변경 이력</div>
     <div class="hist">${(a.log || []).length ? a.log.map(l => `<div><span>${esc(l.t)}</span><span class="muted">${fmtAt(l.at)}</span></div>`).join('') : `<div><span class="muted">기록 없음 · 최종 변경 ${relTime(a.updatedAt)}</span></div>`}</div>
   </div>
@@ -1347,6 +1415,239 @@ async function useMyLocation() {
     DRAWER.draft.lat = +c.latitude.toFixed(6); DRAWER.draft.lng = +c.longitude.toFixed(6); renderDrawer();
     toast(`위치를 넣었어요 (오차 약 ${Math.round(c.accuracy)}m)`);
   } catch (e) { if (!e.silent) toast(e.message, 'warn'); }
+}
+
+/* ═══════════════════════════════════════════
+   [5-2] QR 스캔 (휴대폰) · 위치 자동 저장 · 사진
+   · 연속 스캔: 찍을 때마다 진동 + 결과 표시 → [사진 찍기] / [다음 스캔]
+   · 위치: 스캔하는 순간의 GPS를 저장. 오차가 50m보다 크면 이미 있는 좌표는 덮어쓰지 않음
+   · 실사 중이면 자동 확인, 모두 확인되면 실사 자동 완료
+   · 사진: 자산마다 최신 1장 → GitHub photos/관리번호.jpg (공개 저장소!)
+   ═══════════════════════════════════════════ */
+const GPS_MAX_ACC = 50;            // m: 이보다 오차가 크면 기존 좌표를 덮어쓰지 않음
+const GPS_SAME = 10;               // m: 이보다 가까우면 위치가 그대로라고 보고 저장 안 함
+let SCAN = null;                   // {stream, timer, watch, pos, last, busy, detector}
+const PHOTO_LOCAL = {};            // 방금 찍은 사진 (화면에 바로 보여주기용)
+
+function distM(a, b) {
+  const R = 6371000, r = x => x * Math.PI / 180;
+  const dLat = r(b.lat - a.lat), dLng = r(b.lng - a.lng);
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(r(a.lat)) * Math.cos(r(b.lat)) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(h));
+}
+function loadJsQR() {
+  if (window.jsQR) return Promise.resolve();
+  return new Promise((res, rej) => { const s = document.createElement('script'); s.src = 'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js'; s.onload = res; s.onerror = () => rej(new Error('QR 인식 기능을 불러오지 못했어요')); document.head.appendChild(s); });
+}
+function idFromQR(text) {
+  const t = String(text || '').trim();
+  try { const u = new URL(t); const id = u.searchParams.get('id'); if (id) return id.toUpperCase(); } catch (e) {}
+  return /^[A-Z0-9][A-Z0-9_-]{1,30}$/i.test(t) ? t.toUpperCase() : '';
+}
+
+async function openScanner() {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return toast('이 브라우저에서는 카메라를 쓸 수 없어요', 'err');
+  $('scanner').classList.remove('hidden'); document.body.style.overflow = 'hidden';
+  scanUI('start');
+  SCAN = { stream: null, timer: null, watch: null, pos: null, last: { id: '', at: 0 }, busy: false, detector: null };
+  // 위치: 스캐너가 열려 있는 동안 계속 받아 두었다가 찍는 순간 사용
+  if (navigator.geolocation) SCAN.watch = navigator.geolocation.watchPosition(
+    p => { if (SCAN) SCAN.pos = { lat: p.coords.latitude, lng: p.coords.longitude, acc: p.coords.accuracy, at: Date.now() }; scanGpsInfo(); },
+    e => { if (SCAN) SCAN.gpsErr = e.code === 1 ? '위치 권한 꺼짐' : '위치 찾는 중…'; scanGpsInfo(); },
+    { enableHighAccuracy: true, maximumAge: 5000, timeout: 20000 });
+  try {
+    SCAN.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 960 } }, audio: false });
+  } catch (e) { closeScanner(); return e.name === 'NotAllowedError' ? showCamGuide() : toast('카메라를 켜지 못했어요', 'err'); }
+  const v = $('scan-video'); v.srcObject = SCAN.stream; await v.play().catch(() => {});
+  if ('BarcodeDetector' in window) { try { SCAN.detector = new BarcodeDetector({ formats: ['qr_code'] }); } catch (e) {} }
+  if (!SCAN.detector) { try { await loadJsQR(); } catch (e) { toast(e.message, 'err'); } }
+  scanUI('scan'); scanLoop();
+}
+function closeScanner() {
+  if (!SCAN) { $('scanner').classList.add('hidden'); return; }
+  clearTimeout(SCAN.timer);
+  if (SCAN.stream) SCAN.stream.getTracks().forEach(t => t.stop());
+  if (SCAN.watch != null) navigator.geolocation.clearWatch(SCAN.watch);
+  SCAN = null; $('scanner').classList.add('hidden'); document.body.style.overflow = '';
+  render();
+}
+async function scanLoop() {
+  if (!SCAN || SCAN.busy) return;
+  const v = $('scan-video');
+  if (v.readyState >= 2) {
+    let text = '';
+    try {
+      if (SCAN.detector) { const r = await SCAN.detector.detect(v); if (r[0]) text = r[0].rawValue; }
+      else if (window.jsQR) {
+        const c = $('scan-canvas'), w = 640, h = Math.round(v.videoHeight * 640 / v.videoWidth) || 480;
+        c.width = w; c.height = h; const ctx = c.getContext('2d', { willReadFrequently: true }); ctx.drawImage(v, 0, 0, w, h);
+        const r = jsQR(ctx.getImageData(0, 0, w, h).data, w, h, { inversionAttempts: 'dontInvert' }); if (r) text = r.data;
+      }
+    } catch (e) {}
+    if (text) {
+      const id = idFromQR(text);
+      if (id && !(id === SCAN.last.id && Date.now() - SCAN.last.at < 4000)) { SCAN.last = { id, at: Date.now() }; await onScan(id); return; }
+    }
+  }
+  if (SCAN) SCAN.timer = setTimeout(scanLoop, 180);
+}
+function resumeScan() { if (!SCAN) return; SCAN.busy = false; SCAN.photoFor = null; scanUI('scan'); scanLoop(); }
+
+/* 스캔 결과 처리: 실사 확인 · 미발견 해제 · 위치 저장을 한 번에 저장 */
+async function onScan(id) {
+  SCAN.busy = true;
+  if (navigator.vibrate) navigator.vibrate(80);
+  const a = getAsset(id);
+  if (!a) { scanUI('unknown', { id }); return; }
+  const r = await recordCheck(id, SCAN.pos, 'QR');
+  SCAN.photoFor = id;
+  scanUI('result', { a: getAsset(id) || a, r });
+}
+async function recordCheck(id, pos, how) {
+  const a = getAsset(id); if (!a) return {};
+  const needAudit = !!DOC.audit && !a.out && !DOC.audit.checked[id];
+  const needFound = !a.out && missingIds().has(id);
+  let loc = 'none';
+  if (pos && !a.out) {
+    if (!hasCoord(a)) loc = pos.acc <= 500 ? 'new' : 'bad';
+    else if (pos.acc > GPS_MAX_ACC) loc = 'keep';
+    else loc = distM({ lat: +a.lat, lng: +a.lng }, pos) < GPS_SAME ? 'same' : 'move';
+  }
+  const r = { audit: false, done: false, found: false, loc, acc: pos ? Math.round(pos.acc) : null };
+  if (!needAudit && !needFound && loc !== 'new' && loc !== 'move') return r;
+  const res = await saveChange(doc => {
+    const now = new Date().toISOString(); const x = doc.assets.find(y => y.id === id); if (!x) return r;
+    if (doc.audit && !x.out && !doc.audit.checked[id]) {
+      doc.audit.checked[id] = now; addLog(x, `실사 확인 (${how})`, now); r.audit = true;
+      if (doc.assets.filter(y => !y.out).every(y => doc.audit.checked[y.id])) { closeAuditDoc(doc, now); r.done = true; }
+    }
+    const lm = doc.auditLog[0];
+    if (lm && lm.missing.includes(id)) { lm.missing = lm.missing.filter(z => z !== id); addLog(x, '실사 미발견 → 찾음', now); r.found = true; }
+    if (loc === 'new' || loc === 'move') { x.lat = +pos.lat.toFixed(6); x.lng = +pos.lng.toFixed(6); addLog(x, `${loc === 'new' ? '좌표 입력' : '위치 갱신'} (${how}, 오차 약 ${r.acc}m)`, now); }
+    x.updatedAt = now; return r;
+  }, `${how === 'QR' ? 'QR 스캔' : '직접 확인'}: ${id}${needAudit ? ' · 실사 확인' : ''}${loc === 'new' || loc === 'move' ? ' · 위치' : ''}`, null);
+  if (res && res.done) toast('🎉 모든 자산을 확인해서 실사가 완료됐어요');
+  return res || r;
+}
+async function checkAsset(id) {   // QR이 안 읽힐 때 상세 화면에서 직접 확인
+  const r = await recordCheck(id, null, '직접');
+  if (r.audit || r.found) toast('확인했어요');
+  renderDrawer();
+}
+
+function scanGpsInfo() {
+  const el = $('scan-gps'); if (!el || !SCAN) return;
+  const p = SCAN.pos;
+  el.textContent = p ? `📍 위치 오차 약 ${Math.round(p.acc)}m${p.acc > GPS_MAX_ACC ? ' (커서 기존 좌표는 유지)' : ''}` : (SCAN.gpsErr || '📍 위치 찾는 중…');
+  el.className = 'scan-gps ' + (p && p.acc <= GPS_MAX_ACC ? 'ok' : 'warn');
+}
+function auditProgressHTML() {
+  if (!DOC.audit) return '';
+  const st = auditStats(); const groups = missingByLoc(DOC.assets.filter(a => !a.out && !DOC.audit.checked[a.id]));
+  return `<div class="scan-prog"><b>실사 확인 ${st.done} / ${st.total}</b><div class="progress"><i style="width:${st.total ? st.done / st.total * 100 : 0}%"></i></div>
+    ${groups.length ? `<div class="scan-left">남은 곳: ${groups.slice(0, 4).map(([l, n]) => `${esc(l)} ${n}`).join(' · ')}${groups.length > 4 ? ' …' : ''}</div>` : ''}</div>`;
+}
+function scanUI(mode, d = {}) {
+  const box = $('scan-panel'); if (!box) return;
+  if (mode === 'start') { box.innerHTML = `<div class="scan-msg">카메라를 켜는 중…</div>`; return; }
+  if (mode === 'scan') {
+    box.innerHTML = `<div class="scan-msg">자산의 QR 라벨을 네모 안에 맞춰 주세요</div><div id="scan-gps" class="scan-gps"></div>${auditProgressHTML()}`;
+    scanGpsInfo(); return;
+  }
+  if (mode === 'unknown') {
+    box.innerHTML = `<div class="scan-res bad"><b>등록되지 않은 QR이에요</b><div class="ri-sub">${esc(d.id)}</div></div><div class="scan-btns"><button class="btn lg primary" onclick="resumeScan()">다음 스캔</button></div>`; return;
+  }
+  const { a, r } = d;
+  const locTxt = { new: `📍 좌표 저장 (오차 ${r.acc}m)`, move: `📍 위치 갱신 (오차 ${r.acc}m)`, same: '📍 위치 그대로', keep: `📍 오차 커서 기존 위치 유지 (${r.acc}m)`, bad: `📍 오차가 너무 커서 저장 안 함 (${r.acc}m)`, none: '📍 위치 정보 없음' }[r.loc];
+  const tags = [r.audit && '✓ 실사 확인', r.found && '✓ 미발견 → 찾음', a.out && `현장 종료: ${a.out.type}`].filter(Boolean);
+  box.innerHTML = `
+    <div class="scan-res ok"><div class="scan-res-top"><b>${esc(a.id)}</b>${stBadge(a)}</div><div class="scan-name">${esc(dispName(a))}</div>
+      <div class="ri-sub">${esc(a.location)}</div>
+      <div class="scan-tags">${tags.map(t => `<span>${esc(t)}</span>`).join('')}<span class="${r.loc === 'keep' || r.loc === 'bad' ? 'warn' : ''}">${locTxt}</span></div></div>
+    ${r.done ? '<div class="scan-done">🎉 실사 완료! 모든 자산을 확인했어요</div>' : ''}
+    <div class="scan-btns">
+      ${a.out ? '' : `<button class="btn lg" onclick="takePhoto()" id="photo-btn">📸 사진 찍기</button>`}
+      <button class="btn lg primary" onclick="resumeScan()">다음 스캔</button>
+    </div>
+    <div class="scan-sub-btns"><button class="link" onclick="const id='${a.id}';closeScanner();openAsset(id)">상세 보기</button></div>
+    <p class="scan-note">사진은 공개 저장소에 올라가요 · <b>장비만</b> 찍어 주세요 (사람 얼굴·도면·출입시설 ✕)</p>
+    ${auditProgressHTML()}`;
+}
+
+/* 사진: 지금 카메라 화면을 그대로 찍어 저장 (최신 1장만 유지) */
+async function takePhoto() {
+  if (!SCAN || !SCAN.photoFor) return;
+  if (Store.mode() !== 'github') return toast('사진은 GitHub 연결(설정의 토큰) 후에 저장돼요', 'warn');
+  const id = SCAN.photoFor, v = $('scan-video');
+  const btn = $('photo-btn'); if (btn) { btn.disabled = true; btn.textContent = '저장 중…'; }
+  if (navigator.vibrate) navigator.vibrate(40);
+  const { full, thumb } = snapImages(v);
+  PHOTO_LOCAL[id] = full;
+  const ok = await savePhoto(id, full, thumb);
+  if (btn) btn.textContent = ok ? '✓ 사진 저장됨' : '📸 다시 찍기', btn && (btn.disabled = ok);
+  if (ok) setTimeout(() => { if (SCAN && SCAN.photoFor === id) resumeScan(); }, 900);
+}
+function snapImages(src) {
+  const w0 = src.videoWidth || src.naturalWidth, h0 = src.videoHeight || src.naturalHeight;
+  const k = Math.min(1, 1280 / Math.max(w0, h0)); const c = document.createElement('canvas');
+  c.width = Math.round(w0 * k); c.height = Math.round(h0 * k); c.getContext('2d').drawImage(src, 0, 0, c.width, c.height);
+  const full = c.toDataURL('image/jpeg', 0.72);
+  const t = document.createElement('canvas'), s = Math.min(w0, h0); t.width = t.height = 64;
+  t.getContext('2d').drawImage(src, (w0 - s) / 2, (h0 - s) / 2, s, s, 0, 0, 64, 64);
+  return { full, thumb: t.toDataURL('image/jpeg', 0.6) };
+}
+async function savePhoto(id, full, thumb) {
+  try {
+    await Store.putFile(`photos/${id}.jpg`, full.split(',')[1], `사진 갱신: ${id}`);
+  } catch (e) { toast('사진을 올리지 못했어요 · ' + e.message, 'err'); return false; }
+  const res = await saveChange(doc => { const x = doc.assets.find(y => y.id === id); if (x) { const now = new Date().toISOString(); x.photoAt = now; x.thumb = thumb; addLog(x, '사진 갱신', now); x.updatedAt = now; } return true; },
+    `사진 정보: ${id}`, '사진을 저장했어요');
+  return !!res;
+}
+function photoUrl(a) {
+  if (PHOTO_LOCAL[a.id]) return PHOTO_LOCAL[a.id];
+  if (!a.photoAt) return '';
+  const c = Store.cfg();
+  return `https://raw.githubusercontent.com/${c.owner}/${c.repo}/${c.branch}/photos/${encodeURIComponent(a.id)}.jpg?v=${Date.parse(a.photoAt) || 0}`;
+}
+/* 상세 화면에서 사진 바꾸기 (휴대폰 카메라 또는 사진첩) */
+async function pickPhoto(id, input) {
+  const f = input.files[0]; input.value = ''; if (!f) return;
+  if (Store.mode() !== 'github') return toast('사진은 GitHub 연결(설정의 토큰) 후에 저장돼요', 'warn');
+  const img = new Image(); img.src = URL.createObjectURL(f);
+  try { await img.decode(); } catch (e) { return toast('사진을 읽지 못했어요', 'err'); }
+  const { full, thumb } = snapImages(img); URL.revokeObjectURL(img.src);
+  PHOTO_LOCAL[id] = full; toast('사진 올리는 중…');
+  if (await savePhoto(id, full, thumb)) renderDrawer();
+}
+function showCamGuide() {
+  const steps = IS_IOS ? [
+    "Safari 주소창 왼쪽 <b>'가가'(aA) 아이콘 → 웹사이트 설정 → 카메라</b> → <b>'허용'</b> (이 사이트에만 허용돼요)",
+    "아이폰 <b>설정 → 앱 → Safari → 카메라</b>가 '거부'로 되어 있으면 '묻기'로 바꿔요",
+    "이 화면으로 돌아와 <b>다시 시도</b>를 눌러요"
+  ] : [
+    "화면 맨 위 <b>주소창 왼쪽 아이콘</b>(자물쇠 또는 조절 모양)을 눌러요",
+    "<b>권한</b>(또는 사이트 설정) → <b>카메라</b> → <b>'허용'</b> (이 사이트에만 허용돼요)",
+    "<b>다시 시도</b>를 눌러요"
+  ];
+  openModal(`
+    <div class="m-head"><h2>카메라 권한을 켜 주세요</h2><button class="icon-btn" onclick="closeModal()">${icon('x', 20)}</button></div>
+    <div class="m-body"><p class="sub" style="margin:0 0 14px">QR을 읽으려면 카메라가 필요해요. <b>한 번만 '허용'</b>해 두면 다음부터는 묻지 않아요.</p>
+      <ol class="guide">${steps.map(s => `<li>${s}</li>`).join('')}</ol>
+      <p class="hint">휴대폰 <b>기본 카메라 앱</b>으로 QR을 찍어도 같은 화면이 열려요.</p></div>
+    <div class="m-foot"><span class="sp"></span><button class="btn" onclick="closeModal()">닫기</button><button class="btn primary" onclick="closeModal();openScanner()">다시 시도</button></div>`);
+}
+
+/* 휴대폰 기본 카메라로 QR을 찍어 들어왔을 때도 같은 처리 (실사 확인 + 위치) */
+async function qrOpened(id) {
+  const pos = await new Promise(res => {
+    if (!navigator.geolocation) return res(null);
+    navigator.geolocation.getCurrentPosition(p => res({ lat: p.coords.latitude, lng: p.coords.longitude, acc: p.coords.accuracy }), () => res(null), { enableHighAccuracy: true, timeout: 12000, maximumAge: 10000 });
+  });
+  const r = await recordCheck(id, pos, 'QR');
+  const msg = [r.audit && '실사 확인 ✓', r.found && '미발견 → 찾음', r.loc === 'new' && '좌표 저장', r.loc === 'move' && '위치 갱신'].filter(Boolean);
+  if (msg.length && !r.done) toast(msg.join(' · '));
+  if (DRAWER && DRAWER.id === id) renderDrawer();
 }
 
 /* 지도에서 위치 찍기 */
