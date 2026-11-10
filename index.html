@@ -125,6 +125,15 @@ h1{font-size:25px;margin:0;letter-spacing:-.025em}
 .stat{cursor:pointer}
 .stat.on{border-color:var(--acc);box-shadow:0 0 0 2px var(--acc-bg)}
 .stat.alert{--c:var(--red)} .stat.gray{--c:#8a94a6} .stat.teal{--c:#0e8a80}
+.audit-card{--c:var(--acc);cursor:default}
+.audit-card.on-audit{border-color:var(--acc);box-shadow:0 0 0 2px var(--acc-bg)}
+.audit-card.due{--c:var(--chk);background:#fffbeb;border-color:#f5d48a}
+.audit-card .progress{margin:6px 0 4px}
+.card-links{display:flex;gap:12px;align-items:center;margin-top:4px}
+.card-link{border:0;background:none;padding:0;font-size:12.5px;font-weight:700;color:var(--acc);cursor:pointer}
+.card-link.strong{margin-left:auto;color:#fff;background:var(--acc);border-radius:7px;padding:3px 10px}
+.card-link.warn{color:var(--chk);margin-top:6px;display:block}
+.card-link.on{text-decoration:underline}
 .stat-sub{font-size:12px;color:var(--sub);margin-top:2px;line-height:1.5}
 .st-link{border-radius:6px;padding:1px 4px;margin:0 -2px;cursor:pointer}
 .st-link:hover,.st-link.on{background:var(--acc-bg);color:var(--acc)}
@@ -784,7 +793,7 @@ function cardsHTML() {
     ${card('todo', '할 일', `${td}<small>건</small>`, '상태 하 · 점검·반납 임박', td ? 'alert' : '')}
     ${card('out', '현장 종료', `${outs.length}<small>건</small>`, `창고 ${by('GS 자재창고 반납')} · 타현장 ${by('타현장 전용')} · 렌탈 ${by('렌탈업체 반납')}<br>이번 달 ${month(outs)}건`, 'gray')}
     ${card('disposed', '폐기', `${disp.length}<small>건</small>`, `이번 달 ${month(disp)}건`, 'gray')}
-    ${card('nocoord', '좌표 등록', `${coord}<small>/${act.length}</small>`, `미등록 ${act.length - coord}건 · QR 찍고 넣기`, 'teal')}
+    ${auditCardHTML(act.length - coord)}
   </div>`;
 }
 const FILTER_KO = { all: '', todo: '할 일', out: '현장 종료', disposed: '폐기', nocoord: '좌표 미등록', unaudited: '실사 미확인', 'st:상': '상태 상', 'st:중': '상태 중', 'st:하': '상태 하' };
@@ -801,17 +810,26 @@ function auditDue() {
   const d = new Date(base); d.setDate(d.getDate() + AUDIT_DAYS);
   return { base, due: ymd(d), left: dday(ymd(d)) };
 }
-function auditBannerHTML() {
+/* 정기 실사 카드: 진행 중 / 시기 됨 / 다음 예정 + 좌표 미등록 한 줄(0건이면 사라짐) */
+function auditCardHTML(noCoord) {
+  const coordLine = noCoord ? `<button class="card-link warn ${UI.filter === 'nocoord' ? 'on' : ''}" onclick="setFilter('nocoord')">● 좌표 미등록 ${noCoord}건 ›</button>` : '';
   if (DOC.audit) {
     const st = auditStats(), pct = st.total ? Math.round(st.done / st.total * 100) : 0;
-    return `<div class="banner audit-on"><div class="ri-main"><b>정기 실사 진행 중 · 확인 ${st.done} / ${st.total}</b>
-      <div class="progress"><i style="width:${pct}%"></i></div><div class="ri-sub">휴대폰 카메라로 자산 QR을 찍으면 자동으로 확인돼요 · ${DOC.audit.startedAt.slice(0, 10)} 시작</div></div>
-      <button class="btn" onclick="setFilter('unaudited')">미확인 ${st.total - st.done}건 보기</button><button class="btn primary" onclick="finishAudit()">실사 마치기</button></div>`;
+    return `<div class="stat audit-card on-audit"><div class="lbl">정기 실사 · 진행 중</div>
+      <div class="num">${st.done}<small>/${st.total}</small></div>
+      <div class="progress"><i style="width:${pct}%"></i></div>
+      <div class="card-links"><button class="card-link ${UI.filter === 'unaudited' ? 'on' : ''}" onclick="setFilter('unaudited')">미확인 ${st.total - st.done}건 ›</button><button class="card-link strong" onclick="finishAudit()">마치기</button></div>
+      ${coordLine}</div>`;
   }
   const d = auditDue(); const last = DOC.auditLog[0];
-  const lastTxt = last ? `지난 실사 ${last.endedAt.slice(0, 10)} · ${last.checked}/${last.total} 확인${last.missing.length ? ` · <button class="link" onclick="showAuditResult(0)">못 찾음 ${last.missing.length}건</button>` : ''}` : '아직 실사 기록이 없어요';
-  if (d.left <= 0) return `<div class="banner audit-due">${icon('alert', 18)}<div class="ri-main"><b>정기 실사 시기예요</b> <span class="ri-sub" style="display:inline">· ${AUDIT_DAYS}일마다 · ${lastTxt}</span></div><button class="btn primary" onclick="startAudit()">실사 시작</button></div>`;
-  return `<div class="audit-line">정기 실사 · 다음 예정 ${d.due} (D-${d.left}) · ${lastTxt} <button class="link" onclick="startAudit()">지금 시작</button></div>`;
+  const lastTxt = last ? `지난 실사 ${last.endedAt.slice(5, 10).replace('-', '/')} · ${last.checked}/${last.total}${last.missing.length ? ` · <button class="card-link" onclick="showAuditResult(0)">못 찾음 ${last.missing.length}</button>` : ''}` : '실사 기록 없음';
+  if (d.left <= 0) return `<div class="stat audit-card due"><div class="lbl">정기 실사 · 시기예요</div>
+      <div class="num" style="font-size:22px">${d.left === 0 ? '오늘' : -d.left + '일 지남'}</div>
+      <div class="stat-sub">${lastTxt}</div><div class="card-links"><button class="btn sm primary" onclick="startAudit()">실사 시작</button></div>${coordLine}</div>`;
+  return `<div class="stat audit-card"><div class="lbl">정기 실사</div>
+      <div class="num">D-${d.left}</div>
+      <div class="stat-sub">다음 예정 ${d.due} · ${lastTxt}</div>
+      <div class="card-links"><button class="card-link" onclick="startAudit()">지금 시작 ›</button></div>${coordLine}</div>`;
 }
 
 /* ── 자산 화면 ── */
@@ -820,7 +838,6 @@ function renderAssets() {
   const sel = (key, all, list) => `<select class="sel" onchange="UI.${key}=this.value;${key === 'cat' ? "UI.item='전체';render()" : 'refreshList()'}">${['전체', ...list].map(k => `<option ${UI[key] === k ? 'selected' : ''} value="${esc(k)}">${k === '전체' ? all : esc(k)}</option>`).join('')}</select>`;
   const fk = FILTER_KO[UI.filter];
   return `
-  ${auditBannerHTML()}
   ${cardsHTML()}
   <div class="toolbar">
     <label class="search">${icon('search', 16)}<input id="q" placeholder="품목, 모델, 위치, 관리번호 검색" value="${esc(UI.q)}" oninput="UI.q=this.value;refreshList()"></label>
