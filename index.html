@@ -94,8 +94,8 @@ h1{font-size:25px;margin:0;letter-spacing:-.025em}
 .card h2{font-size:16px;margin:0 0 10px;display:flex;align-items:center;gap:8px;letter-spacing:-.01em}
 .badge{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;padding:3px 9px 3px 8px;border-radius:99px;white-space:nowrap}
 .badge::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
-.ok{--c:var(--ok);--cb:var(--ok-bg)}.use{--c:var(--use);--cb:var(--use-bg)}.chk{--c:var(--chk);--cb:var(--chk-bg)}.off{--c:var(--off);--cb:var(--off-bg)}
-.badge.ok,.badge.use,.badge.chk,.badge.off{color:var(--c);background:var(--cb)}
+.ok{--c:var(--ok);--cb:var(--ok-bg)}.mid{--c:var(--chk);--cb:var(--chk-bg)}.bad{--c:var(--red);--cb:var(--red-bg)}.use{--c:var(--use);--cb:var(--use-bg)}.off{--c:var(--off);--cb:var(--off-bg)}
+.badge.ok,.badge.mid,.badge.bad,.badge.use,.badge.off{color:var(--c);background:var(--cb)}
 .due{font-size:12px;font-weight:700;padding:3px 8px;border-radius:7px;white-space:nowrap;display:inline-block}
 .due.red{color:var(--red);background:var(--red-bg)}.due.amber{color:var(--chk);background:var(--chk-bg)}.due.gray{color:var(--sub);background:#f1f3f6}
 .empty{text-align:center;padding:34px 10px;color:var(--sub)}
@@ -157,7 +157,22 @@ table.tbl{width:100%;border-collapse:collapse}
 .p-foot .btn{flex:1}
 .flabel{font-size:13px;font-weight:700;color:#344054;margin:0 0 7px;display:flex;gap:4px;align-items:center}
 .flabel em{color:var(--red);font-style:normal}
-.seg{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:20px}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:6px;margin-bottom:20px}
+.seg.two{grid-auto-flow:row;grid-template-columns:1fr 1fr}
+.seg button small{display:block;font-weight:500;font-size:11px;opacity:.8;margin-top:2px}
+.out-banner{background:#f1f3f6;border-radius:12px;padding:14px;margin-bottom:16px}
+.out-banner b{font-size:15px}
+.out-banner .ri-sub{white-space:normal;margin-top:4px}
+.full-model{font-size:13px;color:var(--sub);white-space:normal;line-height:1.5}
+.qty{font-weight:700;white-space:nowrap}
+.sum-line{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:12px 18px;margin-bottom:18px;font-size:13.5px;color:var(--sub)}
+.sum-line b{color:var(--text)}
+.audit{margin-bottom:18px;display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+.audit .ri-main{min-width:220px}
+.progress{height:8px;background:#eef0f3;border-radius:99px;overflow:hidden;margin:10px 0 6px}
+.progress i{display:block;height:100%;background:var(--acc);border-radius:99px}
+.audit-banner{display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:var(--acc-bg);border-radius:12px;padding:12px 14px;margin-bottom:16px;font-size:13.5px;color:var(--acc);font-weight:600}
+.audit-banner.done{background:var(--ok-bg);color:var(--ok)}
 .seg button{border:1.5px solid var(--line2);background:#fff;border-radius:10px;padding:11px 4px;font-weight:700;font-size:13.5px;color:#4b5565}
 .seg button.on{border-color:var(--c);background:var(--cb);color:var(--c)}
 .info{margin:0;border:1px solid var(--line);border-radius:12px;overflow:hidden}
@@ -260,10 +275,10 @@ details[open].more summary::before{transform:rotate(90deg)}
 .label{width:70mm;height:70mm;border:.3mm dashed #9aa3b2;display:flex;flex-direction:column;align-items:center;padding:3.5mm 4mm 3mm;color:#111;font-family:inherit}
 .lb-top{width:100%;display:flex;justify-content:space-between;font-size:7.5pt;font-weight:700;color:#4338ca;letter-spacing:.04em}
 .lb-top span:last-child{color:#555;letter-spacing:0}
-.lb-qr{width:43mm;height:43mm;margin-top:2mm;image-rendering:pixelated}
+.lb-qr{width:40mm;height:40mm;margin-top:1.8mm;image-rendering:pixelated}
 .lb-qr.none{display:grid;place-items:center;border:1px solid #ccc;font-size:8pt;color:#999}
-.lb-id{font-size:17pt;font-weight:800;letter-spacing:.02em;margin-top:1.6mm;line-height:1}
-.lb-name{font-size:8.5pt;font-weight:600;text-align:center;line-height:1.25;margin-top:1.3mm;max-height:2.5em;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;width:100%}
+.lb-id{font-size:16pt;font-weight:800;letter-spacing:.02em;margin-top:1.6mm;line-height:1}
+.lb-name{font-size:8pt;font-weight:600;text-align:center;line-height:1.25;margin-top:1.3mm;max-height:2.5em;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;width:100%}
 #print-area{display:none}
 
 /* 토스트 */
@@ -375,20 +390,28 @@ const CONFIG = {
   GITHUB: { owner: 'sskim4912', repo: 'aurora_asset_manager', branch: 'main', path: 'assets.json' },
   QR_BASE_DEFAULT: 'https://sskim4912.github.io/aurora_asset_manager/'
 };
-const STATUSES = ['정상', '사용중', '점검필요', '폐기'];
-const ST_KEY = { '정상': 'ok', '사용중': 'use', '점검필요': 'chk', '폐기': 'off' };
-const CATEGORIES = ['장비', '공구', '자재', '전기설비', '측정기', '비품'];
+// 상태: 현장에 있는 자산의 컨디션 (상·중·하). '하'는 현황의 할 일에 자동으로 떠요.
+const STATUSES = ['상', '중', '하'];
+const ST_KEY = { '상': 'ok', '중': 'mid', '하': 'bad' };
+const ST_DESC = { '상': '정상 사용, 이상 없음', '중': '사용 가능, 일부 노후·경미한 손상', '하': '수리·점검 필요 또는 사용 불가' };
+// 현장 종료(반출): 현장을 떠난 자산. 목록·지도·라벨에서 빠지고 기록만 남아요.
+const OUT_TYPES = ['GS 자재창고 반납', '타현장 전용', '렌탈업체 반납', '폐기'];
+const UNITS = ['EA', 'SET'];
+const ACQ_TYPES = ['계약', '계약외(온라인구매)', '계약외(견적)', '구자산'];
+const ID_PREFIX = 'AURORA-';
+// 분류(대분류) 6개 고정 · 품목(중분류)은 설정에서 추가할 수 있어요
+const CATEGORIES = ['사무/가전/생활', '냉난방용품', '가설비품', '환경/위생/의료', '시험/측정기', '공기구'];
+const BASE_CATALOG = {
+  '사무/가전/생활': ['공기청정기', '냉장고', 'TV', '무전기', '제빙기', '금고', 'CCTV', '세단기', '앰프', '세탁기', '기타'],
+  '냉난방용품': ['냉온풍기', '에어컨'],
+  '가설비품': ['컨테이너', '안전화건조기'],
+  '환경/위생/의료': ['심장제세동기', '혈압계'],
+  '시험/측정기': ['가스탐지기', '디지털풍속계', '소음측정기/소음진동측정기'],
+  '공기구': ['드릴']
+};
 
-function seedDoc() {
-  const t = '2026-11-10T09:00:00+09:00';
-  return { version: 1, updatedAt: t, assets: [
-    { id: 'AUR-001', name: 'OSBL 메인 배관 파이프 자재 (STS 304)', category: '자재', location: 'OSBL 야적장 A구역', lat: 36.7801, lng: 126.5502, status: '정상', nextCheck: '', rentalDue: '', note: '', updatedAt: t },
-    { id: 'AUR-002', name: '인버터 용접기 500A', category: '장비', location: 'ISBL 메인 구조물동', lat: 36.7812, lng: 126.5515, status: '사용중', nextCheck: '2026-12-01', rentalDue: '', note: '', updatedAt: t },
-    { id: 'AUR-003', name: '고소작업대 (렌탈 장비)', category: '장비', location: 'OSBL B구역 외곽', lat: 36.7795, lng: 126.5490, status: '정상', nextCheck: '', rentalDue: '2026-11-20', note: '', updatedAt: t },
-    { id: 'AUR-004', name: '현장 전력 분배전반 #3', category: '전기설비', location: '변전실 인근', lat: 36.7820, lng: 126.5522, status: '점검필요', nextCheck: '2026-11-05', rentalDue: '', note: '차단기 발열 확인 필요', updatedAt: t },
-    { id: 'AUR-005', name: '품질 검사용 레이저 측정기', category: '측정기', location: '품질관리 사무실', lat: 36.7808, lng: 126.5498, status: '정상', nextCheck: '2026-11-14', rentalDue: '', note: '', updatedAt: t }
-  ]};
-}
+const DATA_VERSION = 2;   // 데이터 구조 버전: 더 새 버전 데이터를 만나면 저장을 막아 덮어쓰기 사고를 방지
+function seedDoc() { return { version: 2, updatedAt: '', catalog: {}, assets: [] }; }
 
 /* ═══════════════════════════════════════════
    공통 도구
@@ -412,6 +435,7 @@ const ICONS = {
   alert: '<path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/>',
   clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
   chev: '<path d="M9 18l6-6-6-6"/>',
+  check: '<path d="M20 6L9 17l-5-5"/>',
   map: '<path d="M1 6v16l7-4 8 4 7-4V2l-7 4-8-4z"/><path d="M8 2v16M16 6v16"/>'
 };
 function icon(n, s = 18) { return `<svg class="i" width="${s}" height="${s}" viewBox="0 0 24 24">${ICONS[n] || ''}</svg>`; }
@@ -435,6 +459,8 @@ const hasCoord = a => Number.isFinite(+a.lat) && Number.isFinite(+a.lng) && a.la
 const validLat = v => Number.isFinite(v) && v >= 33 && v <= 39;
 const validLng = v => Number.isFinite(v) && v >= 124 && v <= 132;
 function badge(s) { return `<span class="badge ${ST_KEY[s] || 'off'}">${esc(s)}</span>`; }
+function outBadge(a) { return `<span class="badge off">${esc(a.out.type)}</span>`; }
+const stBadge = a => a.out ? outBadge(a) : badge(a.status);
 function toast(msg, type = '') {
   const el = document.createElement('div'); el.className = 'toast ' + type; el.textContent = msg;
   $('toasts').appendChild(el); setTimeout(() => el.remove(), type === 'err' ? 5000 : 2600);
@@ -463,14 +489,27 @@ function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch
    · 토큰이 없으면 '로컬 모드' — 이 기기 브라우저에만 저장
    ※ 12월 Firebase 이전 시 이 객체의 load / commit 만 Firestore 용으로 바꾸면 됩니다.
    ═══════════════════════════════════════════ */
+// 예전 상태값(정상/사용중/점검필요/폐기)도 자동으로 새 구조로 바꿔요
+const OLD_STATUS = { '정상': '상', '양호': '상', '사용중': '상', '보통': '중', '점검필요': '하', '불량': '하' };
+function normStatus(v) { v = String(v || '').trim(); return STATUSES.includes(v) ? v : (OLD_STATUS[v] || ''); }
 function normalizeDoc(d) {
-  const doc = d && Array.isArray(d.assets) ? d : { version: 1, assets: [] };
-  doc.assets = doc.assets.filter(a => a && a.id).map(a => ({
-    id: String(a.id), name: a.name || '', category: a.category || '', location: a.location || '',
-    lat: a.lat === '' || a.lat == null ? '' : Number(a.lat), lng: a.lng === '' || a.lng == null ? '' : Number(a.lng),
-    status: STATUSES.includes(a.status) ? a.status : '정상', nextCheck: a.nextCheck || '', rentalDue: a.rentalDue || '',
-    note: a.note || '', updatedAt: a.updatedAt || ''
-  }));
+  const doc = d && Array.isArray(d.assets) ? d : seedDoc();
+  doc.version = 2;
+  doc.catalog = doc.catalog && typeof doc.catalog === 'object' ? doc.catalog : {};
+  doc.audit = doc.audit && doc.audit.checked ? doc.audit : null;          // 진행 중인 실사 {startedAt, checked:{id: 시각}}
+  doc.auditLog = Array.isArray(doc.auditLog) ? doc.auditLog : [];          // 지난 실사 기록
+  doc.assets = doc.assets.filter(a => a && a.id).map(a => {
+    const num = v => v === '' || v == null || !Number.isFinite(Number(v)) ? '' : Number(v);
+    let out = a.out && a.out.type ? { type: a.out.type, date: a.out.date || '', to: a.out.to || '', docNo: a.out.docNo || '', note: a.out.note || '' } : null;
+    if (!out && a.status === '폐기') out = { type: '폐기', date: '', to: '', docNo: '', note: '' };
+    return {
+      id: String(a.id), category: a.category || '', item: a.item || (a.name ? '기타' : ''), model: a.model || a.name || '',
+      contract: a.contract || '', acq: a.acq || '', qty: Number.isInteger(+a.qty) && +a.qty > 0 ? +a.qty : 1, unit: UNITS.includes(a.unit) ? a.unit : 'EA',
+      location: a.location || '', locInit: a.locInit || a.location || '', manager: a.manager || '',
+      status: normStatus(a.status) || '상', lat: num(a.lat), lng: num(a.lng),
+      nextCheck: a.nextCheck || '', rentalDue: a.rentalDue || '', note: a.note || '', out, updatedAt: a.updatedAt || ''
+    };
+  });
   return doc;
 }
 const Store = {
@@ -495,8 +534,9 @@ const Store = {
     }
     if (r.status === 404) return { doc: null, sha: null };
     if (!r.ok) throw new Error(ghErr(r.status));
-    const j = await r.json();
-    return { doc: normalizeDoc(JSON.parse(b64decode(j.content))), sha: j.sha };
+    const j = await r.json(); const raw = JSON.parse(b64decode(j.content));
+    if ((raw.version || 1) > DATA_VERSION) throw new Error('앱이 새 버전으로 바뀌었어요 · 페이지를 새로고침(Ctrl+F5)해 주세요');
+    return { doc: normalizeDoc(raw), sha: j.sha };
   },
   async load() {
     if (this.mode() === 'local') {
@@ -533,8 +573,8 @@ function ghErr(s) {
     : s === 404 ? '저장소를 찾을 수 없어요 (404)' : `GitHub 오류 (${s})`;
 }
 function nextId(doc) {
-  const max = doc.assets.reduce((m, a) => { const n = parseInt(String(a.id).replace(/\D/g, ''), 10); return Number.isFinite(n) && n > m ? n : m; }, 0);
-  return 'AUR-' + String(max + 1).padStart(3, '0');
+  const max = doc.assets.reduce((m, a) => { const id = String(a.id); if (!id.startsWith(ID_PREFIX)) return m; const n = parseInt(id.slice(ID_PREFIX.length), 10); return Number.isFinite(n) && n > m ? n : m; }, 0);
+  return ID_PREFIX + String(max + 1).padStart(3, '0');
 }
 function qrBase() {
   const c = Store.cfg(); if (c.qrBase) return c.qrBase;
@@ -547,9 +587,32 @@ const qrUrl = id => qrBase() + '?id=' + encodeURIComponent(id);
 let DOC = null;
 let DRAWER = null;          // {mode:'detail'|'form', id, draft}
 let PENDING_ID = null;      // QR로 들어온 자산번호
-const UI = { q: '', status: '전체', cat: '전체', mapQ: '', labQ: '', labSel: new Set(), paper: lsGet('aam_paper') === 'A3' ? 'A3' : 'A4' };
+const UI = { q: '', status: '전체', cat: '전체', item: '전체', mapQ: '', labQ: '', labSel: new Set(), paper: lsGet('aam_paper') === 'A3' ? 'A3' : 'A4' };
 const getAsset = id => DOC.assets.find(a => a.id === id);
-const activeAssets = () => DOC.assets.filter(a => a.status !== '폐기');
+const activeAssets = () => DOC.assets.filter(a => !a.out);
+// 품목 목록 = 기본 목록 + 설정에서 추가한 품목(doc.catalog: {품목: 분류})
+function catalog() {
+  const c = {}; CATEGORIES.forEach(k => c[k] = [...BASE_CATALOG[k]]);
+  Object.entries(DOC.catalog || {}).forEach(([it, cat]) => { if (c[cat] && !c[cat].includes(it)) c[cat].push(it); });
+  return c;
+}
+function catOf(item) { const c = catalog(); return CATEGORIES.find(k => c[k].includes(item)) || ''; }
+// 모델명 짧게: 앞의 (계약)/(구자산) 등 떼고, '/' 앞까지, 최대 40자
+function shortModel(m) {
+  let t = String(m || '').replace(/^\s*\((계약외|계약|구자산)\)\s*/, '').trim();
+  const cut = t.indexOf('/'); if (cut > 0) t = t.slice(0, cut).trim();
+  return t.length > 40 ? t.slice(0, 39) + '…' : t;
+}
+const dispName = a => { const m = shortModel(a.model); return m ? `${a.item} · ${m}` : a.item; };
+function acqOf(contract) {
+  const t = String(contract || '').trim();
+  if (t.startsWith('(계약외)온라인')) return '계약외(온라인구매)';
+  if (t.startsWith('(계약외)견적')) return '계약외(견적)';
+  if (t.startsWith('(계약외)')) return '계약외(온라인구매)';
+  if (t.startsWith('(계약)')) return '계약';
+  if (t.startsWith('(구자산)')) return '구자산';
+  return '';
+}
 
 function setSync(state, msg = '') {
   const t = { ok: 'GitHub 저장됨 · ' + new Date().toTimeString().slice(0, 5), local: '로컬 모드 · 이 기기에만 저장', saving: '저장 중…', loading: '불러오는 중…', err: '연결 오류 · 눌러서 다시 시도', ro: '토큰 오류 · 보기만 가능' }[state];
@@ -569,7 +632,8 @@ async function reloadData() {
   render(); if (DRAWER) renderDrawer();
   if (PENDING_ID) {
     const id = PENDING_ID; PENDING_ID = null;
-    if (getAsset(id)) openAsset(id); else toast(`${id} 자산을 찾을 수 없어요`, 'warn');
+    if (getAsset(id)) { openAsset(id); const a = getAsset(id); if (DOC.audit && !a.out && !DOC.audit.checked[id]) checkAsset(id, true); }
+    else toast(`${id} 자산을 찾을 수 없어요`, 'warn');
   }
 }
 async function saveChange(mutator, message, okMsg) {
@@ -633,9 +697,9 @@ function todos() {   // 자산 한 개당 한 줄, 해당 일정 표시(tags)를
   const out = [];
   activeAssets().forEach(a => {
     const tags = [];
-    if (a.status === '점검필요') tags.push({ level: 'red', text: '점검 필요', rank: -1000 });
+    if (a.status === '하') tags.push({ level: 'red', text: '상태 하 · 수리·점검', rank: -1000 });
     const c = dday(a.nextCheck);
-    if (c !== null && c <= 7 && a.status !== '점검필요') tags.push({ level: c < 0 ? 'red' : 'amber', text: '점검 ' + ddText(c), rank: c });
+    if (c !== null && c <= 7) tags.push({ level: c < 0 ? 'red' : 'amber', text: '점검 ' + ddText(c), rank: c });
     const r = dday(a.rentalDue);
     if (r !== null && r <= 14) tags.push({ level: r < 0 ? 'red' : 'amber', text: '렌탈 반납 ' + ddText(r), rank: r, rental: true });
     if (!tags.length) return;
@@ -655,32 +719,100 @@ function renderHome() {
     <button class="btn primary" onclick="openForm()">${icon('plus', 16)} 자산 등록</button>
   </div>
   <div class="stats">
-    ${stat('전체 자산', '전체', act.length, '')}${stat('정상', '정상', cnt('정상'), 'ok')}${stat('사용중', '사용중', cnt('사용중'), 'use')}${stat('점검필요', '점검필요', cnt('점검필요'), 'chk')}
+    ${stat('전체 자산', '전체', act.length, '')}${STATUSES.map(s => stat('상태 ' + s, s, cnt(s), ST_KEY[s])).join('')}
   </div>
+  ${outSummaryHTML()}
+  ${auditCardHTML()}
   <div class="grid2">
     <section class="card">
       <h2>할 일 ${t.length ? `<span class="count">${t.length}</span>` : ''}</h2>
       ${t.length ? t.map(x => `
         <div class="row-item" onclick="openAsset('${x.a.id}')">
           <span class="ri-icon ${x.level}">${icon(x.rentalOnly ? 'clock' : 'alert', 17)}</span>
-          <div class="ri-main"><div class="ri-title">${esc(x.a.name)}</div><div class="ri-sub">${x.a.id} · ${esc(x.a.location)}</div></div>
+          <div class="ri-main"><div class="ri-title">${esc(dispName(x.a))}</div><div class="ri-sub">${x.a.id} · ${esc(x.a.location)}</div></div>
           <div class="dues">${x.tags.map(g => `<span class="due ${g.level}">${g.text}</span>`).join('')}</div>
         </div>`).join('') : `<div class="empty"><b>처리할 일이 없어요</b>점검·반납 일정이 모두 여유 있어요</div>`}
     </section>
     <section class="card">
       <h2>최근 변경</h2>
-      ${recent.map(a => `
+      ${recent.length ? '' : '<div class="empty"><b>아직 등록된 자산이 없어요</b>자산 메뉴에서 엑셀로 한꺼번에 올리거나 하나씩 등록하세요</div>'}${recent.map(a => `
         <div class="row-item" onclick="openAsset('${a.id}')">
-          <div class="ri-main"><div class="ri-title">${esc(a.name)}</div><div class="ri-sub">${a.id} · ${relTime(a.updatedAt)}</div></div>
-          ${badge(a.status)}
+          <div class="ri-main"><div class="ri-title">${esc(dispName(a))}</div><div class="ri-sub">${a.id} · ${relTime(a.updatedAt)}</div></div>
+          ${stBadge(a)}
         </div>`).join('')}
     </section>
   </div>`;
 }
-function filterBy(s) { UI.status = s; UI.q = ''; UI.cat = '전체'; go('assets'); }
+/* ── 이번 달 현장 종료 요약 ── */
+function outSummaryHTML() {
+  const ym = todayStr().slice(0, 7);
+  const list = DOC.assets.filter(a => a.out && (a.out.date || '').startsWith(ym));
+  const by = t => list.filter(a => a.out.type === t).length;
+  return `<div class="sum-line"><span>이번 달 현장 종료 <b>${list.length}건</b></span>${OUT_TYPES.map(t => `<span>${t.replace(' 반납', '').replace('GS ', '')} ${by(t)}</span>`).join('<span>·</span>')}
+    <span class="sp"></span><button class="link" onclick="filterBy('현장 종료')">기록 보기 ›</button></div>`;
+}
+
+/* ── 정기 실사: 현장을 돌며 QR을 찍으면 자동 확인 ── */
+function auditStats() {
+  const act = activeAssets(); const ck = DOC.audit ? DOC.audit.checked : {};
+  return { total: act.length, done: act.filter(a => ck[a.id]).length, noCoord: act.filter(a => !hasCoord(a)).length };
+}
+function auditCardHTML() {
+  const st = auditStats(); const last = DOC.auditLog[0];
+  if (DOC.audit) {
+    const pct = st.total ? Math.round(st.done / st.total * 100) : 0;
+    return `<section class="card audit"><div class="ri-main">
+      <h2 style="margin:0">실사 진행 중 <span class="count" style="background:var(--acc-bg);color:var(--acc)">${st.done} / ${st.total}</span></h2>
+      <div class="progress"><i style="width:${pct}%"></i></div>
+      <div class="ri-sub">${DOC.audit.startedAt.slice(0, 10)} 시작 · 휴대폰 카메라로 QR을 찍으면 자동으로 확인돼요${st.noCoord ? ` · 좌표 없음 ${st.noCoord}건` : ''}</div></div>
+      <div class="head-actions"><button class="btn" onclick="filterBy('실사 미확인')">미확인 ${st.total - st.done}건 보기</button><button class="btn primary" onclick="finishAudit()">실사 마치기</button></div></section>`;
+  }
+  return `<section class="card audit"><div class="ri-main"><h2 style="margin:0 0 4px">정기 실사</h2>
+    <div class="ri-sub" style="white-space:normal">현장을 돌며 QR을 찍으면 확인 표시가 되고, 위치(좌표)도 함께 넣을 수 있어요${st.noCoord ? ` · 지금 좌표 없음 ${st.noCoord}건` : ''}</div>
+    ${last ? `<div class="ri-sub">지난 실사 ${last.endedAt.slice(0, 10)} · ${last.checked}/${last.total} 확인${last.missing.length ? ` · <button class="link" onclick="showAuditResult(0)">못 찾음 ${last.missing.length}건</button>` : ' · 모두 확인'}</div>` : ''}</div>
+    <button class="btn primary" onclick="startAudit()">실사 시작</button></section>`;
+}
+async function startAudit() {
+  if (!confirm('정기 실사를 시작할까요?\n현장을 돌며 휴대폰 카메라로 자산 QR을 찍으면 하나씩 확인돼요.')) return;
+  await saveChange(doc => { doc.audit = { startedAt: new Date().toISOString(), checked: {} }; }, '정기 실사 시작', '실사를 시작했어요');
+}
+async function checkAsset(id, auto) {
+  if (!DOC.audit || DOC.audit.checked[id]) return;
+  const ok = await saveChange(doc => { if (doc.audit) doc.audit.checked[id] = new Date().toISOString(); }, `실사 확인: ${id}`, auto ? `실사 확인 ✓ ${id}` : '확인했어요');
+  if (ok && DRAWER && DRAWER.id === id) renderDrawer();
+}
+async function finishAudit() {
+  const st = auditStats(); const miss = st.total - st.done;
+  if (!confirm(`실사를 마칠까요?\n확인 ${st.done}건 · 못 찾음 ${miss}건\n못 찾은 자산 목록은 기록으로 남아요.`)) return;
+  await saveChange(doc => {
+    if (!doc.audit) return;
+    const act = doc.assets.filter(a => !a.out);
+    doc.auditLog.unshift({ startedAt: doc.audit.startedAt, endedAt: new Date().toISOString(), total: act.length,
+      checked: act.filter(a => doc.audit.checked[a.id]).length, missing: act.filter(a => !doc.audit.checked[a.id]).map(a => a.id) });
+    doc.auditLog = doc.auditLog.slice(0, 20); doc.audit = null;
+  }, `정기 실사 마침: ${st.done}/${st.total} 확인`, '실사를 마쳤어요');
+  if (UI.status === '실사 미확인') UI.status = '전체';
+}
+function showAuditResult(i) {
+  const l = DOC.auditLog[i]; if (!l) return;
+  openModal(`<div class="m-head"><h2>못 찾은 자산 ${l.missing.length}건</h2><button class="icon-btn" onclick="closeModal()">${icon('x', 20)}</button></div>
+    <div class="m-body"><p class="sub" style="margin:0 0 10px">${l.endedAt.slice(0, 10)} 실사 · ${l.checked}/${l.total} 확인</p>
+    ${l.missing.map(id => { const a = getAsset(id); return a ? `<div class="row-item" onclick="openAsset('${id}')"><div class="ri-main"><div class="ri-title">${esc(dispName(a))}</div><div class="ri-sub">${id} · ${esc(a.location)}</div></div>${stBadge(a)}</div>` : `<div class="row-item"><div class="ri-main">${esc(id)} (삭제됨)</div></div>`; }).join('')}</div>`);
+}
+async function quickLocate(id) {
+  try {
+    const c = await getPosition();
+    await saveChange(doc => { const x = doc.assets.find(y => y.id === id); if (x) { x.lat = +c.latitude.toFixed(6); x.lng = +c.longitude.toFixed(6); x.updatedAt = new Date().toISOString(); } },
+      `좌표 입력: ${id}`, `좌표를 넣었어요 (오차 약 ${Math.round(c.accuracy)}m)`);
+    renderDrawer();
+  } catch (e) { if (!e.silent) toast(e.message, 'warn'); }
+}
+function filterBy(s) { UI.status = s; UI.q = ''; UI.cat = '전체'; UI.item = '전체'; go('assets'); }
 
 /* ── 자산 ── */
 function renderAssets() {
+  const c = catalog();
+  const items = UI.cat === '전체' ? [] : c[UI.cat];
   return `
   <div class="page-head">
     <div><h1>자산</h1><p class="sub" id="asset-count"></p></div>
@@ -694,20 +826,22 @@ function renderAssets() {
     </div>
   </div>
   <div class="toolbar">
-    <label class="search">${icon('search', 16)}<input id="q" placeholder="품명, 위치, 자산번호 검색" value="${esc(UI.q)}" oninput="UI.q=this.value;updateAssetList()"></label>
-    <div class="chips">${['전체', ...STATUSES].map(s => `<button class="chip ${UI.status === s ? 'on' : ''}" onclick="UI.status='${s}';render()">${s}</button>`).join('')}</div>
-    <select class="sel" onchange="UI.cat=this.value;updateAssetList()">${['전체', ...CATEGORIES].map(c => `<option ${UI.cat === c ? 'selected' : ''} value="${c}">${c === '전체' ? '분류 전체' : c}</option>`).join('')}</select>
+    <label class="search">${icon('search', 16)}<input id="q" placeholder="품목, 모델, 위치, 관리번호 검색" value="${esc(UI.q)}" oninput="UI.q=this.value;updateAssetList()"></label>
+    <div class="chips">${['전체', ...STATUSES, '현장 종료', ...(DOC.audit ? ['실사 미확인'] : [])].map(s => `<button class="chip ${UI.status === s ? 'on' : ''}" onclick="UI.status='${s}';render()">${STATUSES.includes(s) ? '상태 ' + s : s}</button>`).join('')}</div>
+    <select class="sel" onchange="UI.cat=this.value;UI.item='전체';render()">${['전체', ...CATEGORIES].map(k => `<option ${UI.cat === k ? 'selected' : ''} value="${esc(k)}">${k === '전체' ? '분류 전체' : esc(k)}</option>`).join('')}</select>
+    ${items.length ? `<select class="sel" onchange="UI.item=this.value;updateAssetList()">${['전체', ...items].map(k => `<option ${UI.item === k ? 'selected' : ''} value="${esc(k)}">${k === '전체' ? '품목 전체' : esc(k)}</option>`).join('')}</select>` : ''}
   </div>
   <div id="asset-list"></div>`;
 }
 function filteredAssets() {
   const q = UI.q.trim().toLowerCase();
   return DOC.assets.filter(a =>
-    (UI.status === '전체' ? a.status !== '폐기' : a.status === UI.status) &&
-    (UI.cat === '전체' || a.category === UI.cat) &&
-    (!q || [a.id, a.name, a.location, a.category, a.note].some(v => String(v).toLowerCase().includes(q))));
+    (UI.status === '전체' ? !a.out : UI.status === '현장 종료' ? !!a.out : UI.status === '실사 미확인' ? !a.out && !!DOC.audit && !DOC.audit.checked[a.id] : !a.out && a.status === UI.status) &&
+    (UI.cat === '전체' || a.category === UI.cat) && (UI.item === '전체' || a.item === UI.item) &&
+    (!q || [a.id, a.item, a.model, a.contract, a.location, a.category, a.note, a.manager, a.out && a.out.type, a.out && a.out.to, a.out && a.out.docNo].some(v => String(v || '').toLowerCase().includes(q))));
 }
 function schedOf(a) {
+  if (a.out) return { d: 0, t: (a.out.date || '') + ' 종료', lvl: 'gray' };
   const items = [];
   const c = dday(a.nextCheck); if (c !== null) items.push({ d: c, t: '점검 ' + ddText(c), lvl: c < 0 ? 'red' : c <= 7 ? 'amber' : 'gray' });
   const r = dday(a.rentalDue); if (r !== null) items.push({ d: r, t: '반납 ' + ddText(r), lvl: r < 0 ? 'red' : r <= 14 ? 'amber' : 'gray' });
@@ -715,21 +849,22 @@ function schedOf(a) {
 }
 function updateAssetList() {
   const list = filteredAssets(); const total = activeAssets().length;
-  const cntEl = $('asset-count'); if (cntEl) cntEl.textContent = `${list.length}건 표시 · 운용 중 ${total}건`;
+  const cntEl = $('asset-count'); if (cntEl) cntEl.textContent = `${list.length}건 표시 · 현장 보유 ${total}건`;
   const box = $('asset-list'); if (!box) return;
-  if (!list.length) { box.innerHTML = `<div class="card empty"><b>찾는 자산이 없어요</b>검색어나 상태를 바꿔 보세요</div>`; return; }
+  if (!list.length) { box.innerHTML = `<div class="card empty"><b>찾는 자산이 없어요</b>검색어나 필터를 바꿔 보세요</div>`; return; }
   const sch = a => { const s = schedOf(a); return s ? `<span class="due ${s.lvl}">${s.t}</span>` : '<span class="muted">—</span>'; };
   box.innerHTML = `
   <div class="tbl-wrap"><table class="tbl">
-    <thead><tr><th style="width:110px">자산번호</th><th>품명</th><th style="width:90px">분류</th><th>위치</th><th style="width:100px">상태</th><th style="width:120px">일정</th><th class="chev"></th></tr></thead>
+    <thead><tr><th style="width:118px">관리번호</th><th>품목 · 모델</th><th style="width:130px">분류</th><th>위치</th><th style="width:70px">수량</th><th style="width:96px">상태</th><th style="width:120px">일정</th><th class="chev"></th></tr></thead>
     <tbody>${list.map(a => `<tr onclick="openAsset('${a.id}')">
-      <td class="mono">${a.id}</td><td class="nm">${esc(a.name)}</td><td>${esc(a.category)}</td><td>${esc(a.location)}</td>
-      <td>${badge(a.status)}</td><td>${sch(a)}</td><td class="chev">${icon('chev', 16)}</td></tr>`).join('')}</tbody>
+      <td class="mono">${a.id}</td><td class="nm">${esc(a.item)}<div class="ri-sub" style="font-weight:400">${esc(shortModel(a.model))}</div></td><td>${esc(a.category)}</td><td>${esc(a.location)}</td>
+      <td class="qty">${a.qty} ${a.unit}</td><td>${stBadge(a)}</td><td>${sch(a)}</td><td class="chev">${icon('chev', 16)}</td></tr>`).join('')}</tbody>
   </table></div>
   <div class="mlist">${list.map(a => { const s = schedOf(a); return `
     <div class="mcard" onclick="openAsset('${a.id}')">
-      <div class="mc-top"><span class="mono sub" style="margin:0">${a.id} · ${esc(a.category)}</span>${badge(a.status)}</div>
-      <div class="mc-name">${esc(a.name)}</div>
+      <div class="mc-top"><span class="mono sub" style="margin:0">${a.id} · ${esc(a.category)}</span>${stBadge(a)}</div>
+      <div class="mc-name">${esc(a.item)} <span class="qty" style="font-size:13px;color:var(--sub)">${a.qty} ${a.unit}</span></div>
+      ${shortModel(a.model) ? `<div class="mc-sub" style="margin-bottom:3px">${esc(shortModel(a.model))}</div>` : ''}
       <div class="mc-sub">${icon('pin', 14)}${esc(a.location)}</div>
       ${s ? `<div class="mc-due"><span class="due ${s.lvl}">${s.t}</span></div>` : ''}
     </div>`; }).join('')}</div>`;
@@ -758,7 +893,7 @@ function renderMap() {
   return `
   <div class="page-head">
     <div><h1>지도</h1><p class="sub">위치가 등록된 자산 ${n}건${all > n ? ` · 위치 없음 ${all - n}건` : ''}</p></div>
-    <div class="legend">${STATUSES.slice(0, 3).map(s => `<span class="${ST_KEY[s]}"><i></i>${s}</span>`).join('')}</div>
+    <div class="legend">${STATUSES.map(s => `<span class="${ST_KEY[s]}"><i></i>상태 ${s}</span>`).join('')}</div>
   </div>
   <div class="map-layout">
     <aside class="map-list">
@@ -771,10 +906,10 @@ function renderMap() {
 function updateMapList(sel) {
   const box = $('map-items'); if (!box) return;
   const q = UI.mapQ.trim().toLowerCase();
-  const list = mapAssets().filter(a => !q || (a.name + a.location + a.id).toLowerCase().includes(q));
+  const list = mapAssets().filter(a => !q || (dispName(a) + a.location + a.id).toLowerCase().includes(q));
   box.innerHTML = list.length ? list.map(a => `
     <button class="mi ${ST_KEY[a.status]} ${sel === a.id ? 'on' : ''}" onclick="mapSelect('${a.id}')"><i></i>
-      <div class="ri-main"><div class="ri-title">${esc(a.name)}</div><div class="ri-sub">${a.id} · ${esc(a.location)}</div></div></button>`).join('')
+      <div class="ri-main"><div class="ri-title">${esc(dispName(a))}</div><div class="ri-sub">${a.id} · ${esc(a.location)}</div></div></button>`).join('')
     : `<div class="empty" style="padding:20px">해당 자산이 없어요</div>`;
 }
 async function initMainMap() {
@@ -788,7 +923,7 @@ async function initMainMap() {
   const bounds = new kakao.maps.LatLngBounds(); const list = mapAssets();
   list.forEach(a => {
     const el = document.createElement('button');
-    el.className = 'pin ' + ST_KEY[a.status]; el.title = a.name; el.setAttribute('aria-label', a.name);
+    el.className = 'pin ' + ST_KEY[a.status]; el.title = dispName(a); el.setAttribute('aria-label', dispName(a));
     el.addEventListener('click', ev => { ev.stopPropagation(); mapSelect(a.id); });
     const pos = new kakao.maps.LatLng(a.lat, a.lng);
     new kakao.maps.CustomOverlay({ position: pos, content: el, xAnchor: .5, yAnchor: .5, zIndex: 2 }).setMap(MAP);
@@ -809,7 +944,7 @@ function mapSelect(id, level) {
   const pos = new kakao.maps.LatLng(a.lat, a.lng);
   const el = document.createElement('div'); el.className = 'mapcard';
   el.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center"><span class="mono" style="color:var(--sub);font-size:12px">${a.id}</span>${badge(a.status)}</div>
-    <b>${esc(a.name)}</b><div style="color:var(--sub)">${esc(a.location)}</div>
+    <b>${esc(dispName(a))}</b><div style="color:var(--sub)">${esc(a.location)}</div>
     <button class="btn sm primary" data-open>상세 보기</button>`;
   el.addEventListener('click', e => e.stopPropagation());
   el.addEventListener('mousedown', e => e.stopPropagation());
@@ -844,13 +979,13 @@ function renderLabels() {
 }
 function labCandidates() {
   const q = UI.labQ.trim().toLowerCase();
-  return activeAssets().filter(a => !q || (a.name + a.location + a.id).toLowerCase().includes(q));
+  return activeAssets().filter(a => !q || (dispName(a) + a.location + a.id).toLowerCase().includes(q));
 }
 function updateLabelList() {
   const box = $('lab-items'); if (!box) return;
   box.innerHTML = labCandidates().map(a => `
     <label class="lab-it"><input type="checkbox" ${UI.labSel.has(a.id) ? 'checked' : ''} onchange="labToggle('${a.id}',this.checked)">
-      <div class="ri-main"><div class="ri-title">${esc(a.name)}</div><div class="ri-sub">${a.id} · ${esc(a.location)}</div></div></label>`).join('')
+      <div class="ri-main"><div class="ri-title">${esc(dispName(a))}</div><div class="ri-sub">${a.id} · ${esc(a.location)}</div></div></label>`).join('')
     || `<div class="empty" style="padding:20px">해당 자산이 없어요</div>`;
 }
 function labToggle(id, on) { on ? UI.labSel.add(id) : UI.labSel.delete(id); updateLabelPreview(); }
@@ -869,7 +1004,7 @@ function labelHTML(a) {
   const src = qrData(a.id);
   return `<div class="label"><div class="lb-top"><span>AURORA</span><span>${esc(CONFIG.SITE.replace(/ v[\d.]+$/, ''))}</span></div>
     ${src ? `<img class="lb-qr" src="${src}" alt="">` : `<div class="lb-qr none">QR 생성 불가</div>`}
-    <div class="lb-id">${a.id}</div><div class="lb-name">${esc(a.name)}</div></div>`;
+    <div class="lb-id">${a.id}</div><div class="lb-name">${esc(dispName(a))}</div></div>`;
 }
 /* 용지별 배치 (단위 mm) · 라벨 묶음은 용지 한가운데에 놓여요 */
 const PAPER = {
@@ -912,7 +1047,7 @@ function printOne(id) { UI.labSel = new Set([id]); UI.labQ = ''; closeDrawer(); 
 function openAsset(id) { if (!getAsset(id)) return; closeModal(); DRAWER = { mode: 'detail', id }; renderDrawer(); }
 function openForm(id) {
   const a = id ? getAsset(id) : null;
-  DRAWER = { mode: 'form', id: id || null, draft: a ? { ...a } : { name: '', category: '', location: '', status: '정상', lat: '', lng: '', nextCheck: '', rentalDue: '', note: '' } };
+  DRAWER = { mode: 'form', id: id || null, draft: a ? { ...a } : { item: '', model: '', qty: 1, unit: 'EA', location: '', status: '상', acq: '', manager: '관리팀장', lat: '', lng: '', nextCheck: '', rentalDue: '', note: '' } };
   renderDrawer();
 }
 function closeDrawer() { DRAWER = null; $('drawer').classList.add('hidden'); }
@@ -924,53 +1059,114 @@ function renderDrawer() {
 }
 function detailHTML(a) {
   const row = (k, v) => `<div><dt>${k}</dt><dd>${v}</dd></div>`;
-  const dateRow = (k, s, warnDays) => { const n = dday(s); return row(k, `${s}<span class="due ${n < 0 ? 'red' : n <= warnDays ? 'amber' : 'gray'}">${ddText(n)}</span>`); };
+  const dateRow = (k, s, warnDays) => { const n = dday(s); return row(k, `${s}${a.out ? '' : `<span class="due ${n < 0 ? 'red' : n <= warnDays ? 'amber' : 'gray'}">${ddText(n)}</span>`}`); };
   const qr = qrData(a.id);
+  const sm = shortModel(a.model);
+  const acq = a.acq || acqOf(a.contract);
   return `
-  <div class="p-head"><div><div class="mono" style="color:var(--sub);font-size:13px">${a.id} · ${esc(a.category)}</div><h2>${esc(a.name)}</h2></div>
+  <div class="p-head"><div><div class="mono" style="color:var(--sub);font-size:13px">${a.id} · ${esc(a.category)}</div><h2>${esc(a.item)}${sm ? `<div style="font-size:15px;font-weight:600;color:var(--sub);margin-top:2px">${esc(sm)}</div>` : ''}</h2></div>
     <button class="icon-btn" onclick="closeDrawer()" aria-label="닫기">${icon('x', 20)}</button></div>
   <div class="p-body">
-    <div class="flabel">상태 — 누르면 바로 저장돼요</div>
-    <div class="seg">${STATUSES.map(s => `<button class="${ST_KEY[s]} ${a.status === s ? 'on' : ''}" onclick="setStatus('${a.id}','${s}')">${s}</button>`).join('')}</div>
+    ${DOC.audit && !a.out ? (DOC.audit.checked[a.id] ? `<div class="audit-banner done">${icon('check', 16)} 실사 확인됨 · ${relTime(DOC.audit.checked[a.id])}</div>`
+      : `<div class="audit-banner">실사 중 · 아직 확인 전<span class="sp"></span><button class="btn sm primary" onclick="checkAsset('${a.id}')">확인했어요</button></div>`) : ''}
+    ${!a.out && !hasCoord(a) ? `<div class="audit-banner" style="background:#fff7ed;color:var(--chk)">좌표가 없어요<span class="sp"></span><button class="btn sm" onclick="quickLocate('${a.id}')">${icon('crosshair', 14)} 지금 위치로 넣기</button></div>` : ''}
+    ${a.out ? `<div class="out-banner"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b>${esc(a.out.type)}</b><button class="btn sm" onclick="restoreAsset('${a.id}')">현장 복귀</button></div>
+      <div class="ri-sub">${[a.out.date, a.out.to, a.out.docNo && '반출증 ' + a.out.docNo, a.out.note].filter(Boolean).map(esc).join(' · ') || '세부 기록 없음'}</div></div>`
+    : `<div class="flabel">상태 — 누르면 바로 저장돼요</div>
+    <div class="seg" style="margin-bottom:8px">${STATUSES.map(s => `<button class="${ST_KEY[s]} ${a.status === s ? 'on' : ''}" onclick="setStatus('${a.id}','${s}')" title="${ST_DESC[s]}">${s}</button>`).join('')}</div>
+    <p class="hint" style="margin:0 0 18px">${ST_DESC[a.status]}</p>`}
     <dl class="info">
       ${row('위치', `${esc(a.location)}${hasCoord(a) ? `<button class="link" onclick="showOnMap('${a.id}')">지도에서 보기</button>` : '<span class="muted" style="font-size:12.5px">좌표 없음</span>'}`)}
+      ${row('수량', `<span class="qty">${a.qty} ${a.unit}</span>`)}
+      ${a.model && a.model.replace(/^\s*\((계약외|계약|구자산)\)\s*/, '') !== sm ? row('모델·상세', `<span class="full-model">${esc(a.model)}</span>`) : ''}
+      ${acq ? row('취득 구분', esc(acq)) : ''}
+      ${a.contract && a.contract !== a.model && !/^\((계약외|계약|구자산)\)[^/]{0,8}$/.test(a.contract) ? row('품명/계약명', `<span class="full-model">${esc(a.contract)}</span>`) : ''}
       ${a.nextCheck ? dateRow('다음 점검', a.nextCheck, 7) : ''}
       ${a.rentalDue ? dateRow('렌탈 반납', a.rentalDue, 14) : ''}
+      ${a.manager ? row('관리자', esc(a.manager)) : ''}
+      ${a.locInit && a.locInit !== a.location ? row('최초 위치', esc(a.locInit)) : ''}
       ${a.note ? row('비고', esc(a.note)) : ''}
       ${row('최종 변경', relTime(a.updatedAt))}
     </dl>
     <div class="qr-box">${qr ? `<img src="${qr}" alt="QR">` : ''}<div><b>QR 라벨</b><p class="sub" style="margin-bottom:8px">휴대폰 카메라로 찍으면 이 화면이 열려요</p>
-      <button class="btn sm desktop-only" onclick="printOne('${a.id}')">${icon('printer', 14)} 라벨 인쇄</button></div></div>
+      ${a.out ? '' : `<button class="btn sm desktop-only" onclick="printOne('${a.id}')">${icon('printer', 14)} 라벨 인쇄</button>`}</div></div>
   </div>
-  <div class="p-foot"><button class="btn" onclick="openForm('${a.id}')">${icon('edit', 16)} 정보 수정</button>${hasCoord(a) ? `<button class="btn" onclick="showOnMap('${a.id}')">${icon('pin', 16)} 지도</button>` : ''}</div>`;
+  <div class="p-foot"><button class="btn" onclick="openForm('${a.id}')">${icon('edit', 16)} 정보 수정</button>${a.out ? '' : `<button class="btn" onclick="openOut('${a.id}')">${icon('logout', 16)} 현장 종료 처리</button>`}</div>`;
 }
 async function setStatus(id, s) {
   const a = getAsset(id); if (!a || a.status === s) return;
-  if (s === '폐기' && !confirm(`${a.name}\n폐기 처리할까요? 목록과 지도에서 숨겨져요. (자산 > 폐기 에서 다시 볼 수 있어요)`)) return;
   document.querySelectorAll('.seg button').forEach(b => b.disabled = true);
-  await saveChange(doc => { const x = doc.assets.find(y => y.id === id); if (x) { x.status = s; x.updatedAt = new Date().toISOString(); } }, `상태 변경: ${id} → ${s}`, `'${s}'(으)로 바꿨어요`);
+  await saveChange(doc => { const x = doc.assets.find(y => y.id === id); if (x) { x.status = s; x.updatedAt = new Date().toISOString(); } }, `상태 변경: ${id} → ${s}`, `상태를 '${s}'(으)로 바꿨어요`);
   renderDrawer();
+}
+
+/* 현장 종료 처리 (GS 자재창고 반납 · 타현장 전용 · 렌탈업체 반납 · 폐기) */
+let OUT = null;
+const OUT_TO = { 'GS 자재창고 반납': ['받는 곳', 'GS 자재창고'], '타현장 전용': ['받는 현장', '예: ○○현장'], '렌탈업체 반납': ['렌탈업체', '예: ○○렌탈'], '폐기': ['', ''] };
+function openOut(id) {
+  OUT = { id, type: '', date: todayStr(), to: '', docNo: '', note: '' };
+  renderOut();
+}
+function renderOut() {
+  const a = getAsset(OUT.id); const [toLabel, toPh] = OUT_TO[OUT.type] || ['', ''];
+  openModal(`
+    <div class="m-head"><h2>현장 종료 처리</h2><button class="icon-btn" onclick="closeModal()">${icon('x', 20)}</button></div>
+    <div class="m-body">
+      <p class="sub" style="margin:0 0 14px">${a.id} · ${esc(dispName(a))}<br>처리하면 현황·목록·지도·라벨에서 빠지고 기록만 남아요. '현장 복귀'로 되돌릴 수 있어요.</p>
+      <div class="field"><div class="flabel">구분<em>*</em></div>
+        <div class="seg two" style="margin:0">${OUT_TYPES.map(t => `<button type="button" class="off ${OUT.type === t ? 'on' : ''}" onclick="OUT.type='${t}';OUT.to=${t === 'GS 자재창고 반납' ? "'GS 자재창고'" : "''"};renderOut()">${t}</button>`).join('')}</div></div>
+      <div class="field"><div class="flabel">일자</div><input class="inp" type="date" value="${esc(OUT.date)}" oninput="OUT.date=this.value"></div>
+      ${toLabel ? `<div class="field"><div class="flabel">${toLabel}</div><input class="inp" value="${esc(OUT.to)}" placeholder="${toPh}" oninput="OUT.to=this.value"></div>` : ''}
+      <div class="field"><div class="flabel">반출증 · 승인번호 <span class="muted" style="font-weight:500">(선택)</span></div><input class="inp" value="${esc(OUT.docNo)}" oninput="OUT.docNo=this.value"></div>
+      <div class="field" style="margin:0"><div class="flabel">비고 <span class="muted" style="font-weight:500">(선택)</span></div><input class="inp" value="${esc(OUT.note)}" oninput="OUT.note=this.value"></div>
+    </div>
+    <div class="m-foot"><span class="sp"></span><button class="btn" onclick="closeModal()">취소</button><button class="btn primary" id="out-go" onclick="saveOut()">처리하기</button></div>`);
+}
+async function saveOut() {
+  if (!OUT.type) return toast('구분을 골라 주세요', 'warn');
+  const o = { type: OUT.type, date: OUT.date || todayStr(), to: OUT.to.trim(), docNo: OUT.docNo.trim(), note: OUT.note.trim() }; const id = OUT.id;
+  $('out-go').disabled = true; $('out-go').textContent = '저장 중…';
+  const res = await saveChange(doc => { const x = doc.assets.find(y => y.id === id); if (x) { x.out = o; x.updatedAt = new Date().toISOString(); } return id; },
+    `현장 종료: ${id} → ${o.type}${o.docNo ? ' (반출증 ' + o.docNo + ')' : ''}`, `'${o.type}'(으)로 처리했어요`);
+  if (res) { closeModal(); openAsset(id); } else if ($('out-go')) { $('out-go').disabled = false; $('out-go').textContent = '처리하기'; }
+}
+async function restoreAsset(id) {
+  const a = getAsset(id); if (!a || !a.out) return;
+  if (!confirm(`${a.id} ${dispName(a)}\n'${a.out.type}' 처리를 취소하고 현장으로 되돌릴까요?`)) return;
+  await saveChange(doc => { const x = doc.assets.find(y => y.id === id); if (x) { x.out = null; x.updatedAt = new Date().toISOString(); } }, `현장 복귀: ${id}`, '현장으로 되돌렸어요');
+  renderDrawer();
+}
+
+function itemOptions(sel) {
+  const c = catalog();
+  return `<option value="">품목을 고르세요</option>` + CATEGORIES.map(k => `<optgroup label="${esc(k)}">${c[k].map(it => `<option ${sel === it ? 'selected' : ''} value="${esc(it)}">${esc(it)}</option>`).join('')}</optgroup>`).join('');
 }
 function formHTML() {
   const d = DRAWER.draft, isNew = !DRAWER.id;
   const bind = k => `oninput="DRAWER.draft.${k}=this.value"`;
-  const moreOpen = d.nextCheck || d.rentalDue || d.note;
+  const moreOpen = d.nextCheck || d.rentalDue || d.note || d.acq;
+  const segBtns = (key, list, cls) => list.map(v => `<button type="button" class="${cls ? cls(v) : 'use'} ${d[key] === v ? 'on' : ''}" onclick="DRAWER.draft.${key}='${v}';this.parentNode.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b===this))">${v}</button>`).join('');
   return `
-  <div class="p-head"><div><div class="mono" style="color:var(--sub);font-size:13px">${isNew ? '자산번호는 자동으로 붙어요' : DRAWER.id}</div><h2>${isNew ? '자산 등록' : '정보 수정'}</h2></div>
+  <div class="p-head"><div><div class="mono" style="color:var(--sub);font-size:13px">${isNew ? '관리번호는 자동으로 붙어요' : DRAWER.id}</div><h2>${isNew ? '자산 등록' : '정보 수정'}</h2></div>
     <button class="icon-btn" onclick="${isNew ? 'closeDrawer()' : `openAsset('${DRAWER.id}')`}" aria-label="닫기">${icon('x', 20)}</button></div>
   <div class="p-body">
-    <div class="field"><div class="flabel">품명<em>*</em></div><input class="inp" id="f-name" value="${esc(d.name)}" ${bind('name')} placeholder="예: 인버터 용접기 500A"></div>
-    <div class="field"><div class="flabel">분류<em>*</em></div>
-      <div class="cat-chips">${CATEGORIES.map(c => `<button type="button" class="chip ${d.category === c ? 'on' : ''}" onclick="DRAWER.draft.category='${c}';this.parentNode.querySelectorAll('.chip').forEach(b=>b.classList.toggle('on',b===this))">${c}</button>`).join('')}</div></div>
-    <div class="field"><div class="flabel">위치<em>*</em></div><input class="inp" value="${esc(d.location)}" ${bind('location')} placeholder="예: OSBL 야적장 A구역"></div>
+    <div class="field"><div class="flabel">품목<em>*</em> <span class="muted" style="font-weight:500" id="f-cat">${d.item ? '· ' + esc(catOf(d.item)) : ''}</span></div>
+      <select class="inp" onchange="DRAWER.draft.item=this.value;$('f-cat').textContent=this.value?'· '+catOf(this.value):''">${itemOptions(d.item)}</select>
+      <p class="hint">목록에 없는 품목은 설정 → 품목 추가에서 넣을 수 있어요</p></div>
+    <div class="field"><div class="flabel">모델·상세 <span class="muted" style="font-weight:500">('기타'는 필수)</span></div><input class="inp" value="${esc(d.model)}" ${bind('model')} placeholder="예: 캐리어 40평형"></div>
+    <div class="field"><div class="flabel">수량<em>*</em></div>
+      <div class="coord-row"><input class="inp" type="number" min="1" step="1" inputmode="numeric" value="${esc(d.qty)}" ${bind('qty')}><div class="seg" style="margin:0">${segBtns('unit', UNITS)}</div></div></div>
+    <div class="field"><div class="flabel">위치<em>*</em></div><input class="inp" value="${esc(d.location)}" ${bind('location')} placeholder="예: 본관 2층 회의실"></div>
     <div class="field"><div class="flabel">상태</div>
-      <div class="seg" style="margin:0">${STATUSES.map(s => `<button type="button" class="${ST_KEY[s]} ${d.status === s ? 'on' : ''}" onclick="DRAWER.draft.status='${s}';this.parentNode.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b===this))">${s}</button>`).join('')}</div></div>
+      <div class="seg" style="margin:0">${segBtns('status', STATUSES, v => ST_KEY[v])}</div></div>
     <div class="field"><div class="flabel">지도 위치 <span class="muted" style="font-weight:500">(선택)</span></div>
       <div class="coord-row"><input class="inp" id="f-lat" inputmode="decimal" value="${esc(d.lat)}" ${bind('lat')} placeholder="위도 36.78…"><input class="inp" id="f-lng" inputmode="decimal" value="${esc(d.lng)}" ${bind('lng')} placeholder="경도 126.55…"></div>
       <div class="coord-btns"><button type="button" class="btn" onclick="useMyLocation()">${icon('crosshair', 16)} 지금 내 위치</button><button type="button" class="btn" onclick="openPicker()">${icon('pin', 16)} 지도에서 찍기</button></div></div>
     <details class="more" ${moreOpen ? 'open' : ''}><summary>추가 정보 (선택)</summary>
-      <div class="field"><div class="flabel">다음 점검일</div><input class="inp" type="date" value="${esc(d.nextCheck)}" ${bind('nextCheck')}></div>
+      <div class="field"><div class="flabel">취득 구분</div><select class="inp" onchange="DRAWER.draft.acq=this.value"><option value="">—</option>${ACQ_TYPES.map(t => `<option ${(d.acq || acqOf(d.contract)) === t ? 'selected' : ''}>${t}</option>`).join('')}</select></div>
+      <div class="field"><div class="flabel">다음 점검일 <span class="muted" style="font-weight:500">제세동기·가스탐지기 등</span></div><input class="inp" type="date" value="${esc(d.nextCheck)}" ${bind('nextCheck')}></div>
       <div class="field"><div class="flabel">렌탈 반납일 <span class="muted" style="font-weight:500">렌탈 장비만</span></div><input class="inp" type="date" value="${esc(d.rentalDue)}" ${bind('rentalDue')}></div>
+      <div class="field"><div class="flabel">관리자</div><input class="inp" value="${esc(d.manager)}" ${bind('manager')} placeholder="예: 관리팀장 (개인 이름 대신 직책)"></div>
       <div class="field"><div class="flabel">비고</div><textarea class="inp" ${bind('note')} placeholder="자유 메모">${esc(d.note)}</textarea></div>
     </details>
   </div>
@@ -981,22 +1177,26 @@ function formHTML() {
 function formError(msg) { toast(msg, 'warn'); }
 async function saveForm() {
   const d = DRAWER.draft, id = DRAWER.id, isNew = !id;
-  const miss = [!d.name.trim() && '품명', !d.category && '분류', !d.location.trim() && '위치'].filter(Boolean);
+  const qty = Number(d.qty);
+  const miss = [!d.item && '품목', !String(d.location).trim() && '위치'].filter(Boolean);
   if (miss.length) return formError(miss.join(', ') + '을(를) 입력해 주세요');
+  if (!Number.isInteger(qty) || qty < 1) return formError('수량은 1 이상의 정수로 넣어 주세요');
+  if (d.item === '기타' && !String(d.model).trim()) return formError("품목이 '기타'면 모델·상세에 무엇인지 적어 주세요");
   let lat = '', lng = '';
   if (String(d.lat).trim() || String(d.lng).trim()) {
     lat = parseFloat(d.lat); lng = parseFloat(d.lng);
     if (!validLat(lat) || !validLng(lng)) return formError('좌표가 올바르지 않아요 (예: 36.7805 / 126.5505)');
     lat = +lat.toFixed(6); lng = +lng.toFixed(6);
   }
-  const fields = { name: d.name.trim(), category: d.category, location: d.location.trim(), status: d.status, lat, lng, nextCheck: d.nextCheck || '', rentalDue: d.rentalDue || '', note: (d.note || '').trim() };
+  const fields = { item: d.item, category: catOf(d.item), model: String(d.model).trim(), qty, unit: d.unit || 'EA', location: String(d.location).trim(), status: d.status || '상',
+    acq: d.acq || '', manager: String(d.manager || '').trim(), lat, lng, nextCheck: d.nextCheck || '', rentalDue: d.rentalDue || '', note: String(d.note || '').trim() };
   $('f-save').disabled = true; $('f-save').textContent = '저장 중…';
   const res = await saveChange(doc => {
     const now = new Date().toISOString();
-    if (isNew) { const nid = nextId(doc); doc.assets.push({ id: nid, ...fields, updatedAt: now }); return nid; }
+    if (isNew) { const nid = nextId(doc); doc.assets.push({ id: nid, contract: '', locInit: fields.location, out: null, ...fields, updatedAt: now }); return nid; }
     const a = doc.assets.find(x => x.id === id); if (!a) throw new Error('자산을 찾을 수 없어요');
     Object.assign(a, fields, { updatedAt: now }); return id;
-  }, isNew ? `자산 등록: ${fields.name}` : `자산 수정: ${id}`, isNew ? '등록했어요' : '저장했어요');
+  }, isNew ? `자산 등록: ${fields.item}${fields.model ? ' ' + shortModel(fields.model) : ''}` : `자산 수정: ${id}`, isNew ? '등록했어요' : '저장했어요');
   if (res) openAsset(res); else if ($('f-save')) { $('f-save').disabled = false; $('f-save').textContent = isNew ? '등록하기' : '저장'; }
 }
 /* 위치 권한: 휴대폰 보안 기능이라 앱이 대신 허용할 수는 없음.
@@ -1088,39 +1288,58 @@ function closeModal() { $('modal').classList.add('hidden'); $('modal-box').inner
 /* ═══════════════════════════════════════════
    [6] 엑셀
    ═══════════════════════════════════════════ */
-const XL_COLS = [['자산번호', 'id'], ['품명', 'name'], ['분류', 'category'], ['위치', 'location'], ['상태', 'status'], ['위도', 'lat'], ['경도', 'lng'], ['다음점검일', 'nextCheck'], ['렌탈반납일', 'rentalDue'], ['비고', 'note']];
-const XL_ALIAS = Object.fromEntries([...XL_COLS.map(([h, k]) => [h, k]), ['설치위치', 'location'], ['품명및규격', 'name'], ['운용상태', 'status'], ['자산관리번호', 'id']]);
+// 회사 자산 대장 양식(11열) + 앱에서 쓰는 추가 열
+const XL_COLS = [
+  ['관리번호(ID)', 'id'], ['보유부서', '_dept'], ['보유부서명', '_deptName'], ['대분류', 'category'], ['중분류', 'item'],
+  ['품명/계약명', 'contract'], ['모델명/상세', 'model'], ['최초위치', 'locInit'], ['현재위치', 'location'], ['상태', 'status'], ['관리자', 'manager'],
+  ['수량', 'qty'], ['단위', 'unit'], ['위도', 'lat'], ['경도', 'lng'], ['다음점검일', 'nextCheck'], ['렌탈반납일', 'rentalDue'], ['비고', 'note'],
+  ['현장종료구분', 'outType'], ['종료일', 'outDate'], ['받는곳', 'outTo'], ['반출증번호', 'outDoc']
+];
+const XL_WIDTH = [13, 9, 18, 14, 14, 32, 34, 18, 18, 7, 10, 6, 6, 10, 11, 12, 12, 24, 14, 11, 14, 12];
+const XL_ALIAS = Object.fromEntries([...XL_COLS.map(([h, k]) => [h.replace(/\s/g, ''), k]),
+  ['관리번호', 'id'], ['자산번호', 'id'], ['분류', 'category'], ['품목', 'item'], ['모델명', 'model'], ['품명', 'model'], ['위치', 'location'], ['설치위치', 'location'], ['받는곳', 'outTo']]);
 function needXLSX() { if (typeof XLSX === 'undefined') { toast('엑셀 기능을 불러오지 못했어요 · 인터넷 연결을 확인해 주세요', 'err'); return false; } return true; }
+function xlSheet(rows) {
+  const ws = XLSX.utils.aoa_to_sheet([XL_COLS.map(c => c[0]), ...rows]);
+  ws['!cols'] = XL_WIDTH.map(w => ({ wch: w })); return ws;
+}
 function downloadTemplate() {
   if (!needXLSX()) return;
-  const ws = XLSX.utils.aoa_to_sheet([XL_COLS.map(c => c[0])]);
-  ws['!cols'] = [10, 34, 10, 26, 10, 11, 11, 13, 13, 26].map(w => ({ wch: w }));
+  const c = catalog();
   const guide = XLSX.utils.aoa_to_sheet([
     ['열', '필수', '적는 방법'],
-    ['자산번호', '', '새 자산은 비워두세요 (자동으로 AUR-006 같은 번호가 붙어요). 기존 자산을 고칠 때만 적어요.'],
-    ['품명', '필수', '규격까지 함께 적어요. 예: 인버터 용접기 500A'],
-    ['분류', '필수', CATEGORIES.join(', ') + ' 중 하나'],
-    ['위치', '필수', '예: OSBL 야적장 A구역'],
-    ['상태', '', '정상, 사용중, 점검필요, 폐기 중 하나 (비우면 정상)'],
-    ['위도 / 경도', '', '예: 36.7805 / 126.5505 · 비워두고 앱에서 지도를 눌러 넣어도 돼요'],
-    ['다음점검일', '', '예: 2026-12-01'],
-    ['렌탈반납일', '', '렌탈 장비만. 예: 2026-12-31'],
-    ['비고', '', '자유 메모'],
+    ['관리번호(ID)', '', '새 자산은 비워두면 AURORA-080 처럼 자동으로 붙어요. 이미 번호가 있으면 그대로 적어요. 같은 번호가 있으면 그 자산을 고쳐요.'],
+    ['보유부서 · 보유부서명', '', '읽지 않아요 (현장 하나라서). 비워도 돼요.'],
+    ['대분류', '', "중분류(품목)를 보고 자동으로 정해요. 새 품목일 때만 꼭 적어요: " + CATEGORIES.join(', ')],
+    ['중분류', '필수', "품목 이름. '품목목록' 시트 참고. 목록에 없으면 새 품목으로 추가돼요 (대분류 필요)"],
+    ['품명/계약명', '', '(계약) (계약외)온라인구매 (계약외)견적 (구자산) 처럼 적으면 취득 구분이 자동으로 정해져요'],
+    ['모델명/상세', '', "중분류가 '기타'면 필수 (무엇인지 적기)"],
+    ['최초위치 · 현재위치', '필수', '현재위치를 비우면 최초위치를 써요'],
+    ['상태', '', '상, 중, 하 중 하나 (비우면 상). 양호→상, 보통→중, 불량→하로 바꿔 읽어요. 폐기라고 적으면 현장 종료(폐기)로 처리해요'],
+    ['관리자', '', '개인 이름 대신 직책 (예: 관리팀장)'],
+    ['수량 · 단위', '', '수량을 비우면 1, 단위를 비우면 EA. 단위는 EA 또는 SET'],
+    ['위도 · 경도', '', '비워두고 현장에서 휴대폰으로 넣어도 돼요'],
+    ['다음점검일 · 렌탈반납일', '', '예: 2026-12-01'],
+    ['현장종료구분 · 종료일 · 받는곳 · 반출증번호', '', OUT_TYPES.join(', ') + ' 중 하나. 보통은 비워둬요'],
     [],
-    ['기존 자산 고치기', '', '자산번호와 바꿀 칸만 채우세요. 빈칸은 원래 값이 그대로 남아요.'],
+    ['기존 자산 고치기', '', '관리번호와 바꿀 칸만 채우세요. 빈칸은 원래 값이 그대로 남아요.'],
     ['팁', '', "앱의 '내보내기' 파일을 고쳐서 그대로 올려도 돼요."]
   ]);
-  guide['!cols'] = [{ wch: 16 }, { wch: 6 }, { wch: 80 }];
+  guide['!cols'] = [{ wch: 26 }, { wch: 6 }, { wch: 100 }];
+  const items = XLSX.utils.aoa_to_sheet([['대분류', '중분류(품목)'], ...CATEGORIES.flatMap(k => c[k].map(it => [k, it]))]);
+  items['!cols'] = [{ wch: 16 }, { wch: 28 }];
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, '자산입력'); XLSX.utils.book_append_sheet(wb, guide, '작성안내');
+  XLSX.utils.book_append_sheet(wb, xlSheet([]), '자산입력'); XLSX.utils.book_append_sheet(wb, guide, '작성안내'); XLSX.utils.book_append_sheet(wb, items, '품목목록');
   XLSX.writeFile(wb, 'Aurora_자산등록양식.xlsx');
 }
 function exportExcel() {
   if (!needXLSX()) return;
-  const rows = DOC.assets.map(a => [...XL_COLS.map(([, k]) => a[k] ?? ''), a.updatedAt ? new Date(a.updatedAt).toLocaleString('ko-KR') : '']);
-  const ws = XLSX.utils.aoa_to_sheet([[...XL_COLS.map(c => c[0]), '최종변경'], ...rows]);
-  ws['!cols'] = [10, 34, 10, 26, 10, 11, 11, 13, 13, 26, 20].map(w => ({ wch: w }));
-  const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, '자산대장');
+  const c = Store.cfg();
+  const rows = DOC.assets.map(a => XL_COLS.map(([, k]) => ({
+    _dept: c.deptCode || '', _deptName: c.deptName || 'Aurora Project(충남)',
+    status: a.out ? a.out.type : a.status, outType: a.out ? a.out.type : '', outDate: a.out ? a.out.date : '', outTo: a.out ? a.out.to : '', outDoc: a.out ? a.out.docNo : ''
+  }[k] ?? a[k] ?? '')));
+  const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, xlSheet(rows), '자산대장');
   XLSX.writeFile(wb, `Aurora_자산대장_${todayStr()}.xlsx`);
 }
 const cellStr = v => v == null ? '' : String(v).trim();
@@ -1142,46 +1361,73 @@ async function handleExcel(inp) {
 }
 function buildPlan(rows) {
   const byId = new Map(DOC.assets.map(a => [a.id, a])); const seen = new Set(); const out = [];
+  const cat = catalog(); const newItems = {};
   rows.forEach((raw, i) => {
-    const r = {}; Object.keys(raw).forEach(k => { const key = XL_ALIAS[String(k).replace(/\s/g, '')]; if (key) r[key] = raw[k]; });
+    const r = {}; Object.keys(raw).forEach(k => { const key = XL_ALIAS[String(k).replace(/\s/g, '')]; if (key && !key.startsWith('_')) r[key] = raw[k]; });
     if (!Object.values(r).some(v => cellStr(v))) return;
-    const errs = [], f = {}, id = cellStr(r.id).toUpperCase();
-    ['name', 'location', 'note'].forEach(k => { const v = cellStr(r[k]); if (v) f[k] = v; });
-    const cat = cellStr(r.category); if (cat) CATEGORIES.includes(cat) ? f.category = cat : errs.push(`분류 '${cat}'는 쓸 수 없어요`);
-    const st = cellStr(r.status); if (st) STATUSES.includes(st) ? f.status = st : errs.push(`상태 '${st}'는 쓸 수 없어요`);
+    const errs = [], notes = [], f = {}, id = cellStr(r.id).toUpperCase(); const cur = id ? byId.get(id) : null;
+    ['model', 'contract', 'location', 'locInit', 'manager', 'note'].forEach(k => { const v = cellStr(r[k]); if (v) f[k] = v; });
+    if (!f.location && f.locInit && !cur) f.location = f.locInit;
+    const acq = acqOf(f.contract); if (acq) f.acq = acq;
+    // 품목·분류
+    const item = cellStr(r.item), c0 = cellStr(r.category);
+    if (item) {
+      const known = CATEGORIES.find(k => cat[k].includes(item)) || newItems[item];
+      if (known) { f.item = item; f.category = known; if (c0 && c0 !== known) notes.push(`대분류는 품목 기준 '${known}'(으)로 맞춤`); }
+      else if (CATEGORIES.includes(c0)) { f.item = item; f.category = c0; newItems[item] = c0; notes.push(`새 품목 추가: ${item} (${c0})`); }
+      else errs.push(`'${item}'은(는) 새 품목이에요 · 대분류(${CATEGORIES.join(', ')})를 적어 주세요`);
+    }
+    // 상태 · 현장 종료
+    const st = cellStr(r.status), ot = cellStr(r.outType);
+    if (ot) { OUT_TYPES.includes(ot) ? f.out = { type: ot, date: cellDate(r.outDate) || todayStr(), to: cellStr(r.outTo), docNo: cellStr(r.outDoc), note: '' } : errs.push(`현장종료구분 '${ot}'는 쓸 수 없어요`); }
+    if (st) {
+      if (OUT_TYPES.includes(st)) { if (!f.out) f.out = { type: st, date: cellDate(r.outDate) || todayStr(), to: cellStr(r.outTo), docNo: cellStr(r.outDoc), note: '' }; }
+      else { const ns = normStatus(st); ns ? (f.status = ns, ns !== st && notes.push(`상태 '${st}' → '${ns}'`)) : errs.push(`상태 '${st}'는 쓸 수 없어요 (상·중·하)`); }
+    }
+    // 수량 · 단위
+    const q = cellStr(r.qty), u = cellStr(r.unit).toUpperCase();
+    if (q) { Number.isInteger(+q) && +q > 0 ? f.qty = +q : errs.push(`수량 '${q}'를 확인해 주세요 (1 이상 정수)`); }
+    if (u) { UNITS.includes(u) ? f.unit = u : errs.push(`단위 '${u}'는 쓸 수 없어요 (EA·SET)`); }
     const la = cellStr(r.lat), ln = cellStr(r.lng);
     if (la || ln) { const a = parseFloat(la), b = parseFloat(ln); validLat(a) && validLng(b) ? (f.lat = +a.toFixed(6), f.lng = +b.toFixed(6)) : errs.push('위도/경도를 확인해 주세요'); }
     [['nextCheck', '다음점검일'], ['rentalDue', '렌탈반납일']].forEach(([k, h]) => { if (cellStr(r[k])) { const d = cellDate(r[k]); d ? f[k] = d : errs.push(`${h} 날짜 형식(2026-12-01)을 확인해 주세요`); } });
+    if (id) { if (seen.has(id)) errs.push('같은 관리번호가 파일에 두 번 있어요'); seen.add(id); }
     let type, changes = [];
-    if (id) {
-      if (seen.has(id)) errs.push('같은 자산번호가 파일에 두 번 있어요'); seen.add(id);
-      const cur = byId.get(id);
-      if (!cur) errs.push(`${id}는 없는 자산번호예요 (새 자산은 자산번호를 비워두세요)`);
-      else { changes = Object.keys(f).filter(k => String(cur[k] ?? '') !== String(f[k])).map(k => ({ k, from: cur[k], to: f[k] })); type = changes.length ? 'update' : 'same'; }
+    if (cur) {
+      const same = (k, v) => k === 'out' ? JSON.stringify(cur.out) === JSON.stringify(v) : String(cur[k] ?? '') === String(v);
+      changes = Object.keys(f).filter(k => !same(k, f[k])).map(k => ({ k, from: k === 'out' ? (cur.out ? cur.out.type : '') : cur[k], to: k === 'out' ? f.out.type : f[k] }));
+      type = changes.length ? 'update' : 'same';
     } else {
-      if (!f.name) errs.push('품명이 없어요'); if (!f.location) errs.push('위치가 없어요'); if (!cat) errs.push('분류가 없어요');
-      if (!f.status) f.status = '정상'; type = 'new';
+      if (id && !/^[A-Z0-9][A-Z0-9_-]{1,30}$/.test(id)) errs.push(`관리번호 '${id}' 형식을 확인해 주세요`);
+      if (!f.item) { if (!item) errs.push('중분류(품목)가 없어요'); }
+      else if (f.item === '기타' && !f.model) errs.push("품목이 '기타'면 모델명/상세를 적어 주세요");
+      if (!f.location) errs.push('위치가 없어요');
+      if (!q) { f.qty = 1; } if (!u) f.unit = 'EA';
+      if (!f.status) f.status = '상';
+      type = 'new';
     }
     if (errs.length) type = 'error';
-    out.push({ line: i + 2, type, id, f, changes, errs, name: f.name || (byId.get(id) || {}).name || '' });
+    out.push({ line: i + 2, type, id, f, changes, errs, notes, name: f.item ? dispName({ item: f.item, model: f.model || '' }) : (cur ? dispName(cur) : '') });
   });
   return out;
 }
-const FIELD_KO = Object.fromEntries(XL_COLS.map(([h, k]) => [k, h]));
+const FIELD_KO = Object.fromEntries(XL_COLS.map(([h, k]) => [k, h.replace('(ID)', '')]));
+Object.assign(FIELD_KO, { acq: '취득 구분', out: '현장 종료', category: '대분류', item: '중분류' });
 const TYPE_KO = { new: '신규', update: '변경', error: '오류', same: '그대로' };
 function openPlan(fname) {
   const n = t => PLAN.filter(p => p.type === t).length; const ok = n('new') + n('update');
   const detail = p => p.type === 'error' ? `<span style="color:var(--red)">${p.errs.map(esc).join('<br>')}</span>`
-    : p.type === 'update' ? p.changes.map(c => `<div class="chg">${FIELD_KO[c.k]}: ${esc(c.from || '(빈칸)')} → <b>${esc(c.to)}</b></div>`).join('')
-    : p.type === 'new' ? `<span class="chg">${esc(p.f.category || '')} · ${esc(p.f.location || '')} · ${esc(p.f.status)}</span>` : '<span class="muted">바뀐 내용 없음</span>';
+    : (p.type === 'update' ? p.changes.map(c => `<div class="chg">${FIELD_KO[c.k] || c.k}: ${esc(c.from === '' || c.from == null ? '(빈칸)' : c.from)} → <b>${esc(c.to)}</b></div>`).join('')
+    : p.type === 'new' ? `<span class="chg">${esc(p.f.category || '')} · ${p.f.qty} ${p.f.unit} · ${esc(p.f.location || '')} · ${p.f.out ? esc(p.f.out.type) : '상태 ' + esc(p.f.status)}</span>` : '<span class="muted">바뀐 내용 없음</span>')
+    + (p.notes.length ? `<div class="hint" style="margin:3px 0 0">${p.notes.map(esc).join(' · ')}</div>` : '');
   openModal(`
     <div class="m-head"><h2>엑셀 반영 미리보기</h2><button class="icon-btn" onclick="closeModal()">${icon('x', 20)}</button></div>
     <div class="m-body">
       <p class="sub" style="margin:0 0 8px">${esc(fname)} · ${PLAN.length}줄</p>
       <div class="sum-chips"><span class="t-new">신규 ${n('new')}</span><span class="t-update">변경 ${n('update')}</span><span class="t-error">오류 ${n('error')}</span><span class="t-same">그대로 ${n('same')}</span></div>
-      ${PLAN.length ? `<table class="plan"><thead><tr><th>줄</th><th>구분</th><th>자산번호</th><th>품명</th><th>내용</th></tr></thead><tbody>
+      ${PLAN.length ? `<table class="plan"><thead><tr><th>줄</th><th>구분</th><th>관리번호</th><th>품목</th><th>내용</th></tr></thead><tbody>
         ${PLAN.map(p => `<tr><td>${p.line}</td><td><span class="tag t-${p.type}">${TYPE_KO[p.type]}</span></td><td class="mono">${p.id ? esc(p.id) : '<span class="muted">자동</span>'}</td><td>${esc(p.name)}</td><td>${detail(p)}</td></tr>`).join('')}
-      </tbody></table>` : `<div class="empty"><b>읽을 내용이 없어요</b>첫 줄이 '자산번호, 품명, 분류…' 제목인지 확인해 주세요</div>`}
+      </tbody></table>` : `<div class="empty"><b>읽을 내용이 없어요</b>첫 줄이 '관리번호(ID), 보유부서, … 중분류 …' 제목인지 확인해 주세요</div>`}
       ${n('error') ? `<p class="hint">오류가 있는 줄은 빼고 반영돼요. 엑셀을 고쳐서 다시 올리면 돼요.</p>` : ''}
     </div>
     <div class="m-foot"><span class="sp"></span><button class="btn" onclick="closeModal()">취소</button>
@@ -1190,15 +1436,22 @@ function openPlan(fname) {
 async function applyPlan() {
   const items = PLAN.filter(p => p.type === 'new' || p.type === 'update'); if (!items.length) return;
   $('plan-go').disabled = true; $('plan-go').textContent = '반영 중…';
+  const nNew = items.filter(p => p.type === 'new').length, nUp = items.length - nNew;
   const res = await saveChange(doc => {
-    const now = new Date().toISOString(); let added = 0, updated = 0;
+    const now = new Date().toISOString(); let added = 0, updated = 0, skipped = 0;
+    const base = new Set(CATEGORIES.flatMap(k => BASE_CATALOG[k]));
     items.forEach(p => {
-      if (p.type === 'new') { doc.assets.push({ id: nextId(doc), name: '', category: '', location: '', status: '정상', lat: '', lng: '', nextCheck: '', rentalDue: '', note: '', ...p.f, updatedAt: now }); added++; }
-      else { const a = doc.assets.find(x => x.id === p.id); if (a) { p.changes.forEach(c => a[c.k] = c.to); a.updatedAt = now; updated++; } }
+      if (p.f.item && !base.has(p.f.item)) doc.catalog[p.f.item] = p.f.category;
+      if (p.type === 'new') {
+        const id = p.id || nextId(doc);
+        if (doc.assets.some(x => x.id === id)) { skipped++; return; }
+        doc.assets.push({ id, category: '', item: '', model: '', contract: '', acq: '', qty: 1, unit: 'EA', location: '', locInit: p.f.locInit || p.f.location || '', manager: '',
+          status: '상', lat: '', lng: '', nextCheck: '', rentalDue: '', note: '', out: null, ...p.f, updatedAt: now }); added++;
+      } else { const a = doc.assets.find(x => x.id === p.id); if (a) { p.changes.forEach(c => a[c.k] = p.f[c.k]); a.updatedAt = now; updated++; } }
     });
-    return { added, updated };
-  }, `엑셀 반영: 신규 ${items.filter(p => p.type === 'new').length}건 · 변경 ${items.filter(p => p.type === 'update').length}건`);
-  if (res) { closeModal(); toast(`신규 ${res.added}건 · 변경 ${res.updated}건을 반영했어요`); }
+    return { added, updated, skipped };
+  }, `엑셀 반영: 신규 ${nNew}건 · 변경 ${nUp}건`);
+  if (res) { closeModal(); toast(`신규 ${res.added}건 · 변경 ${res.updated}건을 반영했어요${res.skipped ? ` (이미 있는 번호 ${res.skipped}건 건너뜀)` : ''}`); }
   else if ($('plan-go')) { $('plan-go').disabled = false; $('plan-go').textContent = `${items.length}건 반영하기`; }
 }
 
@@ -1229,12 +1482,27 @@ function openSettings() {
         <input class="inp" id="s-qr" value="${esc(c.qrBase)}" placeholder="${esc(CONFIG.QR_BASE_DEFAULT)}">
         <p class="hint">QR을 찍었을 때 열릴 앱 주소예요. 비워두면 지금 열린 주소(또는 기본값)를 써요.</p>
       </div>
+      <div class="set-block">
+        <h3>품목 추가</h3>
+        <p class="hint" style="margin:2px 0 10px">새 품목은 모든 기기에 바로 적용돼요. 분류(대분류)는 6개 중에서 골라요.</p>
+        <div class="coord-row"><input class="inp" id="s-item" placeholder="예: 정수기"><select class="inp" id="s-item-cat">${CATEGORIES.map(k => `<option>${esc(k)}</option>`).join('')}</select></div>
+        <button class="btn" style="margin-top:8px;width:100%" onclick="addItem()">${icon('plus', 16)} 품목 추가</button>
+        ${Object.keys(DOC.catalog || {}).length ? `<p class="hint">추가한 품목: ${Object.entries(DOC.catalog).map(([it, k]) => `${esc(it)} (${esc(k)})`).join(', ')}</p>` : ''}
+      </div>
+      <div class="set-block">
+        <h3>엑셀 내보내기 · 보유부서</h3>
+        <div class="set-grid">
+          <label>보유부서 코드<input class="inp" id="s-dept" value="${esc(c.deptCode || '')}" placeholder="비워도 돼요"></label>
+          <label>보유부서명<input class="inp" id="s-dept-name" value="${esc(c.deptName || 'Aurora Project(충남)')}"></label>
+        </div>
+        <p class="hint">내보내기 파일의 보유부서 칸에만 들어가요. 이 기기에만 저장되고 공개 데이터에는 들어가지 않아요.</p>
+      </div>
     </div>
     <div class="m-foot"><button class="btn" onclick="testConn()">연결 확인</button><span class="sp"></span>
       <button class="btn" onclick="closeModal()">취소</button><button class="btn primary" onclick="saveSettings()">저장</button></div>`);
 }
 function readSettingsForm() {
-  return { owner: $('s-owner').value.trim(), repo: $('s-repo').value.trim(), branch: $('s-branch').value.trim() || 'main', path: $('s-path').value.trim() || 'assets.json', token: $('s-token').value.trim(), qrBase: $('s-qr').value.trim() };
+  return { owner: $('s-owner').value.trim(), repo: $('s-repo').value.trim(), branch: $('s-branch').value.trim() || 'main', path: $('s-path').value.trim() || 'assets.json', token: $('s-token').value.trim(), qrBase: $('s-qr').value.trim(), deptCode: $('s-dept').value.trim(), deptName: $('s-dept-name').value.trim() };
 }
 async function testConn() {
   const c = readSettingsForm(), out = $('s-test');
@@ -1246,6 +1514,13 @@ async function testConn() {
     out.style.color = 'var(--ok)';
     out.textContent = '✓ 저장소에 연결됐어요 · ' + (f.ok ? `${c.path} 파일이 있어요` : `${c.path} 파일은 첫 저장 때 만들어져요`) + (c.token ? '' : ' (토큰이 없어 읽기만 가능)');
   } catch (e) { out.style.color = 'var(--red)'; out.textContent = '✕ ' + e.message; }
+}
+async function addItem() {
+  const it = $('s-item').value.trim(), k = $('s-item-cat').value;
+  if (!it) return toast('품목 이름을 넣어 주세요', 'warn');
+  if (catOf(it)) return toast(`'${it}'은(는) 이미 '${catOf(it)}'에 있어요`, 'warn');
+  const res = await saveChange(doc => { doc.catalog[it] = k; return true; }, `품목 추가: ${it} (${k})`, `'${it}' 품목을 추가했어요`);
+  if (res) openSettings();
 }
 function saveSettings() {
   const c = readSettingsForm(); const before = Store.mode();
