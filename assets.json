@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "updatedAt": "2026-11-10T21:41:45.983Z",
+  "updatedAt": "2026-11-10T23:32:50.605Z",
   "catalog": {},
   "assets": [
     {
@@ -22,7 +22,8 @@
       "rentalDue": "",
       "note": "",
       "out": null,
-      "updatedAt": "2026-11-10T09:00:00+09:00"
+      "updatedAt": "2026-11-10T09:00:00+09:00",
+      "log": []
     },
     {
       "id": "AURORA-002",
@@ -43,7 +44,8 @@
       "rentalDue": "",
       "note": "",
       "out": null,
-      "updatedAt": "2026-11-10T09:00:00+09:00"
+      "updatedAt": "2026-11-10T09:00:00+09:00",
+      "log": []
     },
     {
       "id": "AURORA-003",
@@ -64,7 +66,8 @@
       "rentalDue": "",
       "note": "",
       "out": null,
-      "updatedAt": "2026-11-10T09:00:00+09:00"
+      "updatedAt": "2026-11-10T09:00:00+09:00",
+      "log": []
     },
     {
       "id": "AURORA-004",
@@ -85,7 +88,8 @@
       "rentalDue": "",
       "note": "",
       "out": null,
-      "updatedAt": "2026-11-10T09:00:00+09:00"
+      "updatedAt": "2026-11-10T09:00:00+09:00",
+      "log": []
     },
     {
       "id": "AURORA-005",
@@ -106,7 +110,8 @@
       "rentalDue": "",
       "note": "",
       "out": null,
-      "updatedAt": "2026-11-10T09:00:00+09:00"
+      "updatedAt": "2026-11-10T09:00:00+09:00",
+      "log": []
     },
     {
       "id": "AURORA-006",
@@ -127,7 +132,8 @@
       "rentalDue": "",
       "note": "",
       "out": null,
-      "updatedAt": "2026-11-10T09:00:00+09:00"
+      "updatedAt": "2026-11-10T09:00:00+09:00",
+      "log": []
     },
     {
       "id": "AURORA-007",
@@ -148,7 +154,8 @@
       "rentalDue": "",
       "note": "",
       "out": null,
-      "updatedAt": "2026-11-10T09:00:00+09:00"
+      "updatedAt": "2026-11-10T09:00:00+09:00",
+      "log": []
     },
     {
       "id": "AURORA-008",
@@ -169,7 +176,8 @@
       "rentalDue": "",
       "note": "",
       "out": null,
-      "updatedAt": "2026-11-10T09:00:00+09:00"
+      "updatedAt": "2026-11-10T09:00:00+09:00",
+      "log": []
     },
     {
       "id": "AURORA-009",
@@ -190,7 +198,8 @@
       "rentalDue": "",
       "note": "",
       "out": null,
-      "updatedAt": "2026-11-10T09:00:00+09:00"
+      "updatedAt": "2026-11-10T09:00:00+09:00",
+      "log": []
     },
     {
       "id": "AURORA-010",
@@ -211,7 +220,8 @@
       "rentalDue": "",
       "note": "",
       "out": null,
-      "updatedAt": "2026-11-10T09:00:00+09:00"
+      "updatedAt": "2026-11-10T09:00:00+09:00",
+      "log": []
     },
     {
       "id": "AURORA-011",
@@ -232,7 +242,8 @@
       "rentalDue": "",
       "note": "",
       "out": null,
-      "updatedAt": "2026-11-10T09:00:00+09:00"
+      "updatedAt": "2026-11-10T09:00:00+09:00",
+      "log": []
     },
     {
       "id": "AURORA-012",
@@ -253,7 +264,8 @@
       "rentalDue": "",
       "note": "",
       "out": null,
-      "updatedAt": "2026-11-10T09:00:00+09:00"
+      "updatedAt": "2026-11-10T09:00:00+09:00",
+      "log": []
     },
     {
       "id": "AURORA-013",
@@ -274,7 +286,8 @@
       "rentalDue": "",
       "note": "",
       "out": null,
-      "updatedAt": "2026-11-10T09:00:00+09:00"
+      "updatedAt": "2026-11-10T09:00:00+09:00",
+      "log": []
     },
     {
       "id": "AURORA-014",
@@ -295,7 +308,8 @@
       "rentalDue": "",
       "note": "",
       "out": null,
-      "updatedAt": "2026-11-10T09:00:00+09:00"
+      "updatedAt": "2026-11-10T09:00:00+09:00",
+      "log": []
     },
     {
       "id": "AURORA-015",
@@ -316,7 +330,8 @@
       "rentalDue": "",
       "note": "",
       "out": null,
-      "updatedAt": "2026-11-10T09:00:00+09:00"
+      "updatedAt": "2026-11-10T09:00:00+09:00",
+      "log": []
     },
     {
       "id": "AURORA-016",
@@ -337,7 +352,8 @@
       "rentalDue": "",
       "note": "",
       "out": null,
-      "updatedAt": "2026-11-10T09:00:00+09:00"
+      "updatedAt": "2026-11-10T09:00:00+09:00",
+      "log": []
     },
     {
       "id": "AURORA-017",
@@ -358,7 +374,8 @@
       "rentalDue": "",
       "note": "",
       "out": null,
-      "updatedAt": "2026-11-10T09:00:00+09:00"
+      "updatedAt": "2026-11-10T09:00:00+09:00",
+      "log": []
     },
     {
       "id": "AURORA-018",
@@ -379,7 +396,8 @@
       "rentalDue": "",
       "note": "",
       "out": null,
-      "updatedAt": "2026-11-10T09:00:00+09:00"
+      "updatedAt": "2026-11-10T09:00:00+09:00",
+      "log": []
     },
     {
       "id": "AURORA-019",
@@ -400,7 +418,8 @@
       "rentalDue": "",
       "note": "",
       "out": null,
-      "updatedAt": "2026-11-10T09:00:00+09:00"
+      "updatedAt": "2026-11-10T09:00:00+09:00",
+      "log": []
     },
     {
       "id": "AURORA-020",
@@ -421,7 +440,8 @@
       "rentalDue": "",
       "note": "",
       "out": null,
-      "updatedAt": "2026-11-10T09:00:00+09:00"
+      "updatedAt": "2026-11-10T09:00:00+09:00",
+      "log": []
     },
     {
       "id": "AURORA-021",
@@ -442,7 +462,8 @@
       "rentalDue": "",
       "note": "",
       "out": null,
-      "updatedAt": "2026-11-10T09:00:00+09:00"
+      "updatedAt": "2026-11-10T09:00:00+09:00",
+      "log": []
     },
     {
       "id": "AURORA-022",
@@ -463,7 +484,8 @@
       "rentalDue": "",
       "note": "",
       "out": null,
-      "updatedAt": "2026-11-10T09:00:00+09:00"
+      "updatedAt": "2026-11-10T09:00:00+09:00",
+      "log": []
     },
     {
       "id": "AURORA-023",
@@ -484,7 +506,8 @@
       "rentalDue": "",
       "note": "",
       "out": null,
-      "updatedAt": "2026-11-10T09:00:00+09:00"
+      "updatedAt": "2026-11-10T09:00:00+09:00",
+      "log": []
     },
     {
       "id": "AURORA-024",
@@ -505,7 +528,8 @@
       "rentalDue": "",
       "note": "",
       "out": null,
-      "updatedAt": "2026-11-10T09:00:00+09:00"
+      "updatedAt": "2026-11-10T09:00:00+09:00",
+      "log": []
     },
     {
       "id": "AURORA-025",
@@ -526,7 +550,8 @@
       "rentalDue": "",
       "note": "",
       "out": null,
-      "updatedAt": "2026-11-10T09:00:00+09:00"
+      "updatedAt": "2026-11-10T09:00:00+09:00",
+      "log": []
     },
     {
       "id": "AURORA-026",
@@ -547,7 +572,8 @@
       "rentalDue": "",
       "note": "",
       "out": null,
-      "updatedAt": "2026-11-10T09:00:00+09:00"
+      "updatedAt": "2026-11-10T09:00:00+09:00",
+      "log": []
     },
     {
       "id": "AURORA-027",
@@ -568,7 +594,8 @@
       "rentalDue": "",
       "note": "",
       "out": null,
-      "updatedAt": "2026-11-10T09:00:00+09:00"
+      "updatedAt": "2026-11-10T09:00:00+09:00",
+      "log": []
     },
     {
       "id": "AURORA-028",
@@ -589,7 +616,8 @@
       "rentalDue": "",
       "note": "",
       "out": null,
-      "updatedAt": "2026-11-10T09:00:00+09:00"
+      "updatedAt": "2026-11-10T09:00:00+09:00",
+      "log": []
     },
     {
       "id": "AURORA-029",
@@ -610,7 +638,8 @@
       "rentalDue": "",
       "note": "",
       "out": null,
-      "updatedAt": "2026-11-10T09:00:00+09:00"
+      "updatedAt": "2026-11-10T09:00:00+09:00",
+      "log": []
     },
     {
       "id": "AURORA-030",
@@ -631,7 +660,8 @@
       "rentalDue": "",
       "note": "",
       "out": null,
-      "updatedAt": "2026-11-10T09:00:00+09:00"
+      "updatedAt": "2026-11-10T09:00:00+09:00",
+      "log": []
     },
     {
       "id": "AURORA-031",
@@ -652,7 +682,8 @@
       "rentalDue": "",
       "note": "",
       "out": null,
-      "updatedAt": "2026-11-10T09:00:00+09:00"
+      "updatedAt": "2026-11-10T09:00:00+09:00",
+      "log": []
     },
     {
       "id": "AURORA-032",
@@ -673,7 +704,8 @@
       "rentalDue": "",
       "note": "",
       "out": null,
-      "updatedAt": "2026-11-10T09:00:00+09:00"
+      "updatedAt": "2026-11-10T09:00:00+09:00",
+      "log": []
     },
     {
       "id": "AURORA-033",
@@ -694,7 +726,8 @@
       "rentalDue": "",
       "note": "",
       "out": null,
-      "updatedAt": "2026-11-10T09:00:00+09:00"
+      "updatedAt": "2026-11-10T09:00:00+09:00",
+      "log": []
     },
     {
       "id": "AURORA-034",
@@ -715,7 +748,8 @@
       "rentalDue": "",
       "note": "",
       "out": null,
-      "updatedAt": "2026-11-10T09:00:00+09:00"
+      "updatedAt": "2026-11-10T09:00:00+09:00",
+      "log": []
     },
     {
       "id": "AURORA-035",
@@ -736,7 +770,8 @@
       "rentalDue": "",
       "note": "",
       "out": null,
-      "updatedAt": "2026-11-10T09:00:00+09:00"
+      "updatedAt": "2026-11-10T09:00:00+09:00",
+      "log": []
     },
     {
       "id": "AURORA-036",
@@ -757,7 +792,8 @@
       "rentalDue": "",
       "note": "",
       "out": null,
-      "updatedAt": "2026-11-10T09:00:00+09:00"
+      "updatedAt": "2026-11-10T09:00:00+09:00",
+      "log": []
     },
     {
       "id": "AURORA-037",
@@ -778,7 +814,8 @@
       "rentalDue": "",
       "note": "",
       "out": null,
-      "updatedAt": "2026-11-10T09:00:00+09:00"
+      "updatedAt": "2026-11-10T09:00:00+09:00",
+      "log": []
     },
     {
       "id": "AURORA-038",
@@ -799,7 +836,8 @@
       "rentalDue": "",
       "note": "",
       "out": null,
-      "updatedAt": "2026-11-10T09:00:00+09:00"
+      "updatedAt": "2026-11-10T09:00:00+09:00",
+      "log": []
     },
     {
       "id": "AURORA-039",
@@ -820,7 +858,8 @@
       "rentalDue": "",
       "note": "",
       "out": null,
-      "updatedAt": "2026-11-10T09:00:00+09:00"
+      "updatedAt": "2026-11-10T09:00:00+09:00",
+      "log": []
     },
     {
       "id": "AURORA-040",
@@ -841,7 +880,8 @@
       "rentalDue": "",
       "note": "",
       "out": null,
-      "updatedAt": "2026-11-10T09:00:00+09:00"
+      "updatedAt": "2026-11-10T09:00:00+09:00",
+      "log": []
     },
     {
       "id": "AURORA-041",
@@ -862,7 +902,8 @@
       "rentalDue": "",
       "note": "",
       "out": null,
-      "updatedAt": "2026-11-10T09:00:00+09:00"
+      "updatedAt": "2026-11-10T09:00:00+09:00",
+      "log": []
     },
     {
       "id": "AURORA-042",
@@ -883,7 +924,8 @@
       "rentalDue": "",
       "note": "",
       "out": null,
-      "updatedAt": "2026-11-10T09:00:00+09:00"
+      "updatedAt": "2026-11-10T09:00:00+09:00",
+      "log": []
     },
     {
       "id": "AURORA-043",
@@ -904,7 +946,8 @@
       "rentalDue": "",
       "note": "",
       "out": null,
-      "updatedAt": "2026-11-10T09:00:00+09:00"
+      "updatedAt": "2026-11-10T09:00:00+09:00",
+      "log": []
     },
     {
       "id": "AURORA-044",
@@ -925,7 +968,8 @@
       "rentalDue": "",
       "note": "",
       "out": null,
-      "updatedAt": "2026-11-10T09:00:00+09:00"
+      "updatedAt": "2026-11-10T09:00:00+09:00",
+      "log": []
     },
     {
       "id": "AURORA-045",
@@ -946,7 +990,8 @@
       "rentalDue": "",
       "note": "",
       "out": null,
-      "updatedAt": "2026-11-10T09:00:00+09:00"
+      "updatedAt": "2026-11-10T09:00:00+09:00",
+      "log": []
     },
     {
       "id": "AURORA-046",
@@ -967,7 +1012,8 @@
       "rentalDue": "",
       "note": "",
       "out": null,
-      "updatedAt": "2026-11-10T09:00:00+09:00"
+      "updatedAt": "2026-11-10T09:00:00+09:00",
+      "log": []
     },
     {
       "id": "AURORA-047",
@@ -988,7 +1034,8 @@
       "rentalDue": "",
       "note": "",
       "out": null,
-      "updatedAt": "2026-11-10T09:00:00+09:00"
+      "updatedAt": "2026-11-10T09:00:00+09:00",
+      "log": []
     },
     {
       "id": "AURORA-048",
@@ -1009,7 +1056,8 @@
       "rentalDue": "",
       "note": "",
       "out": null,
-      "updatedAt": "2026-11-10T09:00:00+09:00"
+      "updatedAt": "2026-11-10T09:00:00+09:00",
+      "log": []
     },
     {
       "id": "AURORA-049",
@@ -1030,7 +1078,8 @@
       "rentalDue": "",
       "note": "",
       "out": null,
-      "updatedAt": "2026-11-10T09:00:00+09:00"
+      "updatedAt": "2026-11-10T09:00:00+09:00",
+      "log": []
     },
     {
       "id": "AURORA-050",
@@ -1051,7 +1100,8 @@
       "rentalDue": "",
       "note": "",
       "out": null,
-      "updatedAt": "2026-11-10T09:00:00+09:00"
+      "updatedAt": "2026-11-10T09:00:00+09:00",
+      "log": []
     },
     {
       "id": "AURORA-051",
@@ -1072,7 +1122,8 @@
       "rentalDue": "",
       "note": "",
       "out": null,
-      "updatedAt": "2026-11-10T09:00:00+09:00"
+      "updatedAt": "2026-11-10T09:00:00+09:00",
+      "log": []
     },
     {
       "id": "AURORA-052",
@@ -1093,7 +1144,8 @@
       "rentalDue": "",
       "note": "",
       "out": null,
-      "updatedAt": "2026-11-10T09:00:00+09:00"
+      "updatedAt": "2026-11-10T09:00:00+09:00",
+      "log": []
     },
     {
       "id": "AURORA-053",
@@ -1114,7 +1166,8 @@
       "rentalDue": "",
       "note": "",
       "out": null,
-      "updatedAt": "2026-11-10T09:00:00+09:00"
+      "updatedAt": "2026-11-10T09:00:00+09:00",
+      "log": []
     },
     {
       "id": "AURORA-054",
@@ -1135,7 +1188,8 @@
       "rentalDue": "",
       "note": "",
       "out": null,
-      "updatedAt": "2026-11-10T09:00:00+09:00"
+      "updatedAt": "2026-11-10T09:00:00+09:00",
+      "log": []
     },
     {
       "id": "AURORA-055",
@@ -1156,7 +1210,8 @@
       "rentalDue": "",
       "note": "",
       "out": null,
-      "updatedAt": "2026-11-10T09:00:00+09:00"
+      "updatedAt": "2026-11-10T09:00:00+09:00",
+      "log": []
     },
     {
       "id": "AURORA-056",
@@ -1177,7 +1232,8 @@
       "rentalDue": "",
       "note": "",
       "out": null,
-      "updatedAt": "2026-11-10T09:00:00+09:00"
+      "updatedAt": "2026-11-10T09:00:00+09:00",
+      "log": []
     },
     {
       "id": "AURORA-057",
@@ -1198,7 +1254,8 @@
       "rentalDue": "",
       "note": "",
       "out": null,
-      "updatedAt": "2026-11-10T09:00:00+09:00"
+      "updatedAt": "2026-11-10T09:00:00+09:00",
+      "log": []
     },
     {
       "id": "AURORA-058",
@@ -1219,7 +1276,8 @@
       "rentalDue": "",
       "note": "",
       "out": null,
-      "updatedAt": "2026-11-10T09:00:00+09:00"
+      "updatedAt": "2026-11-10T09:00:00+09:00",
+      "log": []
     },
     {
       "id": "AURORA-059",
@@ -1240,7 +1298,8 @@
       "rentalDue": "",
       "note": "",
       "out": null,
-      "updatedAt": "2026-11-10T09:00:00+09:00"
+      "updatedAt": "2026-11-10T09:00:00+09:00",
+      "log": []
     },
     {
       "id": "AURORA-060",
@@ -1261,7 +1320,8 @@
       "rentalDue": "",
       "note": "",
       "out": null,
-      "updatedAt": "2026-11-10T09:00:00+09:00"
+      "updatedAt": "2026-11-10T09:00:00+09:00",
+      "log": []
     },
     {
       "id": "AURORA-061",
@@ -1282,7 +1342,8 @@
       "rentalDue": "",
       "note": "",
       "out": null,
-      "updatedAt": "2026-11-10T09:00:00+09:00"
+      "updatedAt": "2026-11-10T09:00:00+09:00",
+      "log": []
     },
     {
       "id": "AURORA-062",
@@ -1303,7 +1364,8 @@
       "rentalDue": "",
       "note": "",
       "out": null,
-      "updatedAt": "2026-11-10T09:00:00+09:00"
+      "updatedAt": "2026-11-10T09:00:00+09:00",
+      "log": []
     },
     {
       "id": "AURORA-063",
@@ -1324,7 +1386,8 @@
       "rentalDue": "",
       "note": "",
       "out": null,
-      "updatedAt": "2026-11-10T09:00:00+09:00"
+      "updatedAt": "2026-11-10T09:00:00+09:00",
+      "log": []
     },
     {
       "id": "AURORA-064",
@@ -1345,7 +1408,8 @@
       "rentalDue": "",
       "note": "",
       "out": null,
-      "updatedAt": "2026-11-10T09:00:00+09:00"
+      "updatedAt": "2026-11-10T09:00:00+09:00",
+      "log": []
     },
     {
       "id": "AURORA-065",
@@ -1366,7 +1430,8 @@
       "rentalDue": "",
       "note": "",
       "out": null,
-      "updatedAt": "2026-11-10T09:00:00+09:00"
+      "updatedAt": "2026-11-10T09:00:00+09:00",
+      "log": []
     },
     {
       "id": "AURORA-066",
@@ -1387,7 +1452,8 @@
       "rentalDue": "",
       "note": "",
       "out": null,
-      "updatedAt": "2026-11-10T09:00:00+09:00"
+      "updatedAt": "2026-11-10T09:00:00+09:00",
+      "log": []
     },
     {
       "id": "AURORA-067",
@@ -1408,7 +1474,8 @@
       "rentalDue": "",
       "note": "",
       "out": null,
-      "updatedAt": "2026-11-10T09:00:00+09:00"
+      "updatedAt": "2026-11-10T09:00:00+09:00",
+      "log": []
     },
     {
       "id": "AURORA-068",
@@ -1429,7 +1496,8 @@
       "rentalDue": "",
       "note": "",
       "out": null,
-      "updatedAt": "2026-11-10T09:00:00+09:00"
+      "updatedAt": "2026-11-10T09:00:00+09:00",
+      "log": []
     },
     {
       "id": "AURORA-069",
@@ -1450,7 +1518,8 @@
       "rentalDue": "",
       "note": "",
       "out": null,
-      "updatedAt": "2026-11-10T09:00:00+09:00"
+      "updatedAt": "2026-11-10T09:00:00+09:00",
+      "log": []
     },
     {
       "id": "AURORA-070",
@@ -1471,7 +1540,8 @@
       "rentalDue": "",
       "note": "",
       "out": null,
-      "updatedAt": "2026-11-10T09:00:00+09:00"
+      "updatedAt": "2026-11-10T09:00:00+09:00",
+      "log": []
     },
     {
       "id": "AURORA-071",
@@ -1492,7 +1562,8 @@
       "rentalDue": "",
       "note": "",
       "out": null,
-      "updatedAt": "2026-11-10T09:00:00+09:00"
+      "updatedAt": "2026-11-10T09:00:00+09:00",
+      "log": []
     },
     {
       "id": "AURORA-072",
@@ -1513,7 +1584,8 @@
       "rentalDue": "",
       "note": "",
       "out": null,
-      "updatedAt": "2026-11-10T09:00:00+09:00"
+      "updatedAt": "2026-11-10T09:00:00+09:00",
+      "log": []
     },
     {
       "id": "AURORA-073",
@@ -1534,7 +1606,8 @@
       "rentalDue": "",
       "note": "",
       "out": null,
-      "updatedAt": "2026-11-10T09:00:00+09:00"
+      "updatedAt": "2026-11-10T09:00:00+09:00",
+      "log": []
     },
     {
       "id": "AURORA-074",
@@ -1555,7 +1628,8 @@
       "rentalDue": "",
       "note": "",
       "out": null,
-      "updatedAt": "2026-11-10T09:00:00+09:00"
+      "updatedAt": "2026-11-10T09:00:00+09:00",
+      "log": []
     },
     {
       "id": "AURORA-075",
@@ -1576,7 +1650,8 @@
       "rentalDue": "",
       "note": "",
       "out": null,
-      "updatedAt": "2026-11-10T09:00:00+09:00"
+      "updatedAt": "2026-11-10T09:00:00+09:00",
+      "log": []
     },
     {
       "id": "AURORA-076",
@@ -1597,7 +1672,8 @@
       "rentalDue": "",
       "note": "",
       "out": null,
-      "updatedAt": "2026-11-10T09:00:00+09:00"
+      "updatedAt": "2026-11-10T09:00:00+09:00",
+      "log": []
     },
     {
       "id": "AURORA-077",
@@ -1618,7 +1694,8 @@
       "rentalDue": "",
       "note": "",
       "out": null,
-      "updatedAt": "2026-11-10T09:00:00+09:00"
+      "updatedAt": "2026-11-10T09:00:00+09:00",
+      "log": []
     },
     {
       "id": "AURORA-078",
@@ -1639,7 +1716,8 @@
       "rentalDue": "",
       "note": "",
       "out": null,
-      "updatedAt": "2026-11-10T09:00:00+09:00"
+      "updatedAt": "2026-11-10T09:00:00+09:00",
+      "log": []
     },
     {
       "id": "AURORA-079",
@@ -1660,12 +1738,102 @@
       "rentalDue": "",
       "note": "",
       "out": null,
-      "updatedAt": "2026-11-10T09:00:00+09:00"
+      "updatedAt": "2026-11-10T09:00:00+09:00",
+      "log": []
     }
   ],
-  "audit": {
-    "startedAt": "2026-11-10T21:41:45.983Z",
-    "checked": {}
-  },
-  "auditLog": []
+  "audit": null,
+  "auditLog": [
+    {
+      "startedAt": "2026-11-10T21:41:45.983Z",
+      "endedAt": "2026-11-10T23:32:50.605Z",
+      "total": 79,
+      "checked": 0,
+      "missing": [
+        "AURORA-001",
+        "AURORA-002",
+        "AURORA-003",
+        "AURORA-004",
+        "AURORA-005",
+        "AURORA-006",
+        "AURORA-007",
+        "AURORA-008",
+        "AURORA-009",
+        "AURORA-010",
+        "AURORA-011",
+        "AURORA-012",
+        "AURORA-013",
+        "AURORA-014",
+        "AURORA-015",
+        "AURORA-016",
+        "AURORA-017",
+        "AURORA-018",
+        "AURORA-019",
+        "AURORA-020",
+        "AURORA-021",
+        "AURORA-022",
+        "AURORA-023",
+        "AURORA-024",
+        "AURORA-025",
+        "AURORA-026",
+        "AURORA-027",
+        "AURORA-028",
+        "AURORA-029",
+        "AURORA-030",
+        "AURORA-031",
+        "AURORA-032",
+        "AURORA-033",
+        "AURORA-034",
+        "AURORA-035",
+        "AURORA-036",
+        "AURORA-037",
+        "AURORA-038",
+        "AURORA-039",
+        "AURORA-040",
+        "AURORA-041",
+        "AURORA-042",
+        "AURORA-043",
+        "AURORA-044",
+        "AURORA-045",
+        "AURORA-046",
+        "AURORA-047",
+        "AURORA-048",
+        "AURORA-049",
+        "AURORA-050",
+        "AURORA-051",
+        "AURORA-052",
+        "AURORA-053",
+        "AURORA-054",
+        "AURORA-055",
+        "AURORA-056",
+        "AURORA-057",
+        "AURORA-058",
+        "AURORA-059",
+        "AURORA-060",
+        "AURORA-061",
+        "AURORA-062",
+        "AURORA-063",
+        "AURORA-064",
+        "AURORA-065",
+        "AURORA-066",
+        "AURORA-067",
+        "AURORA-068",
+        "AURORA-069",
+        "AURORA-070",
+        "AURORA-071",
+        "AURORA-072",
+        "AURORA-073",
+        "AURORA-074",
+        "AURORA-075",
+        "AURORA-076",
+        "AURORA-077",
+        "AURORA-078",
+        "AURORA-079"
+      ]
+    }
+  ],
+  "auditSince": "2026-11-11",
+  "locations": [
+    "현장 사무실 / 본관"
+  ]
 }
