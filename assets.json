@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-11-10T07:04:12.280Z",
+  "updatedAt": "2026-11-10T08:48:45.278Z",
   "assets": [
     {
       "id": "AUR-001",
@@ -9,11 +9,11 @@
       "location": "OSBL 야적장 A구역",
       "lat": 36.7801,
       "lng": 126.5502,
-      "status": "사용중",
+      "status": "폐기",
       "nextCheck": "",
       "rentalDue": "",
       "note": "",
-      "updatedAt": "2026-11-10T06:54:17.408Z"
+      "updatedAt": "2026-11-10T08:48:45.278Z"
     },
     {
       "id": "AUR-002",
