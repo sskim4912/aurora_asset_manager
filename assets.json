@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-11-10T06:54:35.313Z",
+  "updatedAt": "2026-11-10T06:55:34.996Z",
   "assets": [
     {
       "id": "AUR-001",
@@ -48,11 +48,11 @@
       "location": "변전실 인근",
       "lat": 36.782,
       "lng": 126.5522,
-      "status": "사용중",
+      "status": "점검필요",
       "nextCheck": "2026-11-05",
       "rentalDue": "",
       "note": "차단기 발열 확인 필요",
-      "updatedAt": "2026-11-10T06:54:35.313Z"
+      "updatedAt": "2026-11-10T06:55:34.996Z"
     },
     {
       "id": "AUR-005",
