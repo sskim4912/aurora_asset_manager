@@ -317,6 +317,7 @@ details[open].more summary::before{transform:rotate(90deg)}
 .sheet-scale{transform-origin:top left}
 .sheet-gap{height:16px}
 .prev-note{font-size:12.5px;color:var(--sub);margin:0 0 10px}
+.lab-sheets{background:#eef1f5;border-radius:12px;padding:14px;max-height:62vh;overflow:auto}
 
 /* 라벨 실물 크기 (인쇄·미리보기 공통) */
 .sheet{background:#fff;display:grid;grid-auto-rows:70mm;align-content:center;justify-content:center;box-shadow:0 2px 14px rgba(16,24,40,.12);overflow:hidden}
@@ -407,7 +408,6 @@ details[open].more summary::before{transform:rotate(90deg)}
   <header class="hdr">
     <a class="hdr-logo" href="#assets" onclick="goHome();return false" title="첫 화면으로"><img class="gs-logo" data-logo alt="GS건설"></a>
     <div class="hdr-title"><b>Aurora Asset Manager</b><small>충남 현장 v2.4</small></div>
-    <nav class="hdr-nav" id="top-nav"></nav>
     <span class="sp"></span>
     <button class="sync" onclick="reloadData()" title="눌러서 새로고침"><span class="dot" data-sync-dot></span><span data-sync-text class="sync-text">불러오는 중…</span></button>
     <button class="icon-btn" onclick="openSettings()" aria-label="설정" title="설정"><span data-ic="settings"></span></button>
@@ -737,8 +737,7 @@ function logout() { localStorage.removeItem('aam_auth'); sessionStorage.removeIt
    [4] 화면 — 자산(한 페이지: 요약 카드 · 목록/지도) / 라벨 인쇄
    ═══════════════════════════════════════════ */
 const VIEWS = {
-  assets: { label: '자산', icon: 'box', render: renderAssets, after: afterAssets },
-  labels: { label: '라벨 인쇄', icon: 'tag', render: renderLabels, after: updateLabelPreview, desktop: true }
+  assets: { label: '자산', icon: 'box', render: renderAssets, after: afterAssets }
 };
 function currentView() { const h = location.hash.slice(1); return VIEWS[h] ? h : 'assets'; }
 function go(v) { if (location.hash.slice(1) === v) render(); else location.hash = v; window.scrollTo(0, 0); }
@@ -750,8 +749,6 @@ function goHome() {   // GS 로고: 첫 화면으로
 function render() {
   if (!DOC) return;
   const v = currentView();
-  $('top-nav').innerHTML = Object.entries(VIEWS).map(([k, o]) =>
-    `<button class="nav-btn ${k === v ? 'on' : ''} ${o.desktop ? 'desktop-only' : ''}" onclick="go('${k}')">${icon(o.icon)}${o.label}${k === 'labels' && UI.sel.size ? `<span class="cnt">${UI.sel.size}</span>` : ''}</button>`).join('');
   closeMapInfo(); MAP = null;
   $('view').innerHTML = VIEWS[v].render();
   if (VIEWS[v].after) VIEWS[v].after();
@@ -907,18 +904,17 @@ function updateAssetList() {
 }
 
 /* ── 체크해서 한꺼번에: 상태 바꾸기 · 라벨 인쇄 · 현장 종료 ── */
-function selOne(id, on) { on ? UI.sel.add(id) : UI.sel.delete(id); updateAssetList(); render_navCount(); }
-function selAll(on) { filteredAssets().forEach(a => on ? UI.sel.add(a.id) : UI.sel.delete(a.id)); updateAssetList(); render_navCount(); }
-function render_navCount() { const v = currentView(); $('top-nav').querySelectorAll('.nav-btn').forEach((b, i) => { const k = Object.keys(VIEWS)[i]; const c = b.querySelector('.cnt'); if (k === 'labels') { if (c) c.remove(); if (UI.sel.size) b.insertAdjacentHTML('beforeend', `<span class="cnt">${UI.sel.size}</span>`); } }); }
+function selOne(id, on) { on ? UI.sel.add(id) : UI.sel.delete(id); updateAssetList(); }
+function selAll(on) { filteredAssets().forEach(a => on ? UI.sel.add(a.id) : UI.sel.delete(a.id)); updateAssetList(); }
 function updateSelBar() {
   const bar = $('sel-bar'); if (!bar) return;
   const ids = [...UI.sel]; const anyActive = ids.some(id => { const a = getAsset(id); return a && !a.out; });
   bar.innerHTML = ids.length ? `<div class="sel-bar desktop-only">
     <b>☑ ${ids.length}개 선택</b>
     ${anyActive ? `<span class="muted">상태</span>${STATUSES.map(s => `<button class="btn sm" onclick="bulkStatus('${s}')">${s}</button>`).join('')}<span class="vsep"></span>` : ''}
-    <button class="btn sm" onclick="go('labels')">${icon('printer', 14)} 라벨 인쇄</button>
+    <button class="btn sm" onclick="openPrint([...UI.sel])">${icon('printer', 14)} 라벨 인쇄</button>
     ${anyActive ? `<button class="btn sm" onclick="openOut([...UI.sel].filter(id=>!getAsset(id).out))">${icon('logout', 14)} 현장 종료</button>` : ''}
-    <span class="sp"></span><button class="link" onclick="UI.sel.clear();updateAssetList();render_navCount()">선택 해제</button></div>` : '';
+    <span class="sp"></span><button class="link" onclick="UI.sel.clear();updateAssetList()">선택 해제</button></div>` : '';
 }
 async function bulkStatus(s) {
   const ids = [...UI.sel].filter(id => { const a = getAsset(id); return a && !a.out && a.status !== s; });
@@ -1003,21 +999,31 @@ function showOnMap(id) {
   go('assets');
 }
 
-/* ── 라벨 인쇄 (자산 목록에서 체크한 것만 · PC 전용) ── */
-function renderLabels() {
-  const n = UI.sel.size;
-  return `
-  <div class="page-head">
-    <div><h1>라벨 인쇄</h1><p class="sub">7×7cm · ${UI.paper} 한 장에 ${PAPER[UI.paper].per}개 · 점선을 따라 잘라 코팅하세요${n ? ` · <button class="link" onclick="go('assets')">자산 목록에서 다시 고르기</button>` : ''}</p></div>
-    <div class="head-actions">
-      <div class="paper-seg">${Object.keys(PAPER).map(k => `<button class="${UI.paper === k ? 'on' : ''}" onclick="setPaper('${k}')">${k}<small>${PAPER[k].per}칸</small></button>`).join('')}</div>
-      <button class="btn primary" id="print-btn" onclick="printLabels()">${icon('printer', 16)} 인쇄</button>
-    </div>
-  </div>
-  <p class="prev-note">미리보기 · 인쇄할 때 배율은 '100%(실제 크기)', 여백은 '없음'으로 맞춰 주세요</p>
-  <div id="lab-sheets"></div>`;
+/* ── 라벨 인쇄: 팝업 창 (자산 목록에서 체크한 것 / 상세 화면의 한 개) · PC 전용 ── */
+let PRINT_IDS = [];
+function printList() { return sortList(DOC.assets.filter(a => PRINT_IDS.includes(a.id))); }
+function openPrint(ids) {
+  PRINT_IDS = [...new Set(ids)].filter(id => getAsset(id));
+  if (!PRINT_IDS.length) return toast('인쇄할 자산을 먼저 체크하세요', 'warn');
+  renderPrint();
 }
-function selectedLabels() { return sortList(DOC.assets.filter(a => UI.sel.has(a.id))); }
+function renderPrint() {
+  const P = PAPER[UI.paper], list = printList(), pages = Math.ceil(list.length / P.per);
+  openModal(`
+    <div class="m-head"><h2>라벨 인쇄 · ${list.length}개</h2><button class="icon-btn" onclick="closeModal()">${icon('x', 20)}</button></div>
+    <div class="m-body">
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
+        <div class="paper-seg">${Object.keys(PAPER).map(k => `<button class="${UI.paper === k ? 'on' : ''}" onclick="setPaper('${k}')">${k}<small>${PAPER[k].per}칸</small></button>`).join('')}</div>
+        <span class="sub" style="margin:0">7×7cm · ${UI.paper} ${pages}장 · 점선을 따라 잘라 코팅하세요</span>
+      </div>
+      <p class="prev-note">인쇄할 때 배율은 '100%(실제 크기)', 여백은 '없음'으로 맞춰 주세요${UI.paper === 'A3' ? " · 용지 크기는 'A3'" : ''}</p>
+      <div id="lab-sheets" class="lab-sheets"></div>
+    </div>
+    <div class="m-foot"><span class="sp"></span><button class="btn" onclick="closeModal()">취소</button><button class="btn primary" onclick="printLabels()">${icon('printer', 16)} 인쇄하기</button></div>`, 'wide');
+  const box = $('lab-sheets'); const pw = P.w * MM, ph = P.h * MM;
+  const z = Math.min(1, ((box.clientWidth || 760) - 30) / pw, (window.innerHeight * 0.62 - 30) / ph);
+  box.innerHTML = sheetsHTML(list).map(s => `<div style="width:${pw * z}px;height:${ph * z}px;margin:0 auto"><div class="sheet-scale" style="transform:scale(${z})">${s}</div></div>`).join('<div class="sheet-gap"></div>');
+}
 const QR_CACHE = {};
 function qrData(id) {
   const key = qrUrl(id); if (QR_CACHE[key]) return QR_CACHE[key];
@@ -1039,33 +1045,21 @@ const PAPER = {
   A3: { w: 297, h: 420, cols: 3, rows: 5, cg: 10, rg: 8, per: 15 }
 };
 const MM = 96 / 25.4;   // 1mm = 3.78px
-function setPaper(k) { UI.paper = k; lsSet('aam_paper', k); render(); }
+function setPaper(k) { UI.paper = k; lsSet('aam_paper', k); renderPrint(); }
 function sheetsHTML(list) {
   const P = PAPER[UI.paper]; const pages = [];
   for (let i = 0; i < list.length; i += P.per) pages.push(list.slice(i, i + P.per));
   const style = `width:${P.w}mm;height:${P.h - 1}mm;grid-template-columns:repeat(${P.cols},70mm);column-gap:${P.cg}mm;row-gap:${P.rg}mm`;
   return pages.map(p => `<div class="sheet" style="${style}">${p.map(labelHTML).join('')}</div>`);
 }
-function updateLabelPreview() {
-  const box = $('lab-sheets'); if (!box) return;
-  const P = PAPER[UI.paper];
-  const list = selectedLabels(); const pages = Math.ceil(list.length / P.per);
-  $('print-btn').innerHTML = `${icon('printer', 16)} 인쇄${list.length ? ` (${list.length}개 · ${UI.paper} ${pages}장)` : ''}`;
-  $('print-btn').disabled = !list.length;
-  if (!list.length) { box.innerHTML = `<div class="card empty"><b>인쇄할 자산을 먼저 고르세요</b>자산 목록 왼쪽 체크박스로 고른 뒤 [라벨 인쇄]를 누르면 여기에 미리보기가 나와요<br><br><button class="btn primary" onclick="go('assets')">자산 목록으로 가기</button></div>`; return; }
-  const pw = P.w * MM, ph = P.h * MM;
-  const z = Math.min(1, (box.clientWidth || 700) / pw);
-  box.innerHTML = sheetsHTML(list).map(s => `<div style="width:${pw * z}px;height:${ph * z}px"><div class="sheet-scale" style="transform:scale(${z})">${s}</div></div>`).join('<div class="sheet-gap"></div>');
-}
 function printLabels() {
-  const list = selectedLabels(); if (!list.length) return toast('인쇄할 자산을 먼저 고르세요', 'warn');
+  const list = printList(); if (!list.length) return toast('인쇄할 자산을 먼저 고르세요', 'warn');
   $('print-area').innerHTML = sheetsHTML(list).join('');
   let ps = $('page-size'); if (!ps) { ps = document.createElement('style'); ps.id = 'page-size'; document.head.appendChild(ps); }
   ps.textContent = `@media print{@page{size:${UI.paper} portrait;margin:0}}`;
-  if (UI.paper === 'A3') toast('인쇄 창에서 용지 크기를 A3로 골라 주세요');
   setTimeout(() => window.print(), 100);
 }
-function printOne(id) { UI.sel = new Set([id]); closeDrawer(); go('labels'); }
+function printOne(id) { openPrint([id]); }
 
 /* ── 정기 실사 동작 ── */
 async function startAudit() {
@@ -1643,7 +1637,7 @@ function startApp() {
 }
 window.addEventListener('hashchange', () => { render(); });
 window.addEventListener('keydown', e => { if (e.key === 'Escape') { if (!$('modal').classList.contains('hidden')) closeModal(); else closeDrawer(); } });
-let RESIZE_T; window.addEventListener('resize', () => { clearTimeout(RESIZE_T); RESIZE_T = setTimeout(() => { if (currentView() === 'labels') updateLabelPreview(); if (MAP) MAP.relayout(); }, 150); });
+let RESIZE_T; window.addEventListener('resize', () => { clearTimeout(RESIZE_T); RESIZE_T = setTimeout(() => { if ($('lab-sheets')) renderPrint(); if (MAP) MAP.relayout(); }, 150); });
 
 (function init() {
   const p = new URLSearchParams(location.search);
