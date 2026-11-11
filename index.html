@@ -361,6 +361,8 @@ details[open].more summary::before{transform:rotate(90deg)}
 #kmap{width:100%;height:100%}
 .map-fail{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;color:var(--sub);gap:6px}
 .map-fail b{color:var(--text);font-size:15px}
+.tag-lease{display:inline-block;font-size:11px;font-weight:700;color:#7c3aed;background:#f3e8ff;border-radius:5px;padding:1px 6px;vertical-align:2px;margin-left:4px}
+.lease-box{border:1px dashed #c4b5fd;background:#faf5ff;border-radius:10px;padding:12px;margin-bottom:14px}
 .cluster{width:40px;height:40px;border-radius:50%;border:3px solid #fff;background:rgba(10,94,176,.9);color:#fff;font-weight:800;font-size:14px;box-shadow:0 2px 8px rgba(0,0,0,.3);padding:0;cursor:pointer}
 .pin-wrap{position:relative;display:flex;align-items:center;cursor:pointer}
 .pin-label{display:none;position:absolute;left:24px;top:50%;transform:translateY(-50%);white-space:nowrap;background:#fff;border:1px solid var(--line2);border-radius:7px;padding:2px 7px;font-size:12px;font-weight:700;box-shadow:0 2px 6px rgba(0,0,0,.15)}
@@ -533,7 +535,9 @@ const ST_DESC = { '상': '정상 사용, 이상 없음', '중': '사용 가능, 
 // 현장 종료(반출): 현장을 떠난 자산. 목록·지도·라벨에서 빠지고 기록만 남아요.
 const OUT_TYPES = ['GS 자재창고 반납', '타현장 전용', '렌탈업체 반납', '폐기'];
 const UNITS = ['EA', 'SET'];
-const ACQ_TYPES = ['계약', '계약외(온라인구매)', '계약외(견적)', '구자산'];
+const LEASE = '임대/임차';
+const ACQ_TYPES = ['계약', '계약외(온라인구매)', '계약외(견적)', '구자산', LEASE];
+const isLease = a => a && a.acq === LEASE;
 const ID_PREFIX = 'AURORA-';
 // 분류(대분류) 6개 고정 · 품목(중분류)은 설정에서 추가할 수 있어요
 const CATEGORIES = ['사무/가전/생활', '냉난방용품', '가설비품', '환경/위생/의료', '시험/측정기', '공기구'];
@@ -548,8 +552,8 @@ const BASE_CATALOG = {
 
 const LOG_MAX = 15;     // 자산별 변경 이력 보관 개수 (B5)
 function addLog(x, t, at) { x.log = [{ at: at || new Date().toISOString(), t }, ...(x.log || [])].slice(0, LOG_MAX); }
-const DATA_VERSION = 2;   // 데이터 구조 버전: 더 새 버전 데이터를 만나면 저장을 막아 덮어쓰기 사고를 방지
-function seedDoc() { return { version: 2, updatedAt: '', catalog: {}, assets: [] }; }
+const DATA_VERSION = 3;   // 데이터 구조 버전: 더 새 버전 데이터를 만나면 저장을 막아 덮어쓰기 사고를 방지
+function seedDoc() { return { version: 3, updatedAt: '', catalog: {}, assets: [] }; }
 
 /* ═══════════════════════════════════════════
    공통 도구
@@ -636,7 +640,7 @@ const OLD_STATUS = { '정상': '상', '양호': '상', '사용중': '상', '보�
 function normStatus(v) { v = String(v || '').trim(); return STATUSES.includes(v) ? v : (OLD_STATUS[v] || ''); }
 function normalizeDoc(d) {
   const doc = d && Array.isArray(d.assets) ? d : seedDoc();
-  doc.version = 2;
+  doc.version = 3;
   doc.catalog = doc.catalog && typeof doc.catalog === 'object' ? doc.catalog : {};
   doc.audit = doc.audit && doc.audit.checked ? doc.audit : null;          // 진행 중인 실사 {startedAt, checked:{id: 시각}}
   doc.auditLog = Array.isArray(doc.auditLog) ? doc.auditLog : [];          // 지난 실사 기록
@@ -650,7 +654,8 @@ function normalizeDoc(d) {
       contract: a.contract || '', acq: a.acq || '', qty: Number.isInteger(+a.qty) && +a.qty > 0 ? +a.qty : 1, unit: UNITS.includes(a.unit) ? a.unit : 'EA',
       location: a.location || '', locInit: a.locInit || a.location || '', manager: a.manager || '',
       status: normStatus(a.status) || '상', lat: num(a.lat), lng: num(a.lng),
-      nextCheck: a.nextCheck || '', rentalDue: a.rentalDue || '', note: a.note || '', out, updatedAt: a.updatedAt || '',
+      nextCheck: a.nextCheck || '', rentalDue: a.rentalDue || '', leaseVendor: a.leaseVendor || '', leaseStart: a.leaseStart || '', leaseTel: a.leaseTel || '',
+      note: a.note || '', out, updatedAt: a.updatedAt || '',
       log: Array.isArray(a.log) ? a.log.slice(0, LOG_MAX) : [], thumb: a.thumb || '',
       photo: a.photo && a.photo.path ? a.photo : (a.photoAt ? { path: `photos/${a.id}.jpg`, at: a.photoAt } : null),
       photos: Array.isArray(a.photos) ? a.photos : (a.photoAt ? [{ path: `photos/${a.id}.jpg`, at: a.photoAt }] : [])
@@ -879,18 +884,18 @@ function cardsHTML() {
   const outs = DOC.assets.filter(a => a.out && a.out.type !== '폐기'), disp = DOC.assets.filter(a => a.out && a.out.type === '폐기');
   const month = l => l.filter(a => (a.out.date || '').startsWith(ym)).length;
   const by = t => outs.filter(a => a.out.type === t).length;
-  const coord = act.filter(hasCoord).length;
+  const coord = act.filter(hasCoord).length, lease = act.filter(isLease).length;
   const card = (key, label, num, sub, cls = '') => `<button class="stat ${cls} ${UI.filter === key ? 'on' : ''}" onclick="setFilter('${key}')"><div class="lbl">${label}</div><div class="num">${num}</div><div class="stat-sub">${sub}</div></button>`;
   const st = s => `<span class="st-link ${UI.filter === 'st:' + s ? 'on' : ''}" onclick="event.stopPropagation();setFilter('st:${s}')">${s} ${cnt(s)}</span>`;
   return `<div class="stats">
-    ${card('all', '전체 자산', `${act.length}<small>건</small>`, STATUSES.map(st).join(' · '))}
+    ${card('all', '전체 자산', `${act.length}<small>건</small>`, STATUSES.map(st).join(' · ') + (lease ? `<br><span class="st-link ${UI.filter === 'lease' ? 'on' : ''}" onclick="event.stopPropagation();setFilter('lease')">● 임대/임차 ${lease}건 ›</span>` : ''))}
     ${card('todo', '할 일', `${td}<small>건</small>`, '상태 하 · 점검·반납 임박 · 실사 미발견', td ? 'alert' : '')}
     ${card('out', '현장 종료', `${outs.length}<small>건</small>`, `창고 ${by('GS 자재창고 반납')} · 타현장 ${by('타현장 전용')} · 렌탈 ${by('렌탈업체 반납')}<br>이번 달 ${month(outs)}건`, 'gray')}
     ${card('disposed', '폐기', `${disp.length}<small>건</small>`, `이번 달 ${month(disp)}건`, 'gray')}
     ${auditCardHTML(act.length - coord)}
   </div>`;
 }
-const FILTER_KO = { all: '', todo: '할 일', out: '현장 종료', disposed: '폐기', nocoord: '좌표 미등록', unaudited: '실사 미확인', 'st:상': '상태 상', 'st:중': '상태 중', 'st:하': '상태 하' };
+const FILTER_KO = { all: '', todo: '할 일', out: '현장 종료', disposed: '폐기', nocoord: '좌표 미등록', lease: '임대/임차', unaudited: '실사 미확인', 'st:상': '상태 상', 'st:중': '상태 중', 'st:하': '상태 하' };
 function setFilter(k) { UI.filter = UI.filter === k && k !== 'all' ? 'all' : k; UI.sel.clear(); render(); }
 
 /* ── 정기 실사: 진행 중 띠 / 60일 알림 ── */
@@ -959,11 +964,12 @@ function filteredAssets() {
       if (a.out) return false;
       if (f === 'todo' && !todo.has(a.id)) return false;
       if (f === 'nocoord' && hasCoord(a)) return false;
+      if (f === 'lease' && !isLease(a)) return false;
       if (f === 'unaudited' && (!DOC.audit || DOC.audit.checked[a.id])) return false;
       if (f.startsWith('st:') && a.status !== f.slice(3)) return false;
     }
     return (UI.cat === '전체' || a.category === UI.cat) && (UI.item === '전체' || a.item === UI.item) && (UI.loc === '전체' || a.location === UI.loc) &&
-      (!q || [a.id, a.item, a.model, a.contract, a.location, a.category, a.note, a.manager, a.out && a.out.type, a.out && a.out.to, a.out && a.out.docNo].some(v => String(v || '').toLowerCase().includes(q)));
+      (!q || [a.id, a.item, a.model, a.contract, a.location, a.category, a.note, a.manager, a.leaseVendor, a.out && a.out.type, a.out && a.out.to, a.out && a.out.docNo].some(v => String(v || '').toLowerCase().includes(q)));
   });
 }
 function schedOf(a) {
@@ -1004,13 +1010,13 @@ function updateAssetList() {
       ${th('id', '관리번호', 118)}<th style="width:62px">사진</th>${th('name', '품목 · 모델')}${th('category', '분류', 120)}${th('location', '위치')}${th('qty', '수량', 70)}${th('status', '상태', 96)}${th('sched', '일정', 120)}${th('updated', '최종 변경', 96)}</tr></thead>
     <tbody>${list.map(a => `<tr class="${UI.sel.has(a.id) ? 'picked' : ''}" onclick="openAsset('${a.id}')">
       <td class="ck" onclick="event.stopPropagation()"><input type="checkbox" ${UI.sel.has(a.id) ? 'checked' : ''} onclick="selOne('${a.id}',this.checked)"></td>
-      <td class="mono">${a.id}</td><td onclick="event.stopPropagation()">${photoCell(a)}</td><td class="nm">${esc(a.item)}<div class="ri-sub" style="font-weight:400">${esc(shortModel(a.model))}</div></td><td>${esc(a.category)}</td><td>${esc(a.location)}${hasCoord(a) ? '' : ' <span class="no-coord" title="좌표 없음">●</span>'}</td>
+      <td class="mono">${a.id}</td><td onclick="event.stopPropagation()">${photoCell(a)}</td><td class="nm">${esc(a.item)}${isLease(a) ? ' <span class="tag-lease">임대</span>' : ''}<div class="ri-sub" style="font-weight:400">${esc(shortModel(a.model))}</div></td><td>${esc(a.category)}</td><td>${esc(a.location)}${hasCoord(a) ? '' : ' <span class="no-coord" title="좌표 없음">●</span>'}</td>
       <td class="qty">${a.qty} ${a.unit}</td><td>${stBadge(a)}</td><td>${sch(a)}</td><td class="muted" style="font-size:12.5px">${relTime(a.updatedAt)}</td></tr>`).join('')}</tbody>
   </table></div>
   <div class="mlist">${list.map(a => { const s = schedOf(a); return `
     <div class="mcard has-thumb" onclick="openAsset('${a.id}')"><span class="mc-photo" onclick="event.stopPropagation()">${photoCell(a)}</span>
       <div class="mc-top"><span class="mono sub" style="margin:0">${a.id} · ${esc(a.category)}</span>${stBadge(a)}</div>
-      <div class="mc-name">${esc(a.item)} <span class="qty" style="font-size:13px;color:var(--sub)">${a.qty} ${a.unit}</span></div>
+      <div class="mc-name">${esc(a.item)}${isLease(a) ? ' <span class="tag-lease">임대</span>' : ''} <span class="qty" style="font-size:13px;color:var(--sub)">${a.qty} ${a.unit}</span></div>
       ${shortModel(a.model) ? `<div class="mc-sub" style="margin-bottom:3px">${esc(shortModel(a.model))}</div>` : ''}
       <div class="mc-sub">${icon('pin', 14)}${esc(a.location)}${hasCoord(a) ? '' : ' <span class="no-coord">● 좌표 없음</span>'}</div>
       ${s ? `<div class="mc-due"><span class="due ${s.lvl}">${s.t}</span></div>` : ''}
@@ -1309,7 +1315,9 @@ function detailHTML(a) {
       ${acq ? row('취득 구분', esc(acq)) : ''}
       ${a.contract && a.contract !== a.model && !/^\((계약외|계약|구자산)\)[^/]{0,8}$/.test(a.contract) ? row('품명/계약명', `<span class="full-model">${esc(a.contract)}</span>`) : ''}
       ${a.nextCheck ? dateRow('다음 점검', a.nextCheck, 7) : ''}
-      ${a.rentalDue ? dateRow('렌탈 반납', a.rentalDue, 14) : ''}
+      ${isLease(a) ? row('임대 업체', `${esc(a.leaseVendor || '—')}${a.leaseTel ? `<div><a class="link" href="tel:${esc(a.leaseTel.replace(/[^0-9+]/g, ''))}">${esc(a.leaseTel)}</a></div>` : ''}`) : ''}
+      ${isLease(a) && a.leaseStart ? row('임대 기간', `${esc(a.leaseStart)} ~ ${esc(a.rentalDue || '')}`) : ''}
+      ${a.rentalDue ? dateRow('반납 예정', a.rentalDue, 14) : ''}
       ${a.manager ? row('관리자', esc(a.manager)) : ''}
       ${a.locInit && a.locInit !== a.location ? row('최초 위치', esc(a.locInit)) : ''}
       ${a.note ? row('비고', esc(a.note)) : ''}
@@ -1339,6 +1347,11 @@ async function setStatus(id, s) {
 /* 현장 종료 처리 (GS 자재창고 반납 · 타현장 전용 · 렌탈업체 반납 · 폐기) — 하나 또는 여러 개 */
 let OUT = null;
 const OUT_TO = { 'GS 자재창고 반납': ['받는 곳', 'GS 자재창고'], '타현장 전용': ['받는 현장', '예: ○○현장'], '렌탈업체 반납': ['렌탈업체', '예: ○○렌탈'], '폐기': ['', ''] };
+function outDefaultTo(t) {
+  if (t === 'GS 자재창고 반납') return 'GS 자재창고';
+  if (t === '렌탈업체 반납') { const v = [...new Set(OUT.ids.map(id => (getAsset(id) || {}).leaseVendor).filter(Boolean))]; return v.length === 1 ? v[0] : ''; }
+  return '';
+}
 function openOut(ids) {
   ids = (Array.isArray(ids) ? ids : [ids]).filter(id => { const a = getAsset(id); return a && !a.out; });
   if (!ids.length) return toast('현장 종료할 자산이 없어요 (이미 처리됨)', 'warn');
@@ -1353,7 +1366,7 @@ function renderOut() {
     <div class="m-body">
       <p class="sub" style="margin:0 0 14px">${one ? `${one.id} · ${esc(dispName(one))}` : OUT.ids.slice(0, 6).join(', ') + (OUT.ids.length > 6 ? ` 외 ${OUT.ids.length - 6}개` : '')}<br>처리하면 목록·지도·라벨에서 빠지고 기록만 남아요. '현장 복귀'로 되돌릴 수 있어요.</p>
       <div class="field"><div class="flabel">구분<em>*</em></div>
-        <div class="seg two" style="margin:0">${OUT_TYPES.map(t => `<button type="button" class="off ${OUT.type === t ? 'on' : ''}" onclick="OUT.type='${t}';OUT.to=${t === 'GS 자재창고 반납' ? "'GS 자재창고'" : "''"};renderOut()">${t}</button>`).join('')}</div></div>
+        <div class="seg two" style="margin:0">${OUT_TYPES.map(t => `<button type="button" class="off ${OUT.type === t ? 'on' : ''}" onclick="OUT.type='${t}';OUT.to=outDefaultTo(OUT.type);renderOut()">${t}</button>`).join('')}</div></div>
       <div class="field"><div class="flabel">일자</div><input class="inp" type="date" value="${esc(OUT.date)}" oninput="OUT.date=this.value"></div>
       ${toLabel ? `<div class="field"><div class="flabel">${toLabel}</div><input class="inp" value="${esc(OUT.to)}" placeholder="${toPh}" oninput="OUT.to=this.value"></div>` : ''}
       <div class="field"><div class="flabel">반출증 · 승인번호 <span class="muted" style="font-weight:500">(선택)</span></div><input class="inp" value="${esc(OUT.docNo)}" oninput="OUT.docNo=this.value"></div>
@@ -1402,6 +1415,7 @@ function formHTML() {
   const d = DRAWER.draft, isNew = !DRAWER.id;
   const bind = k => `oninput="DRAWER.draft.${k}=this.value"`;
   const moreOpen = d.nextCheck || d.rentalDue || d.note || d.acq;
+  const lease = (d.acq || acqOf(d.contract)) === LEASE;
   const segBtns = (key, list) => list.map(v => `<button type="button" class="use ${d[key] === v ? 'on' : ''}" onclick="DRAWER.draft.${key}='${v}';this.parentNode.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b===this))">${v}</button>`).join('');
   const has = validLat(+d.lat) && validLng(+d.lng) && d.lat !== '';
   return `
@@ -1419,9 +1433,14 @@ function formHTML() {
       <div class="coord-state ${has ? 'on' : ''}">${has ? `${icon('check', 16)} 좌표 등록됨 <span class="muted">(${(+d.lat).toFixed(5)}, ${(+d.lng).toFixed(5)})</span><span class="sp"></span><button type="button" class="link" onclick="DRAWER.draft.lat='';DRAWER.draft.lng='';renderDrawer()">지우기</button>` : '좌표 없음 — 아래 버튼으로 넣어요'}</div>
       <div class="coord-btns"><button type="button" class="btn" onclick="useMyLocation()">${icon('crosshair', 16)} 지금 내 위치</button><button type="button" class="btn" onclick="openPicker()">${icon('pin', 16)} 지도에서 찍기</button></div></div>
     <details class="more" ${moreOpen ? 'open' : ''}><summary>추가 정보 (선택)</summary>
-      <div class="field"><div class="flabel">취득 구분</div><select class="inp" onchange="DRAWER.draft.acq=this.value"><option value="">—</option>${ACQ_TYPES.map(t => `<option ${(d.acq || acqOf(d.contract)) === t ? 'selected' : ''}>${t}</option>`).join('')}</select></div>
+      <div class="field"><div class="flabel">취득 구분</div><select class="inp" onchange="DRAWER.draft.acq=this.value;$('f-lease').classList.toggle('hidden',this.value!==LEASE)"><option value="">—</option>${ACQ_TYPES.map(t => `<option ${(d.acq || acqOf(d.contract)) === t ? 'selected' : ''}>${t}</option>`).join('')}</select></div>
       <div class="field"><div class="flabel">다음 점검일 <span class="muted" style="font-weight:500">제세동기·가스탐지기 등</span></div><input class="inp" type="date" value="${esc(d.nextCheck)}" ${bind('nextCheck')}></div>
-      <div class="field"><div class="flabel">렌탈 반납일 <span class="muted" style="font-weight:500">렌탈 장비만</span></div><input class="inp" type="date" value="${esc(d.rentalDue)}" ${bind('rentalDue')}></div>
+      <div id="f-lease" class="lease-box ${lease ? '' : 'hidden'}">
+        <div class="field"><div class="flabel">임대 업체</div><input class="inp" value="${esc(d.leaseVendor || '')}" ${bind('leaseVendor')} placeholder="예: ○○렌탈"></div>
+        <div class="field"><div class="flabel">임대 기간 <span class="muted" style="font-weight:500">반납 14일 전부터 '할 일'에 떠요</span></div>
+          <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:6px;align-items:center"><input class="inp" type="date" value="${esc(d.leaseStart || '')}" ${bind('leaseStart')}><span class="muted">~</span><input class="inp" type="date" value="${esc(d.rentalDue)}" ${bind('rentalDue')}></div></div>
+        <div class="field" style="margin:0"><div class="flabel">업체 연락처 <span class="muted" style="font-weight:500">대표번호만 (공개됨 · 개인 휴대폰 X)</span></div><input class="inp" type="tel" value="${esc(d.leaseTel || '')}" ${bind('leaseTel')} placeholder="예: 1588-0000"></div>
+      </div>
       <div class="field"><div class="flabel">관리자</div><input class="inp" value="${esc(d.manager)}" ${bind('manager')} placeholder="예: 관리팀장 (개인 이름 대신 직책)"></div>
       <div class="field"><div class="flabel">비고</div><textarea class="inp" ${bind('note')} placeholder="자유 메모">${esc(d.note)}</textarea></div>
     </details>
@@ -1431,7 +1450,7 @@ function formHTML() {
     <button class="btn primary" id="f-save" onclick="saveForm()">${isNew ? '등록하기' : '저장'}</button></div>`;
 }
 function formError(msg) { toast(msg, 'warn'); }
-const EDIT_KO = { item: '품목', model: '모델', qty: '수량', unit: '단위', location: '위치', acq: '취득 구분', manager: '관리자', nextCheck: '다음 점검', rentalDue: '렌탈 반납', note: '비고' };
+const EDIT_KO = { item: '품목', model: '모델', qty: '수량', unit: '단위', location: '위치', acq: '취득 구분', manager: '관리자', nextCheck: '다음 점검', rentalDue: '반납 예정', leaseVendor: '임대 업체', leaseStart: '임대 시작', leaseTel: '업체 연락처', note: '비고' };
 async function saveForm() {
   const d = DRAWER.draft, id = DRAWER.id, isNew = !id;
   const qty = Number(d.qty);
@@ -1442,7 +1461,11 @@ async function saveForm() {
   let lat = '', lng = '';
   if (String(d.lat).trim() && String(d.lng).trim()) { lat = +(+d.lat).toFixed(6); lng = +(+d.lng).toFixed(6); if (!validLat(lat) || !validLng(lng)) { lat = ''; lng = ''; } }
   const fields = { item: d.item, category: catOf(d.item), model: String(d.model).trim(), qty, unit: d.unit || 'EA', location: String(d.location).trim(),
-    acq: d.acq || '', manager: String(d.manager || '').trim(), lat, lng, nextCheck: d.nextCheck || '', rentalDue: d.rentalDue || '', note: String(d.note || '').trim() };
+    acq: d.acq || '', manager: String(d.manager || '').trim(), lat, lng, nextCheck: d.nextCheck || '', rentalDue: d.rentalDue || '', note: String(d.note || '').trim(),
+    leaseVendor: '', leaseStart: '', leaseTel: '' };
+  if (fields.acq === LEASE) Object.assign(fields, { leaseVendor: String(d.leaseVendor || '').trim(), leaseStart: d.leaseStart || '', leaseTel: String(d.leaseTel || '').trim() });
+  else fields.rentalDue = '';
+  if (fields.leaseStart && fields.rentalDue && fields.leaseStart > fields.rentalDue) return formError('임대 기간: 반납일이 시작일보다 빨라요');
   $('f-save').disabled = true; $('f-save').textContent = '저장 중…';
   const res = await saveChange(doc => {
     const now = new Date().toISOString();
@@ -1894,12 +1917,12 @@ function closeModal() { $('modal').classList.add('hidden'); $('modal-box').inner
 const XL_COLS = [
   ['관리번호(ID)', 'id'], ['보유부서', '_dept'], ['보유부서명', '_deptName'], ['대분류', 'category'], ['중분류', 'item'],
   ['품명/계약명', 'contract'], ['모델명/상세', 'model'], ['최초위치', 'locInit'], ['현재위치', 'location'], ['상태', 'status'], ['관리자', 'manager'],
-  ['수량', 'qty'], ['단위', 'unit'], ['위도', 'lat'], ['경도', 'lng'], ['좌표 기록', '_coordLog'], ['다음점검일', 'nextCheck'], ['렌탈반납일', 'rentalDue'], ['비고', 'note'],
+  ['수량', 'qty'], ['단위', 'unit'], ['위도', 'lat'], ['경도', 'lng'], ['좌표 기록', '_coordLog'], ['다음점검일', 'nextCheck'], ['임대업체', 'leaseVendor'], ['임대시작일', 'leaseStart'], ['반납예정일', 'rentalDue'], ['업체연락처', 'leaseTel'], ['비고', 'note'],
   ['현장종료구분', 'outType'], ['종료일', 'outDate'], ['받는곳', 'outTo'], ['반출증번호', 'outDoc']
 ];
-const XL_WIDTH = [13, 9, 18, 14, 14, 32, 34, 18, 18, 7, 10, 6, 6, 10, 11, 30, 12, 12, 24, 14, 11, 14, 12];
+const XL_WIDTH = [13, 9, 18, 14, 14, 32, 34, 18, 18, 7, 10, 6, 6, 10, 11, 30, 12, 14, 12, 12, 14, 24, 14, 11, 14, 12];
 const XL_ALIAS = Object.fromEntries([...XL_COLS.map(([h, k]) => [h.replace(/\s/g, ''), k]),
-  ['관리번호', 'id'], ['자산번호', 'id'], ['분류', 'category'], ['품목', 'item'], ['모델명', 'model'], ['품명', 'model'], ['위치', 'location'], ['설치위치', 'location'], ['받는곳', 'outTo']]);
+  ['관리번호', 'id'], ['자산번호', 'id'], ['분류', 'category'], ['품목', 'item'], ['모델명', 'model'], ['품명', 'model'], ['위치', 'location'], ['설치위치', 'location'], ['받는곳', 'outTo'], ['렌탈반납일', 'rentalDue'], ['반납일', 'rentalDue'], ['렌탈업체', 'leaseVendor'], ['임대업체명', 'leaseVendor'], ['연락처', 'leaseTel'], ['취득구분', 'acq']]);
 function needXLSX() { if (typeof XLSX === 'undefined') { toast('엑셀 기능을 불러오지 못했어요 · 인터넷 연결을 확인해 주세요', 'err'); return false; } return true; }
 function xlSheet(rows) {
   const ws = XLSX.utils.aoa_to_sheet([XL_COLS.map(c => c[0]), ...rows]);
@@ -1921,6 +1944,7 @@ function downloadTemplate() {
     ['관리자', '', '개인 이름 대신 직책 (예: 관리팀장)'],
     ['수량 · 단위', '', '수량을 비우면 1, 단위를 비우면 EA. 단위는 EA 또는 SET'],
     ['위도 · 경도', '', '비워두고 현장에서 휴대폰으로 넣어도 돼요'],
+    ['임대업체 · 임대시작일 · 반납예정일 · 업체연락처', '', '임대/임차 장비만 적어요. 임대업체를 적으면 취득 구분이 자동으로 임대/임차가 돼요. 날짜는 2026-12-01. 연락처는 업체 대표번호만 (공개 저장소라 개인 휴대폰 X)'],
     ['좌표 기록', '', '내려받기 전용(언제·어떻게 좌표를 넣었는지). 올릴 때는 읽지 않아요.'],
     ['다음점검일 · 렌탈반납일', '', '예: 2026-12-01'],
     ['현장종료구분 · 종료일 · 받는곳 · 반출증번호', '', OUT_TYPES.join(', ') + ' 중 하나. 보통은 비워둬요'],
@@ -1970,7 +1994,7 @@ function buildPlan(rows) {
     const r = {}; Object.keys(raw).forEach(k => { const key = XL_ALIAS[String(k).replace(/\s/g, '')]; if (key && !key.startsWith('_')) r[key] = raw[k]; });
     if (!Object.values(r).some(v => cellStr(v))) return;
     const errs = [], notes = [], f = {}, id = cellStr(r.id).toUpperCase(); const cur = id ? byId.get(id) : null;
-    ['model', 'contract', 'location', 'locInit', 'manager', 'note'].forEach(k => { const v = cellStr(r[k]); if (v) f[k] = v; });
+    ['model', 'contract', 'location', 'locInit', 'manager', 'note', 'leaseVendor', 'leaseTel'].forEach(k => { const v = cellStr(r[k]); if (v) f[k] = v; });
     if (!f.location && f.locInit && !cur) f.location = f.locInit;
     const acq = acqOf(f.contract); if (acq) f.acq = acq;
     // 품목·분류
@@ -1994,7 +2018,7 @@ function buildPlan(rows) {
     if (u) { UNITS.includes(u) ? f.unit = u : errs.push(`단위 '${u}'는 쓸 수 없어요 (EA·SET)`); }
     const la = cellStr(r.lat), ln = cellStr(r.lng);
     if (la || ln) { const a = parseFloat(la), b = parseFloat(ln); validLat(a) && validLng(b) ? (f.lat = +a.toFixed(6), f.lng = +b.toFixed(6)) : errs.push('위도/경도를 확인해 주세요'); }
-    [['nextCheck', '다음점검일'], ['rentalDue', '렌탈반납일']].forEach(([k, h]) => { if (cellStr(r[k])) { const d = cellDate(r[k]); d ? f[k] = d : errs.push(`${h} 날짜 형식(2026-12-01)을 확인해 주세요`); } });
+    [['nextCheck', '다음점검일'], ['rentalDue', '반납예정일'], ['leaseStart', '임대시작일']].forEach(([k, h]) => { if (cellStr(r[k])) { const d = cellDate(r[k]); d ? f[k] = d : errs.push(`${h} 날짜 형식(2026-12-01)을 확인해 주세요`); } });
     if (id) { if (seen.has(id)) errs.push('같은 관리번호가 파일에 두 번 있어요'); seen.add(id); }
     let type, changes = [];
     if (cur) {
@@ -2050,7 +2074,7 @@ async function applyPlan() {
         const id = p.id || nextId(doc);
         if (doc.assets.some(x => x.id === id)) { skipped++; return; }
         doc.assets.push({ id, category: '', item: '', model: '', contract: '', acq: '', qty: 1, unit: 'EA', location: '', locInit: p.f.locInit || p.f.location || '', manager: '',
-          status: '상', lat: '', lng: '', nextCheck: '', rentalDue: '', note: '', out: null, ...p.f, log: [{ at: now, t: '엑셀로 등록' }], updatedAt: now }); added++;
+          status: '상', lat: '', lng: '', nextCheck: '', rentalDue: '', leaseVendor: '', leaseStart: '', leaseTel: '', note: '', out: null, ...p.f, log: [{ at: now, t: '엑셀로 등록' }], updatedAt: now }); added++;
       } else { const a = doc.assets.find(x => x.id === p.id); if (a) { p.changes.forEach(c => a[c.k] = p.f[c.k]); addLog(a, '엑셀 수정: ' + p.changes.map(c => FIELD_KO[c.k] || c.k).join(', '), now); a.updatedAt = now; updated++; } }
       if (p.f.location && !doc.locations.includes(p.f.location)) doc.locations.push(p.f.location);
     });
