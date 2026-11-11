@@ -635,6 +635,36 @@ async function sha256(s) {
   const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
   return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join('');
 }
+/* 공유 토큰: 관리자 비밀번호로 잠가 key.json에 보관 → 직원은 비밀번호만 넣으면 자동 적용 */
+let PW_PLAIN = '';
+const b2a = u => btoa(String.fromCharCode(...new Uint8Array(u))), a2b = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+async function pwKey(pw, salt) {
+  const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(pw), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey({ name: 'PBKDF2', salt, iterations: 600000, hash: 'SHA-256' }, base, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
+}
+async function lockToken(token, pw) {
+  const salt = crypto.getRandomValues(new Uint8Array(16)), iv = crypto.getRandomValues(new Uint8Array(12));
+  const data = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, await pwKey(pw, salt), new TextEncoder().encode(token));
+  return { v: 1, salt: b2a(salt), iv: b2a(iv), data: b2a(data) };
+}
+async function fetchSharedToken(pw) {   // 실패하면 '' (조용히)
+  try {
+    const c = Store.cfg(); const r = await fetch(`https://raw.githubusercontent.com/${c.owner}/${c.repo}/${c.branch}/key.json?_=${Date.now()}`, { cache: 'no-store' });
+    if (!r.ok) return ''; const k = await r.json();
+    const out = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: a2b(k.iv) }, await pwKey(pw, a2b(k.salt)), a2b(k.data));
+    return new TextDecoder().decode(out);
+  } catch (e) { return ''; }
+}
+async function shareToken() {
+  const t = $('s-token').value.trim(); const out = $('s-test');
+  if (!t) { out.style.color = 'var(--red)'; out.textContent = '먼저 위 칸에 토큰을 넣어 주세요'; return; }
+  let pw = PW_PLAIN; if (!pw) pw = prompt('관리자 비밀번호를 한 번 더 넣어 주세요') || '';
+  if ((await sha256(pw)) !== CONFIG.PW_HASH) { out.style.color = 'var(--red)'; out.textContent = '비밀번호가 맞지 않아요'; return; }
+  PW_PLAIN = pw; Store.saveCfg({ ...Store.cfg(), token: t });
+  out.style.color = 'var(--sub)'; out.textContent = '등록 중…';
+  try { await Store.putFile('key.json', b64encode(JSON.stringify(await lockToken(t, pw))), '토큰 공유 등록(잠금)'); out.style.color = 'var(--ok)'; out.textContent = '✅ 등록 완료 · 이제 직원은 비밀번호만 넣으면 사진·저장이 돼요 (반영까지 최대 5분)'; }
+  catch (e) { out.style.color = 'var(--red)'; out.textContent = '등록 실패 · ' + e.message; }
+}
 function b64encode(str) {
   const bytes = new TextEncoder().encode(str); let bin = '';
   for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
@@ -871,6 +901,8 @@ async function login(e) {
     const c = document.querySelector('.gate-card'); c.classList.remove('shake'); void c.offsetWidth; c.classList.add('shake');
     $('pw').select(); return;
   }
+  PW_PLAIN = $('pw').value;
+  if (!Store.cfg().token) { const t = await fetchSharedToken(PW_PLAIN); if (t) Store.saveCfg({ ...Store.cfg(), token: t }); }
   const rec = JSON.stringify({ h, exp: Date.now() + CONFIG.AUTH_DAYS * 864e5 });
   if ($('remember').checked) localStorage.setItem('aam_auth', rec); else sessionStorage.setItem('aam_auth', rec);
   startApp();
@@ -2159,7 +2191,9 @@ function openSettings() {
         <h3>GitHub 토큰</h3>
         <p class="hint" style="margin:2px 0 10px">현재: <b>${Store.mode() === 'github' ? 'GitHub에 저장 중 — 모든 기기가 같은 데이터를 봐요' : '로컬 모드 — 이 기기에만 저장돼요'}</b></p>
         <input class="inp" id="s-token" type="password" value="${esc(c.token)}" placeholder="github_pat_…" autocomplete="off">
-        <p class="hint">토큰은 이 기기 브라우저에만 저장되고, 코드나 데이터 파일에는 들어가지 않아요.</p>
+        <p class="hint">토큰은 이 기기 브라우저에 저장돼요. <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">토큰 새로 만들기 ↗</a></p>
+        <button class="btn primary" type="button" style="width:100%;margin-top:8px" onclick="shareToken()">👥 모든 직원 휴대폰에 자동 적용</button>
+        <p class="hint">누르면 토큰을 비밀번호로 잠가 저장해요. 직원은 비밀번호만 넣으면 돼요.</p>
         <div id="s-test" class="test-res"></div>
       </div>
       <div class="set-block">
