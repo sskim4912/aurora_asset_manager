@@ -1303,6 +1303,7 @@ function detailHTML(a) {
     <p class="hint" style="margin:0 0 18px">${ST_DESC[a.status]}</p>`}
     <dl class="info">
       ${row('위치', `${esc(a.location)}${hasCoord(a) ? `<button class="link" onclick="showOnMap('${a.id}')">지도에서 보기</button>` : '<span class="muted" style="font-size:12.5px">좌표 없음</span>'}`)}
+      ${hasCoord(a) ? row('GPS 좌표', `<span class="mono" style="font-size:12.5px">${(+a.lat).toFixed(6)}, ${(+a.lng).toFixed(6)}</span>${(c => c ? `<div class="muted" style="font-size:12px">${fmtAt(c.at)} 기록${c.how ? ' · ' + esc(c.how) : ''}</div>` : '')(coordLog(a))}`) : ''}
       ${row('수량', `<span class="qty">${a.qty} ${a.unit}</span>`)}
       ${a.model && a.model.replace(/^\s*\((계약외|계약|구자산)\)\s*/, '') !== sm ? row('모델·상세', `<span class="full-model">${esc(a.model)}</span>`) : ''}
       ${acq ? row('취득 구분', esc(acq)) : ''}
@@ -1322,6 +1323,10 @@ function detailHTML(a) {
     <div class="hist">${(a.log || []).length ? a.log.map(l => `<div><span>${esc(l.t)}</span><span class="muted">${fmtAt(l.at)}</span></div>`).join('') : `<div><span class="muted">기록 없음 · 최종 변경 ${relTime(a.updatedAt)}</span></div>`}</div>
   </div>
   <div class="p-foot"><button class="btn" onclick="openForm('${a.id}')">${icon('edit', 16)} 정보 수정</button>${a.out ? '' : `<button class="btn" onclick="openOut(['${a.id}'])">${icon('logout', 16)} 현장 종료 처리</button>`}</div>`;
+}
+function coordLog(a) {   // 마지막 좌표 기록 (기록 목록에서) → { at, how }
+  const l = (a.log || []).find(x => /^(좌표 입력|위치 갱신|좌표 변경)/.test(x.t));
+  return l ? { at: l.at, how: (l.t.match(/\((.*)\)/) || [])[1] || '' } : null;
 }
 function fmtAt(iso) { if (!iso) return ''; const d = new Date(iso); return `${d.getMonth() + 1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`; }
 async function setStatus(id, s) {
@@ -1889,10 +1894,10 @@ function closeModal() { $('modal').classList.add('hidden'); $('modal-box').inner
 const XL_COLS = [
   ['관리번호(ID)', 'id'], ['보유부서', '_dept'], ['보유부서명', '_deptName'], ['대분류', 'category'], ['중분류', 'item'],
   ['품명/계약명', 'contract'], ['모델명/상세', 'model'], ['최초위치', 'locInit'], ['현재위치', 'location'], ['상태', 'status'], ['관리자', 'manager'],
-  ['수량', 'qty'], ['단위', 'unit'], ['위도', 'lat'], ['경도', 'lng'], ['다음점검일', 'nextCheck'], ['렌탈반납일', 'rentalDue'], ['비고', 'note'],
+  ['수량', 'qty'], ['단위', 'unit'], ['위도', 'lat'], ['경도', 'lng'], ['좌표 기록', '_coordLog'], ['다음점검일', 'nextCheck'], ['렌탈반납일', 'rentalDue'], ['비고', 'note'],
   ['현장종료구분', 'outType'], ['종료일', 'outDate'], ['받는곳', 'outTo'], ['반출증번호', 'outDoc']
 ];
-const XL_WIDTH = [13, 9, 18, 14, 14, 32, 34, 18, 18, 7, 10, 6, 6, 10, 11, 12, 12, 24, 14, 11, 14, 12];
+const XL_WIDTH = [13, 9, 18, 14, 14, 32, 34, 18, 18, 7, 10, 6, 6, 10, 11, 30, 12, 12, 24, 14, 11, 14, 12];
 const XL_ALIAS = Object.fromEntries([...XL_COLS.map(([h, k]) => [h.replace(/\s/g, ''), k]),
   ['관리번호', 'id'], ['자산번호', 'id'], ['분류', 'category'], ['품목', 'item'], ['모델명', 'model'], ['품명', 'model'], ['위치', 'location'], ['설치위치', 'location'], ['받는곳', 'outTo']]);
 function needXLSX() { if (typeof XLSX === 'undefined') { toast('엑셀 기능을 불러오지 못했어요 · 인터넷 연결을 확인해 주세요', 'err'); return false; } return true; }
@@ -1916,6 +1921,7 @@ function downloadTemplate() {
     ['관리자', '', '개인 이름 대신 직책 (예: 관리팀장)'],
     ['수량 · 단위', '', '수량을 비우면 1, 단위를 비우면 EA. 단위는 EA 또는 SET'],
     ['위도 · 경도', '', '비워두고 현장에서 휴대폰으로 넣어도 돼요'],
+    ['좌표 기록', '', '내려받기 전용(언제·어떻게 좌표를 넣었는지). 올릴 때는 읽지 않아요.'],
     ['다음점검일 · 렌탈반납일', '', '예: 2026-12-01'],
     ['현장종료구분 · 종료일 · 받는곳 · 반출증번호', '', OUT_TYPES.join(', ') + ' 중 하나. 보통은 비워둬요'],
     [],
@@ -1934,6 +1940,7 @@ function exportExcel() {
   const c = Store.cfg();
   const rows = DOC.assets.map(a => XL_COLS.map(([, k]) => ({
     _dept: c.deptCode || '', _deptName: c.deptName || 'Aurora Project(충남)',
+    _coordLog: (l => { if (!l) return ''; const d = new Date(l.at); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}${l.how ? ' · ' + l.how : ''}`; })(hasCoord(a) && coordLog(a)),
     status: a.out ? a.out.type : a.status, outType: a.out ? a.out.type : '', outDate: a.out ? a.out.date : '', outTo: a.out ? a.out.to : '', outDoc: a.out ? a.out.docNo : ''
   }[k] ?? a[k] ?? '')));
   const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, xlSheet(rows), '자산대장');
