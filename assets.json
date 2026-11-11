@@ -1,6 +1,6 @@
 {
   "version": 3,
-  "updatedAt": "2026-11-11T01:57:40.529Z",
+  "updatedAt": "2026-11-11T04:04:28.603Z",
   "catalog": {},
   "assets": [
     {
@@ -16,8 +16,8 @@
       "locInit": "현장 사무실 / 본관",
       "manager": "관리팀장",
       "status": "상",
-      "lat": 36.996541,
-      "lng": 126.37889,
+      "lat": "",
+      "lng": "",
       "nextCheck": "",
       "rentalDue": "",
       "leaseVendor": "",
@@ -25,60 +25,11 @@
       "leaseTel": "",
       "note": "",
       "out": null,
-      "updatedAt": "2026-11-11T00:23:19.221Z",
-      "log": [
-        {
-          "at": "2026-11-11T00:23:19.221Z",
-          "t": "사진 등록 · AURORA-001_공기청정기_20261111_092316.jpg"
-        },
-        {
-          "at": "2026-11-11T00:17:34.072Z",
-          "t": "사진 등록 · AURORA-001_공기청정기_20261111_091730.jpg"
-        },
-        {
-          "at": "2026-11-11T00:14:51.314Z",
-          "t": "사진 갱신"
-        },
-        {
-          "at": "2026-11-11T00:14:28.683Z",
-          "t": "사진 갱신"
-        },
-        {
-          "at": "2026-11-11T00:14:15.069Z",
-          "t": "좌표 입력 (QR, 오차 약 15m)"
-        },
-        {
-          "at": "2026-11-11T00:12:23.386Z",
-          "t": "실사 미발견 → 찾음"
-        },
-        {
-          "at": "2026-11-11T00:12:23.386Z",
-          "t": "실사 확인 (직접)"
-        },
-        {
-          "at": "2026-11-10T23:50:41.525Z",
-          "t": "사진 갱신"
-        }
-      ],
-      "thumb": "data:image/jpeg;base64,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",
-      "photo": {
-        "path": "photos/AURORA-001/AURORA-001_공기청정기_20261111_092316.jpg",
-        "at": "2026-11-11T00:23:16.154Z"
-      },
-      "photos": [
-        {
-          "path": "photos/AURORA-001/AURORA-001_공기청정기_20261111_092316.jpg",
-          "at": "2026-11-11T00:23:16.154Z"
-        },
-        {
-          "path": "photos/AURORA-001/AURORA-001_공기청정기_20261111_091730.jpg",
-          "at": "2026-11-11T00:17:30.502Z"
-        },
-        {
-          "path": "photos/AURORA-001.jpg",
-          "at": "2026-11-11T00:14:51.314Z"
-        }
-      ]
+      "updatedAt": "2026-11-10T09:00:00+09:00",
+      "log": [],
+      "thumb": "",
+      "photo": null,
+      "photos": []
     },
     {
       "id": "AURORA-002",
@@ -2242,7 +2193,7 @@
       "item": "제빙기",
       "model": "스노웨이 제빙기",
       "contract": "(계약외)온라인구매",
-      "acq": "임대/임차",
+      "acq": "계약외(온라인구매)",
       "qty": 1,
       "unit": "EA",
       "location": "현장 사무실 / 본관",
@@ -2252,118 +2203,21 @@
       "lat": "",
       "lng": "",
       "nextCheck": "",
-      "rentalDue": "2027-01-31",
-      "leaseVendor": "00렌탈",
-      "leaseStart": "2026-11-12",
-      "leaseTel": "1588-0000",
-      "note": "연습",
+      "rentalDue": "",
+      "leaseVendor": "",
+      "leaseStart": "",
+      "leaseTel": "",
+      "note": "",
       "out": null,
-      "updatedAt": "2026-11-11T01:57:40.529Z",
-      "log": [
-        {
-          "at": "2026-11-11T01:57:40.529Z",
-          "t": "수정: 취득 구분, 반납 예정, 임대 업체, 임대 시작, 업체 연락처, 비고"
-        }
-      ],
+      "updatedAt": "2026-11-10T09:00:00+09:00",
+      "log": [],
       "thumb": "",
       "photo": null,
       "photos": []
     }
   ],
-  "audit": {
-    "startedAt": "2026-11-10T23:33:06.788Z",
-    "checked": {
-      "AURORA-001": "2026-11-11T00:12:23.386Z"
-    }
-  },
-  "auditLog": [
-    {
-      "startedAt": "2026-11-10T21:41:45.983Z",
-      "endedAt": "2026-11-10T23:32:50.605Z",
-      "total": 79,
-      "checked": 0,
-      "missing": [
-        "AURORA-002",
-        "AURORA-003",
-        "AURORA-004",
-        "AURORA-005",
-        "AURORA-006",
-        "AURORA-007",
-        "AURORA-008",
-        "AURORA-009",
-        "AURORA-010",
-        "AURORA-011",
-        "AURORA-012",
-        "AURORA-013",
-        "AURORA-014",
-        "AURORA-015",
-        "AURORA-016",
-        "AURORA-017",
-        "AURORA-018",
-        "AURORA-019",
-        "AURORA-020",
-        "AURORA-021",
-        "AURORA-022",
-        "AURORA-023",
-        "AURORA-024",
-        "AURORA-025",
-        "AURORA-026",
-        "AURORA-027",
-        "AURORA-028",
-        "AURORA-029",
-        "AURORA-030",
-        "AURORA-031",
-        "AURORA-032",
-        "AURORA-033",
-        "AURORA-034",
-        "AURORA-035",
-        "AURORA-036",
-        "AURORA-037",
-        "AURORA-038",
-        "AURORA-039",
-        "AURORA-040",
-        "AURORA-041",
-        "AURORA-042",
-        "AURORA-043",
-        "AURORA-044",
-        "AURORA-045",
-        "AURORA-046",
-        "AURORA-047",
-        "AURORA-048",
-        "AURORA-049",
-        "AURORA-050",
-        "AURORA-051",
-        "AURORA-052",
-        "AURORA-053",
-        "AURORA-054",
-        "AURORA-055",
-        "AURORA-056",
-        "AURORA-057",
-        "AURORA-058",
-        "AURORA-059",
-        "AURORA-060",
-        "AURORA-061",
-        "AURORA-062",
-        "AURORA-063",
-        "AURORA-064",
-        "AURORA-065",
-        "AURORA-066",
-        "AURORA-067",
-        "AURORA-068",
-        "AURORA-069",
-        "AURORA-070",
-        "AURORA-071",
-        "AURORA-072",
-        "AURORA-073",
-        "AURORA-074",
-        "AURORA-075",
-        "AURORA-076",
-        "AURORA-077",
-        "AURORA-078",
-        "AURORA-079"
-      ]
-    }
-  ],
+  "audit": null,
+  "auditLog": [],
   "auditSince": "2026-11-11",
   "locations": [
     "현장 사무실 / 본관"
