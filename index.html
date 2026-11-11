@@ -292,6 +292,7 @@ table.tbl{width:100%;border-collapse:collapse}
 .audit-banner.done{background:var(--ok-bg);color:var(--ok)}
 .seg button{border:1.5px solid var(--line2);background:#fff;border-radius:10px;padding:11px 4px;font-weight:700;font-size:13.5px;color:#4b5565}
 .seg button.on{border-color:var(--c);background:var(--cb);color:var(--c)}
+.seg button.pick.on{border-color:#0a5eb0;background:#0a5eb0;color:#fff}.seg button.pick.on small{color:#dbeafe}
 .info{margin:0;border:1px solid var(--line);border-radius:12px;overflow:hidden}
 .info>div{display:flex;gap:12px;padding:12px 14px;border-bottom:1px solid #f0f2f6;align-items:baseline}
 .info>div:last-child{border-bottom:0}
@@ -1396,10 +1397,10 @@ function renderOut() {
     <div class="m-body">
       <p class="sub" style="margin:0 0 14px">${one ? `${one.id} · ${esc(dispName(one))}` : OUT.ids.slice(0, 6).join(', ') + (OUT.ids.length > 6 ? ` 외 ${OUT.ids.length - 6}개` : '')}<br>처리하면 목록·지도·라벨에서 빠지고 기록만 남아요. '현장 복귀'로 되돌릴 수 있어요.</p>
       <div class="field"><div class="flabel">구분<em>*</em></div>
-        <div class="seg two" style="margin:0">${OUT_TYPES.filter(t => one || t !== LOSS).map(t => `<button type="button" class="off ${OUT.type === t ? 'on' : ''}" onclick="OUT.type='${t}';OUT.to=outDefaultTo(OUT.type);renderOut()">${t}</button>`).join('')}</div>
+        <div class="seg two" style="margin:0">${OUT_TYPES.filter(t => one || t !== LOSS).map(t => `<button type="button" class="pick ${OUT.type === t ? 'on' : ''}" onclick="OUT.type='${t}';OUT.to=outDefaultTo(OUT.type);renderOut()">${OUT.type === t ? '✓ ' : ''}${t}</button>`).join('')}</div>
         ${one ? '' : '<p class="hint">분실/망실은 비품마다 하나씩 처리해요 (상세 화면의 [현장 종료 처리]).</p>'}</div>
       ${OUT.type === LOSS ? `<div class="field"><div class="flabel">분실 · 망실<em>*</em></div>
-        <div class="seg" style="margin:0">${LOSS_KINDS.map(k => `<button type="button" class="off ${OUT.to === k ? 'on' : ''}" onclick="OUT.to='${k}';renderOut()">${k} <small class="muted">${k === '분실' ? '잃어버림' : '부서지거나 못 쓰게 됨'}</small></button>`).join('')}</div></div>` : ''}
+        <div class="seg" style="margin:0">${LOSS_KINDS.map(k => `<button type="button" class="pick ${OUT.to === k ? 'on' : ''}" onclick="OUT.to='${k}';renderOut()">${OUT.to === k ? '✓ ' : ''}${k} <small class="muted">${k === '분실' ? '잃어버림' : '부서지거나 못 쓰게 됨'}</small></button>`).join('')}</div></div>` : ''}
       <div class="field"><div class="flabel">${OUT.type === LOSS ? '확인일 <span class="muted" style="font-weight:500">없어진 걸 안 날</span>' : '일자'}</div><input class="inp" type="date" value="${esc(OUT.date)}" oninput="OUT.date=this.value"></div>
       ${toLabel ? `<div class="field"><div class="flabel">${toLabel}</div><input class="inp" value="${esc(OUT.to)}" placeholder="${toPh}" oninput="OUT.to=this.value"></div>` : ''}
       <div class="field"><div class="flabel">${OUT.type === LOSS ? '경위서 · 승인번호' : '반출증 · 승인번호'} <span class="muted" style="font-weight:500">(선택)</span></div><input class="inp" value="${esc(OUT.docNo)}" oninput="OUT.docNo=this.value"></div>
