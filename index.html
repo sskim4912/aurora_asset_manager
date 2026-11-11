@@ -218,6 +218,7 @@ h1{font-size:25px;margin:0;letter-spacing:-.025em}
 .photo-hist button.on{background:var(--acc);border-color:var(--acc);color:#fff}
 .photo-pick.strong{background:var(--acc);color:#fff;border:0}
 .step-guide{background:var(--acc-bg);color:var(--acc);border-radius:10px;padding:10px 12px;font-size:13px;margin-bottom:10px}
+.scan-res>div{min-width:0}.scan-res .ri-sub{white-space:normal}
 .shot-mini{width:72px;height:72px;object-fit:cover;border-radius:10px;flex:none}
 .scan-gps{font-size:13px;font-weight:700;text-align:center;border-radius:10px;padding:8px;margin-bottom:10px}
 .scan-gps.green{background:var(--ok-bg);color:var(--ok)}.scan-gps.yellow{background:var(--chk-bg);color:var(--chk)}.scan-gps.red,.scan-gps.none{background:var(--red-bg);color:var(--red)}
@@ -1888,7 +1889,8 @@ function scanUI() {
       <div class="scan-tags" id="loc-tag" style="justify-content:center"></div>
       <div class="shutter-row"><button class="btn" onclick="SCAN.step='located';$('scanner').classList.remove('photo-mode');scanUI();refreshLocTag()">뒤로</button><button class="shutter" onclick="takePhoto()" aria-label="촬영"></button><span style="width:64px"></span></div>${note}`;
   else if (st === 'uploading') h = `<div class="scan-res ok" style="display:flex;gap:12px;align-items:center"><img src="${c.shot.full}" class="shot-mini"><div><b>사진 저장하는 중…</b><div class="ri-sub">${esc(c.shot.path.split('/').pop())}</div></div></div>`;
-  else if (st === 'upload-fail') h = `<div class="scan-res bad" style="display:flex;gap:12px;align-items:center"><img src="${c.shot.full}" class="shot-mini"><div><b>사진을 올리지 못했어요</b><div class="ri-sub">사진은 그대로 있어요 · 신호가 좋은 곳에서 다시 올려 주세요</div></div></div>
+  else if (st === 'upload-fail') h = `<div class="scan-res bad" style="display:flex;gap:12px;align-items:center"><img src="${c.shot.full}" class="shot-mini"><div><b>사진을 올리지 못했어요</b><div class="ri-sub">${Store.mode() !== 'github' ? '이 휴대폰(앱)에 <b>GitHub 토큰</b>이 없어요 · 아래 버튼으로 토큰을 넣어 주세요' : '사진은 그대로 있어요 · 신호가 좋은 곳에서 다시 올려 주세요'}</div></div></div>
+      ${Store.mode() !== 'github' ? '<button class="btn lg primary" style="width:100%;margin-bottom:8px" onclick="closeScanner(true);openSettings()">🔑 설정에서 토큰 넣기</button>' : ''}
       <div class="scan-btns"><button class="btn lg" onclick="photoMode()">다시 찍기</button><button class="btn lg primary" onclick="uploadShot()">다시 올리기</button></div>`;
   else if (st === 'done') {
     const r = c.result || {};
