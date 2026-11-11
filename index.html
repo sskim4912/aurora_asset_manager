@@ -870,7 +870,7 @@ function todos() {
     const c = dday(a.nextCheck);
     if (c !== null && c <= 7) tags.push({ level: c < 0 ? 'red' : 'amber', text: '점검 ' + ddText(c), rank: c });
     const r = dday(a.rentalDue);
-    if (r !== null && r <= 14) tags.push({ level: r < 0 ? 'red' : 'amber', text: '렌탈 반납 ' + ddText(r), rank: r });
+    if (r !== null && r <= 14) tags.push({ level: r < 0 ? 'red' : 'amber', text: '임대 반납 ' + ddText(r), rank: r });
     if (miss.has(a.id)) tags.push({ level: 'red', text: '실사 미발견', rank: -900 });
     if (tags.length) out.push({ a, tags: tags.sort((x, y) => x.rank - y.rank) });
   });
@@ -888,7 +888,7 @@ function cardsHTML() {
   const card = (key, label, num, sub, cls = '') => `<button class="stat ${cls} ${UI.filter === key ? 'on' : ''}" onclick="setFilter('${key}')"><div class="lbl">${label}</div><div class="num">${num}</div><div class="stat-sub">${sub}</div></button>`;
   const st = s => `<span class="st-link ${UI.filter === 'st:' + s ? 'on' : ''}" onclick="event.stopPropagation();setFilter('st:${s}')">${s} ${cnt(s)}</span>`;
   return `<div class="stats">
-    ${card('all', '전체 자산', `${act.length}<small>건</small>`, STATUSES.map(st).join(' · ') + (lease ? `<br><span class="st-link ${UI.filter === 'lease' ? 'on' : ''}" onclick="event.stopPropagation();setFilter('lease')">● 임대/임차 ${lease}건 ›</span>` : ''))}
+    ${card('all', '전체 자산', `${act.length}<small>건</small>`, STATUSES.map(st).join(' · ') + `<br><span class="st-link ${UI.filter === 'lease' ? 'on' : ''}" onclick="event.stopPropagation();setFilter('lease')">임대/임차 ${lease}건 ›</span>`)}
     ${card('todo', '할 일', `${td}<small>건</small>`, '상태 하 · 점검·반납 임박 · 실사 미발견', td ? 'alert' : '')}
     ${card('out', '현장 종료', `${outs.length}<small>건</small>`, `창고 ${by('GS 자재창고 반납')} · 타현장 ${by('타현장 전용')} · 렌탈 ${by('렌탈업체 반납')}<br>이번 달 ${month(outs)}건`, 'gray')}
     ${card('disposed', '폐기', `${disp.length}<small>건</small>`, `이번 달 ${month(disp)}건`, 'gray')}
@@ -999,7 +999,9 @@ function updateAssetList() {
   const cntEl = $('asset-count'); if (cntEl) cntEl.textContent = `${list.length}건`;
   updateSelBar();
   const box = $('asset-list'); if (!box) return;
-  if (!list.length) { box.innerHTML = `<div class="card empty"><b>해당하는 자산이 없어요</b>검색어나 필터를 바꿔 보세요</div>`; return; }
+  if (!list.length) { box.innerHTML = UI.filter === 'lease' && !UI.q
+    ? `<div class="card empty"><b>임대/임차 장비가 아직 없어요</b>비품을 눌러 [정보 수정] → 추가 정보 → 취득 구분에서 '임대/임차'를 고르면 여기에 모여요.<br>엑셀로 올릴 때 '임대업체' 열을 채워도 돼요.</div>`
+    : `<div class="card empty"><b>해당하는 자산이 없어요</b>검색어나 필터를 바꿔 보세요</div>`; return; }
   const sch = a => { const s = schedOf(a); return s ? `<span class="due ${s.lvl}">${s.t}</span>` : '<span class="muted">—</span>'; };
   const th = (k, l, w) => `<th ${w ? `style="width:${w}px"` : ''} class="sortable ${UI.sort.k === k ? 'on' : ''}" onclick="setSort('${k}')">${l}<span class="arrow">${UI.sort.k === k ? (UI.sort.d > 0 ? '▲' : '▼') : '↕'}</span></th>`;
   const allOn = list.every(a => UI.sel.has(a.id));
