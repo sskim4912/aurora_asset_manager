@@ -538,7 +538,9 @@ const STATUSES = ['상', '중', '하'];
 const ST_KEY = { '상': 'ok', '중': 'mid', '하': 'bad' };
 const ST_DESC = { '상': '정상 사용, 이상 없음', '중': '사용 가능, 일부 노후·경미한 손상', '하': '수리·점검 필요 또는 사용 불가' };
 // 현장 종료(반출): 현장을 떠난 자산. 목록·지도·라벨에서 빠지고 기록만 남아요.
-const OUT_TYPES = ['GS 자재창고 반납', '타현장 전용', '임대/임차 반납', '폐기'];
+const OUT_TYPES = ['GS 자재창고 반납', '타현장 전용', '임대/임차 반납', '폐기', '분실/망실'];
+const LOSS = '분실/망실', LOSS_KINDS = ['분실', '망실'];
+const isGone = a => !!(a.out && (a.out.type === '폐기' || a.out.type === LOSS));   // 폐기·분실 카드로 가는 것
 const UNITS = ['EA', 'SET'];
 const LEASE = '임대/임차';
 const ACQ_TYPES = ['계약', '계약외(온라인구매)', '계약외(견적)', '구자산', LEASE];
@@ -610,7 +612,7 @@ const hasCoord = a => Number.isFinite(+a.lat) && Number.isFinite(+a.lng) && a.la
 const validLat = v => Number.isFinite(v) && v >= 33 && v <= 39;
 const validLng = v => Number.isFinite(v) && v >= 124 && v <= 132;
 function badge(s) { return `<span class="badge ${ST_KEY[s] || 'off'}">${esc(s)}</span>`; }
-function outBadge(a) { return `<span class="badge off">${esc(a.out.type)}</span>`; }
+function outBadge(a) { return `<span class="badge off">${esc(a.out.type === LOSS ? (a.out.to || LOSS) : a.out.type)}</span>`; }
 const stBadge = a => a.out ? outBadge(a) : badge(a.status);
 function toast(msg, type = '') {
   const el = document.createElement('div'); el.className = 'toast ' + type; el.textContent = msg;
@@ -903,7 +905,7 @@ function todos() {
 function cardsHTML() {
   const act = activeAssets(); const cnt = s => act.filter(a => a.status === s).length;
   const td = todos().length, ym = todayStr().slice(0, 7);
-  const outs = DOC.assets.filter(a => a.out && a.out.type !== '폐기'), disp = DOC.assets.filter(a => a.out && a.out.type === '폐기');
+  const outs = DOC.assets.filter(a => a.out && !isGone(a)), disp = DOC.assets.filter(isGone);
   const month = l => l.filter(a => (a.out.date || '').startsWith(ym)).length;
   const by = t => outs.filter(a => a.out.type === t).length;
   const coord = act.filter(hasCoord).length, lease = act.filter(isLease).length, leaseOut = DOC.assets.filter(a => a.out && isLease(a)).length;
@@ -913,11 +915,11 @@ function cardsHTML() {
     ${card('all', '전체 자산', `${act.length}<small>건</small>`, STATUSES.map(st).join(' · ') + `<br><span class="lease-link ${UI.filter === 'lease' ? 'on' : ''}" onclick="event.stopPropagation();setFilter('lease')">임대/임차 총 ${lease + leaseOut}건 · 사용 중 ${lease}건 ›</span>`)}
     ${card('todo', '할 일', `${td}<small>건</small>`, '상태 하 · 점검·반납 임박 · 실사 미발견', td ? 'alert' : '')}
     ${card('out', '현장 종료', `${outs.length}<small>건</small>`, `창고 ${by('GS 자재창고 반납')} · 타현장 ${by('타현장 전용')} · 이번 달 ${month(outs)}건<br><span class="lease-link ${UI.filter === 'leaseOut' ? 'on' : ''}" onclick="event.stopPropagation();setFilter('leaseOut')">임대/임차 반납 ${leaseOut}건 ›</span>`, 'gray')}
-    ${card('disposed', '폐기', `${disp.length}<small>건</small>`, `이번 달 ${month(disp)}건`, 'gray')}
+    ${card('disposed', '폐기 · 분실', `${disp.length}<small>건</small>`, `폐기 ${disp.filter(a => a.out.type === '폐기').length} · 분실/망실 ${disp.filter(a => a.out.type === LOSS).length}<br>이번 달 ${month(disp)}건`, 'gray')}
     ${auditCardHTML(act.length - coord)}
   </div>`;
 }
-const FILTER_KO = { all: '', todo: '할 일', out: '현장 종료', disposed: '폐기', nocoord: '좌표 미등록', lease: '임대/임차', leaseOut: '임대/임차 반납', unaudited: '실사 미확인', 'st:상': '상태 상', 'st:중': '상태 중', 'st:하': '상태 하' };
+const FILTER_KO = { all: '', todo: '할 일', out: '현장 종료', disposed: '폐기 · 분실', nocoord: '좌표 미등록', lease: '임대/임차', leaseOut: '임대/임차 반납', unaudited: '실사 미확인', 'st:상': '상태 상', 'st:중': '상태 중', 'st:하': '상태 하' };
 function setFilter(k) { UI.filter = UI.filter === k && k !== 'all' ? 'all' : k; UI.sel.clear(); render(); }
 
 /* ── 정기 실사: 진행 중 띠 / 60일 알림 ── */
@@ -982,8 +984,8 @@ function filteredAssets() {
   return DOC.assets.filter(a => {
     if (f === 'lease') { if (!isLease(a)) return false; }
     else if (f === 'leaseOut') { if (!isLease(a) || !a.out) return false; }
-    else if (f === 'out') { if (!a.out || a.out.type === '폐기') return false; }
-    else if (f === 'disposed') { if (!a.out || a.out.type !== '폐기') return false; }
+    else if (f === 'out') { if (!a.out || isGone(a)) return false; }
+    else if (f === 'disposed') { if (!isGone(a)) return false; }
     else {
       if (a.out) return false;
       if (f === 'todo' && !todo.has(a.id)) return false;
@@ -1190,7 +1192,7 @@ function mapSpot(g) {   // 같은 자리 여러 개 → 목록
 }
 function showOnMap(id) {
   const a = getAsset(id); MAP_FOCUS = id; closeDrawer();
-  Object.assign(UI, { mode: 'map', q: '', cat: '전체', item: '전체', loc: '전체', filter: a && a.out ? (a.out.type === '폐기' ? 'disposed' : 'out') : 'all' });
+  Object.assign(UI, { mode: 'map', q: '', cat: '전체', item: '전체', loc: '전체', filter: a && a.out ? (isGone(a) ? 'disposed' : 'out') : 'all' });
   go('assets');
 }
 
@@ -1330,8 +1332,8 @@ function detailHTML(a) {
   <div class="p-body">
     ${photoUrl(a) ? `<div class="asset-photo" onclick="showPhoto('${a.id}')"><img src="${photoUrl(a)}" alt="" loading="lazy" onerror="this.parentNode.classList.add('err')"><span>사진 ${a.photo ? fmtAt(a.photo.at) : '방금'}${(a.photos || []).length > 1 ? ` · 이력 ${a.photos.length}장` : ''}</span></div>` : ''}
     ${!a.out && !hasCoord(a) ? `<div class="audit-banner" style="background:#fff7ed;color:var(--chk)">좌표가 없어요<span class="sp"></span><button class="btn sm" onclick="quickLocate('${a.id}')">${icon('crosshair', 14)} 지금 위치로 넣기</button></div>` : ''}
-    ${a.out ? `<div class="out-banner"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b>${esc(a.out.type)}</b><button class="btn sm" onclick="restoreAsset('${a.id}')">현장 복귀</button></div>
-      <div class="ri-sub">${[a.out.date, a.out.to, a.out.docNo && '반출증 ' + a.out.docNo, a.out.note].filter(Boolean).map(esc).join(' · ') || '세부 기록 없음'}</div></div>`
+    ${a.out ? `<div class="out-banner"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b>${esc(a.out.type === LOSS ? (a.out.to || LOSS) : a.out.type)}</b><button class="btn sm" onclick="restoreAsset('${a.id}')">현장 복귀</button></div>
+      <div class="ri-sub">${(a.out.type === LOSS ? [a.out.date && '확인 ' + a.out.date, a.out.docNo && '경위서 ' + a.out.docNo, a.out.note && '경위: ' + a.out.note] : [a.out.date, a.out.to, a.out.docNo && '반출증 ' + a.out.docNo, a.out.note]).filter(Boolean).map(esc).join(' · ') || '세부 기록 없음'}</div></div>`
     : `<div class="flabel">상태 — 누르면 바로 저장돼요</div>
     <div class="seg" style="margin-bottom:8px">${STATUSES.map(s => `<button class="${ST_KEY[s]} ${a.status === s ? 'on' : ''}" onclick="setStatus('${a.id}','${s}')" title="${ST_DESC[s]}">${s}</button>`).join('')}</div>
     <p class="hint" style="margin:0 0 18px">${ST_DESC[a.status]}</p>`}
@@ -1374,7 +1376,7 @@ async function setStatus(id, s) {
 
 /* 현장 종료 처리 (GS 자재창고 반납 · 타현장 전용 · 임대/임차 반납 · 폐기) — 하나 또는 여러 개 */
 let OUT = null;
-const OUT_TO = { 'GS 자재창고 반납': ['받는 곳', 'GS 자재창고'], '타현장 전용': ['받는 현장', '예: ○○현장'], '임대/임차 반납': ['임대 업체', '예: ○○렌탈'], '폐기': ['', ''] };
+const OUT_TO = { 'GS 자재창고 반납': ['받는 곳', 'GS 자재창고'], '타현장 전용': ['받는 현장', '예: ○○현장'], '임대/임차 반납': ['임대 업체', '예: ○○렌탈'], '폐기': ['', ''], [LOSS]: ['', ''] };
 function outDefaultTo(t) {
   if (t === 'GS 자재창고 반납') return 'GS 자재창고';
   if (t === '임대/임차 반납') { const v = [...new Set(OUT.ids.map(id => (getAsset(id) || {}).leaseVendor).filter(Boolean))]; return v.length === 1 ? v[0] : ''; }
@@ -1394,21 +1396,32 @@ function renderOut() {
     <div class="m-body">
       <p class="sub" style="margin:0 0 14px">${one ? `${one.id} · ${esc(dispName(one))}` : OUT.ids.slice(0, 6).join(', ') + (OUT.ids.length > 6 ? ` 외 ${OUT.ids.length - 6}개` : '')}<br>처리하면 목록·지도·라벨에서 빠지고 기록만 남아요. '현장 복귀'로 되돌릴 수 있어요.</p>
       <div class="field"><div class="flabel">구분<em>*</em></div>
-        <div class="seg two" style="margin:0">${OUT_TYPES.map(t => `<button type="button" class="off ${OUT.type === t ? 'on' : ''}" onclick="OUT.type='${t}';OUT.to=outDefaultTo(OUT.type);renderOut()">${t}</button>`).join('')}</div></div>
-      <div class="field"><div class="flabel">일자</div><input class="inp" type="date" value="${esc(OUT.date)}" oninput="OUT.date=this.value"></div>
+        <div class="seg two" style="margin:0">${OUT_TYPES.filter(t => one || t !== LOSS).map(t => `<button type="button" class="off ${OUT.type === t ? 'on' : ''}" onclick="OUT.type='${t}';OUT.to=outDefaultTo(OUT.type);renderOut()">${t}</button>`).join('')}</div>
+        ${one ? '' : '<p class="hint">분실/망실은 비품마다 하나씩 처리해요 (상세 화면의 [현장 종료 처리]).</p>'}</div>
+      ${OUT.type === LOSS ? `<div class="field"><div class="flabel">분실 · 망실<em>*</em></div>
+        <div class="seg" style="margin:0">${LOSS_KINDS.map(k => `<button type="button" class="off ${OUT.to === k ? 'on' : ''}" onclick="OUT.to='${k}';renderOut()">${k} <small class="muted">${k === '분실' ? '잃어버림' : '부서지거나 못 쓰게 됨'}</small></button>`).join('')}</div></div>` : ''}
+      <div class="field"><div class="flabel">${OUT.type === LOSS ? '확인일 <span class="muted" style="font-weight:500">없어진 걸 안 날</span>' : '일자'}</div><input class="inp" type="date" value="${esc(OUT.date)}" oninput="OUT.date=this.value"></div>
       ${toLabel ? `<div class="field"><div class="flabel">${toLabel}</div><input class="inp" value="${esc(OUT.to)}" placeholder="${toPh}" oninput="OUT.to=this.value"></div>` : ''}
-      <div class="field"><div class="flabel">반출증 · 승인번호 <span class="muted" style="font-weight:500">(선택)</span></div><input class="inp" value="${esc(OUT.docNo)}" oninput="OUT.docNo=this.value"></div>
-      <div class="field" style="margin:0"><div class="flabel">비고 <span class="muted" style="font-weight:500">(선택)</span></div><input class="inp" value="${esc(OUT.note)}" oninput="OUT.note=this.value"></div>
+      <div class="field"><div class="flabel">${OUT.type === LOSS ? '경위서 · 승인번호' : '반출증 · 승인번호'} <span class="muted" style="font-weight:500">(선택)</span></div><input class="inp" value="${esc(OUT.docNo)}" oninput="OUT.docNo=this.value"></div>
+      ${OUT.type === LOSS
+        ? `<div class="field" style="margin:0"><div class="flabel">경위<em>*</em></div><textarea class="inp" rows="3" id="out-note" placeholder="예: 태풍으로 지붕 파손 시 함께 파손 / 정기 실사 때 찾지 못함" oninput="OUT.note=this.value">${esc(OUT.note)}</textarea></div>`
+        : `<div class="field" style="margin:0"><div class="flabel">비고 <span class="muted" style="font-weight:500">(선택)</span></div><input class="inp" value="${esc(OUT.note)}" oninput="OUT.note=this.value"></div>`}
     </div>
     <div class="m-foot"><span class="sp"></span><button class="btn" onclick="closeModal()">취소</button><button class="btn primary" id="out-go" onclick="saveOut()">처리하기</button></div>`);
 }
 async function saveOut() {
   if (!OUT.type) return toast('구분을 골라 주세요', 'warn');
+  if (OUT.type === LOSS) {
+    if (OUT.ids.length !== 1) return toast('분실/망실은 하나씩 처리해요', 'warn');
+    if (!LOSS_KINDS.includes(OUT.to)) return toast('분실인지 망실인지 골라 주세요', 'warn');
+    if (!OUT.note.trim()) { toast('경위를 적어 주세요', 'warn'); return $('out-note') && $('out-note').focus(); }
+  }
   const o = { type: OUT.type, date: OUT.date || todayStr(), to: OUT.to.trim(), docNo: OUT.docNo.trim(), note: OUT.note.trim() }; const ids = OUT.ids;
   $('out-go').disabled = true; $('out-go').textContent = '저장 중…';
-  const logT = `현장 종료: ${o.type}${o.to && o.type !== 'GS 자재창고 반납' ? ' (' + o.to + ')' : ''}${o.docNo ? ' · 반출증 ' + o.docNo : ''}`;
+  const logT = o.type === LOSS ? `${o.to} 처리: ${o.note}${o.docNo ? ' · 경위서 ' + o.docNo : ''}`
+    : `현장 종료: ${o.type}${o.to && o.type !== 'GS 자재창고 반납' ? ' (' + o.to + ')' : ''}${o.docNo ? ' · 반출증 ' + o.docNo : ''}`;
   const res = await saveChange(doc => { const now = new Date().toISOString(); ids.forEach(id => { const x = doc.assets.find(y => y.id === id); if (x && !x.out) { x.out = { ...o }; if (o.type === '임대/임차 반납') x.acq = LEASE; x.updatedAt = now; addLog(x, logT, now); } }); return true; },
-    `현장 종료: ${ids.length === 1 ? ids[0] : ids.length + '건'} → ${o.type}${o.docNo ? ' (반출증 ' + o.docNo + ')' : ''}`, `${ids.length > 1 ? ids.length + '건을 ' : ''}'${o.type}'(으)로 처리했어요`);
+    `현장 종료: ${ids.length === 1 ? ids[0] : ids.length + '건'} → ${o.type === LOSS ? o.to : o.type}${o.docNo ? ' (반출증 ' + o.docNo + ')' : ''}`, o.type === LOSS ? `'${o.to}'(으)로 처리했어요` : `${ids.length > 1 ? ids.length + '건을 ' : ''}'${o.type}'(으)로 처리했어요`);
   if (res) { closeModal(); UI.sel.clear(); if (ids.length === 1) openAsset(ids[0]); else render(); } else if ($('out-go')) { $('out-go').disabled = false; $('out-go').textContent = '처리하기'; }
 }
 async function restoreAsset(id) {
@@ -1472,6 +1485,7 @@ function formHTML() {
       <div class="field"><div class="flabel">관리자</div><input class="inp" value="${esc(d.manager)}" ${bind('manager')} placeholder="예: 관리팀장 (개인 이름 대신 직책)"></div>
       <div class="field"><div class="flabel">비고</div><textarea class="inp" ${bind('note')} placeholder="자유 메모">${esc(d.note)}</textarea></div>
     </details>
+    ${!isNew && !(getAsset(DRAWER.id) || {}).out ? `<p class="hint" style="margin-top:14px;text-align:center">폐기 · 분실/망실 · 반납은 <button class="link" onclick="openOut(['${DRAWER.id}'])">현장 종료 처리 ›</button>에서 해요</p>` : ''}
   </div>
   <div class="p-foot">
     <button class="btn" onclick="${isNew ? 'closeDrawer()' : `openAsset('${DRAWER.id}')`}">취소</button>
@@ -1993,7 +2007,7 @@ function exportExcel() {
   const rows = DOC.assets.map(a => XL_COLS.map(([, k]) => ({
     _dept: c.deptCode || '', _deptName: c.deptName || 'Aurora Project(충남)',
     _coordLog: (l => { if (!l) return ''; const d = new Date(l.at); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}${l.how ? ' · ' + l.how : ''}`; })(hasCoord(a) && coordLog(a)),
-    status: a.out ? a.out.type : a.status, outType: a.out ? a.out.type : '', outDate: a.out ? a.out.date : '', outTo: a.out ? a.out.to : '', outDoc: a.out ? a.out.docNo : ''
+    status: a.out ? (a.out.type === LOSS ? a.out.to || LOSS : a.out.type) : a.status, outType: a.out ? a.out.type : '', outDate: a.out ? a.out.date : '', outTo: a.out ? a.out.to : '', outDoc: a.out ? a.out.docNo : ''
   }[k] ?? a[k] ?? '')));
   const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, xlSheet(rows), '자산대장');
   XLSX.writeFile(wb, `Aurora_자산대장_${todayStr()}.xlsx`);
@@ -2037,8 +2051,10 @@ function buildPlan(rows) {
     const fixOut = v => v === '렌탈업체 반납' || v === '렌탈 반납' || v === '임대 반납' ? '임대/임차 반납' : v;
     const st = fixOut(cellStr(r.status)), ot = fixOut(cellStr(r.outType));
     if (ot) { OUT_TYPES.includes(ot) ? f.out = { type: ot, date: cellDate(r.outDate) || todayStr(), to: cellStr(r.outTo), docNo: cellStr(r.outDoc), note: '' } : errs.push(`현장종료구분 '${ot}'는 쓸 수 없어요`); }
+    if (f.out && f.out.type === LOSS && !LOSS_KINDS.includes(f.out.to)) f.out.to = LOSS_KINDS.includes(st) ? st : '분실';
     if (st) {
-      if (OUT_TYPES.includes(st)) { if (!f.out) f.out = { type: st, date: cellDate(r.outDate) || todayStr(), to: cellStr(r.outTo), docNo: cellStr(r.outDoc), note: '' }; }
+      if (LOSS_KINDS.includes(st)) { if (!f.out) f.out = { type: LOSS, date: cellDate(r.outDate) || todayStr(), to: st, docNo: cellStr(r.outDoc), note: '' }; }
+      else if (OUT_TYPES.includes(st)) { if (!f.out) f.out = { type: st, date: cellDate(r.outDate) || todayStr(), to: cellStr(r.outTo), docNo: cellStr(r.outDoc), note: '' }; }
       else { const ns = normStatus(st); ns ? (f.status = ns, ns !== st && notes.push(`상태 '${st}' → '${ns}'`)) : errs.push(`상태 '${st}'는 쓸 수 없어요 (상·중·하)`); }
     }
     // 수량 · 단위
