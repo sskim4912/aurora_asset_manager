@@ -362,6 +362,7 @@ details[open].more summary::before{transform:rotate(90deg)}
 .map-fail{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;color:var(--sub);gap:6px}
 .map-fail b{color:var(--text);font-size:15px}
 .lease-link{display:inline-block;margin-top:6px;padding:3px 9px;border-radius:7px;background:#e8f1fb;color:#0a5eb0;font-weight:700;font-size:12.5px;cursor:pointer}.lease-link:hover,.lease-link.on{background:#0a5eb0;color:#fff}
+.empty-row{text-align:center;padding:28px 10px!important;color:var(--sub);cursor:default}
 .tag-lease{display:inline-block;font-size:11px;font-weight:700;color:#7c3aed;background:#f3e8ff;border-radius:5px;padding:1px 6px;vertical-align:2px;margin-left:4px}
 .lease-box{border:1px dashed #c4b5fd;background:#faf5ff;border-radius:10px;padding:12px;margin-bottom:14px}
 .cluster{width:40px;height:40px;border-radius:50%;border:3px solid #fff;background:rgba(10,94,176,.9);color:#fff;font-weight:800;font-size:14px;box-shadow:0 2px 8px rgba(0,0,0,.3);padding:0;cursor:pointer}
@@ -889,14 +890,14 @@ function cardsHTML() {
   const card = (key, label, num, sub, cls = '') => `<button class="stat ${cls} ${UI.filter === key ? 'on' : ''}" onclick="setFilter('${key}')"><div class="lbl">${label}</div><div class="num">${num}</div><div class="stat-sub">${sub}</div></button>`;
   const st = s => `<span class="st-link ${UI.filter === 'st:' + s ? 'on' : ''}" onclick="event.stopPropagation();setFilter('st:${s}')">${s} ${cnt(s)}</span>`;
   return `<div class="stats">
-    ${card('all', '전체 자산', `${act.length}<small>건</small>`, STATUSES.map(st).join(' · ') + `<br><span class="lease-link ${UI.filter === 'lease' ? 'on' : ''}" onclick="event.stopPropagation();setFilter('lease')">임대/임차 ${lease + leaseOut} · 사용 중 ${lease} · 반납 ${leaseOut} ›</span>`)}
+    ${card('all', '전체 자산', `${act.length}<small>건</small>`, STATUSES.map(st).join(' · ') + `<br><span class="lease-link ${UI.filter === 'lease' ? 'on' : ''}" onclick="event.stopPropagation();setFilter('lease')">임대/임차 총 ${lease + leaseOut}건 · 사용 중 ${lease}건 ›</span>`)}
     ${card('todo', '할 일', `${td}<small>건</small>`, '상태 하 · 점검·반납 임박 · 실사 미발견', td ? 'alert' : '')}
-    ${card('out', '현장 종료', `${outs.length}<small>건</small>`, `창고 ${by('GS 자재창고 반납')} · 타현장 ${by('타현장 전용')} · 임대/임차 ${by('임대/임차 반납')}<br>이번 달 ${month(outs)}건`, 'gray')}
+    ${card('out', '현장 종료', `${outs.length}<small>건</small>`, `창고 ${by('GS 자재창고 반납')} · 타현장 ${by('타현장 전용')} · 이번 달 ${month(outs)}건<br><span class="lease-link ${UI.filter === 'leaseOut' ? 'on' : ''}" onclick="event.stopPropagation();setFilter('leaseOut')">임대/임차 반납 ${leaseOut}건 ›</span>`, 'gray')}
     ${card('disposed', '폐기', `${disp.length}<small>건</small>`, `이번 달 ${month(disp)}건`, 'gray')}
     ${auditCardHTML(act.length - coord)}
   </div>`;
 }
-const FILTER_KO = { all: '', todo: '할 일', out: '현장 종료', disposed: '폐기', nocoord: '좌표 미등록', lease: '임대/임차', unaudited: '실사 미확인', 'st:상': '상태 상', 'st:중': '상태 중', 'st:하': '상태 하' };
+const FILTER_KO = { all: '', todo: '할 일', out: '현장 종료', disposed: '폐기', nocoord: '좌표 미등록', lease: '임대/임차', leaseOut: '임대/임차 반납', unaudited: '실사 미확인', 'st:상': '상태 상', 'st:중': '상태 중', 'st:하': '상태 하' };
 function setFilter(k) { UI.filter = UI.filter === k && k !== 'all' ? 'all' : k; UI.sel.clear(); render(); }
 
 /* ── 정기 실사: 진행 중 띠 / 60일 알림 ── */
@@ -960,6 +961,7 @@ function filteredAssets() {
   const todo = f === 'todo' ? new Set(todos().map(t => t.a.id)) : null;
   return DOC.assets.filter(a => {
     if (f === 'lease') { if (!isLease(a)) return false; }
+    else if (f === 'leaseOut') { if (!isLease(a) || !a.out) return false; }
     else if (f === 'out') { if (!a.out || a.out.type === '폐기') return false; }
     else if (f === 'disposed') { if (!a.out || a.out.type !== '폐기') return false; }
     else {
@@ -996,16 +998,16 @@ function sortList(list) {
 let LOC_GRP = [];
 function toggleLocGrp(i) { const l = LOC_GRP[i]; UI.loc = UI.loc === l ? '전체' : l; render(); }
 function updateAssetList() {
-  const list = sortList(filteredAssets());
+  let list = sortList(filteredAssets());
+  if (UI.filter === 'lease') list = [...list.filter(a => !a.out), ...list.filter(a => a.out)];
   const cntEl = $('asset-count'); if (cntEl) cntEl.textContent = `${list.length}건`;
   updateSelBar();
   const box = $('asset-list'); if (!box) return;
-  if (!list.length) { box.innerHTML = UI.filter === 'lease' && !UI.q
-    ? `<div class="card empty"><b>임대/임차 장비가 아직 없어요</b>비품을 눌러 [정보 수정] → 추가 정보 → 취득 구분에서 '임대/임차'를 고르면 여기에 모여요.<br>엑셀로 올릴 때 '임대업체' 열을 채워도 돼요.</div>`
-    : `<div class="card empty"><b>해당하는 자산이 없어요</b>검색어나 필터를 바꿔 보세요</div>`; return; }
+  const leaseEmpty = !list.length && !UI.q && { lease: `<b>임대/임차 장비가 아직 없어요</b>비품을 눌러 [정보 수정] → 추가 정보 → 취득 구분에서 '임대/임차'를 고르면 여기에 모여요.`, leaseOut: '<b>반납한 임대/임차 장비가 없어요</b>' }[UI.filter];
+  if (!list.length && !leaseEmpty) { box.innerHTML = `<div class="card empty"><b>해당하는 자산이 없어요</b>검색어나 필터를 바꿔 보세요</div>`; return; }
   const sch = a => { const s = schedOf(a); return s ? `<span class="due ${s.lvl}">${s.t}</span>` : '<span class="muted">—</span>'; };
   const th = (k, l, w) => `<th ${w ? `style="width:${w}px"` : ''} class="sortable ${UI.sort.k === k ? 'on' : ''}" onclick="setSort('${k}')">${l}<span class="arrow">${UI.sort.k === k ? (UI.sort.d > 0 ? '▲' : '▼') : '↕'}</span></th>`;
-  const allOn = list.every(a => UI.sel.has(a.id));
+  const allOn = list.length > 0 && list.every(a => UI.sel.has(a.id));
   const grp = UI.filter === 'unaudited' || UI.filter === 'nocoord' ? missingByLoc(list) : []; LOC_GRP = grp.map(g => g[0]);
   box.innerHTML = (grp.length > 1 || UI.loc !== '전체' && grp.length ? `<div class="loc-groups"><span class="muted">위치별:</span>${grp.map(([l, n], i) => `<button class="chip ${UI.loc === l ? 'on' : ''}" onclick="toggleLocGrp(${i})">${esc(l)} <b>${n}</b></button>`).join('')}</div>` : '') + `
   <div class="tbl-wrap"><table class="tbl">
@@ -1024,6 +1026,9 @@ function updateAssetList() {
       <div class="mc-sub">${icon('pin', 14)}${esc(a.location)}${hasCoord(a) ? '' : ' <span class="no-coord">● 좌표 없음</span>'}</div>
       ${s ? `<div class="mc-due"><span class="due ${s.lvl}">${s.t}</span></div>` : ''}
     </div>`; }).join('')}</div>`;
+  if (leaseEmpty) { const tb = box.querySelector('tbody'), ml = box.querySelector('.mlist');
+    if (tb) tb.innerHTML = `<tr><td colspan="10" class="empty-row">${leaseEmpty}</td></tr>`;
+    if (ml) ml.innerHTML = `<div class="card empty">${leaseEmpty}</div>`; }
 }
 
 /* ── 체크해서 한꺼번에: 상태 바꾸기 · 라벨 인쇄 · 현장 종료 ── */
