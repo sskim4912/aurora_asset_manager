@@ -361,7 +361,18 @@ details[open].more summary::before{transform:rotate(90deg)}
 #kmap{width:100%;height:100%}
 .map-fail{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;color:var(--sub);gap:6px}
 .map-fail b{color:var(--text);font-size:15px}
-.pin{width:20px;height:20px;border-radius:50%;border:3px solid #fff;background:var(--c);box-shadow:0 1px 5px rgba(0,0,0,.4);padding:0;display:block}
+.pin-wrap{position:relative;display:flex;align-items:center;cursor:pointer}
+.pin-label{display:none;position:absolute;left:24px;top:50%;transform:translateY(-50%);white-space:nowrap;background:#fff;border:1px solid var(--line2);border-radius:7px;padding:2px 7px;font-size:12px;font-weight:700;box-shadow:0 2px 6px rgba(0,0,0,.15)}
+#kmap.show-labels .pin-label{display:block}
+.pin b{color:#fff;font-size:10px;line-height:1}
+.mc-row{display:flex;gap:10px;align-items:flex-start}
+.mc-img{width:52px;height:52px;border-radius:8px;object-fit:cover;flex:none}
+.spot-list{display:flex;flex-direction:column;gap:4px;max-height:220px;overflow:auto}
+.spot-list button{display:flex;gap:8px;align-items:center;border:0;background:#f6f7fa;border-radius:9px;padding:6px 8px;text-align:left;font-size:12.5px}
+.spot-list button:hover{background:var(--acc-bg)}
+.spot-list img,.spot-list .ph{width:32px;height:32px;border-radius:6px;object-fit:cover;flex:none;background:#e6e9ef}
+.spot-list span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.spot-list small{display:block;color:var(--sub);overflow:hidden;text-overflow:ellipsis}.spot-list .badge{flex:none}
+.pin{width:20px;height:20px;display:grid;place-items:center;border-radius:50%;border:3px solid #fff;background:var(--c);box-shadow:0 1px 5px rgba(0,0,0,.4);padding:0}
 .pin.big{width:26px;height:26px}
 .mapcard{background:#fff;border-radius:12px;box-shadow:0 6px 24px rgba(0,0,0,.2);padding:12px 14px;min-width:210px;max-width:260px;font-size:13px;position:relative}
 .mapcard::after{content:"";position:absolute;left:50%;bottom:-7px;margin-left:-7px;border:7px solid transparent;border-bottom:0;border-top-color:#fff}
@@ -509,7 +520,7 @@ const CONFIG = {
   PW_HASH: '8d129f703b9851ce74cbb41cb84db46fcb6098bea25563526bb700d4a03f8812',
   AUTH_DAYS: 30,
   KAKAO_KEY: '77c97bf1b0283e37f4ca3c548d45e5e6',
-  MAP_CENTER: [36.7805, 126.5505],
+  MAP_CENTER: [36.9965, 126.3789],   // 현장 컨테이너 (2026-11-11 실측)
   // 데이터 저장 위치 (앱의 '설정'에서도 바꿀 수 있어요)
   GITHUB: { owner: 'sskim4912', repo: 'aurora_asset_manager', branch: 'main', path: 'assets.json' },
   QR_BASE_DEFAULT: 'https://sskim4912.github.io/aurora_asset_manager/'
@@ -1041,7 +1052,7 @@ function loadKakao() {
   if (KAKAO_P) return KAKAO_P;
   KAKAO_P = new Promise((res, rej) => {
     const s = document.createElement('script');
-    s.src = 'https://dapi.kakao.com/v2/maps/sdk.js?autoload=false&appkey=' + CONFIG.KAKAO_KEY;
+    s.src = 'https://dapi.kakao.com/v2/maps/sdk.js?autoload=false&libraries=clusterer&appkey=' + CONFIG.KAKAO_KEY;
     const to = setTimeout(() => rej(new Error('timeout')), 10000);
     s.onload = () => { try { kakao.maps.load(() => { clearTimeout(to); res(); }); } catch (e) { clearTimeout(to); rej(e); } };
     s.onerror = () => { clearTimeout(to); rej(new Error('load')); };
@@ -1051,52 +1062,78 @@ function loadKakao() {
   return KAKAO_P;
 }
 const mapFail = () => `<div class="map-fail">${icon('map', 30)}<b>지도를 불러오지 못했어요</b>인터넷 연결을 확인하거나, 카카오 개발자 콘솔에<br>이 사이트 주소(도메인)가 등록되어 있는지 확인해 주세요.</div>`;
+/* 지도 자동 표시: 축소하면 묶음 숫자 · 확대하면 이름표 · 1건이면 정보창 자동 · 같은 자리는 목록 */
+const LABEL_LEVEL = 3;              // 이 레벨 이하(확대)에서 이름표 표시
+const SAME_SPOT = 3;                // m: 이 안쪽은 같은 자리로 묶음
+let MAP_CLUSTER = null;
+function spotGroups(list) {         // 거의 같은 자리(3m) 자산끼리 묶기
+  const groups = [];
+  list.forEach(a => { const p = { lat: +a.lat, lng: +a.lng }; const g = groups.find(g => distM(g.p, p) < SAME_SPOT); g ? g.items.push(a) : groups.push({ p, items: [a] }); });
+  return groups;
+}
+const shortNo = id => String(id).replace(ID_PREFIX, '');
 async function initMainMap() {
   updateSelBar();
   const all = filteredAssets(), list = all.filter(hasCoord);
   const cntEl = $('asset-count'); if (cntEl) cntEl.textContent = `${all.length}건 중 지도 표시 ${list.length}건${all.length > list.length ? ` · 좌표 없음 ${all.length - list.length}건` : ''}`;
   const box = $('asset-list'); if (!box) return;
-  box.innerHTML = `<div class="legend" style="margin-bottom:8px">${STATUSES.map(s => `<span class="${ST_KEY[s]}"><i></i>상태 ${s}</span>`).join('')}</div><div class="map-box"><div id="kmap"></div></div>`;
+  box.innerHTML = `<div class="legend" style="margin-bottom:8px">${STATUSES.map(s => `<span class="${ST_KEY[s]}"><i></i>상태 ${s}</span>`).join('')}<span class="muted">· 축소하면 숫자로 묶이고, 확대하면 이름이 보여요</span></div><div class="map-box"><div id="kmap"></div></div>`;
   const el = $('kmap');
-  if (!list.length) { el.parentElement.insertAdjacentHTML('beforeend', `<div class="map-fail">${icon('pin', 30)}<b>지도에 표시할 자산이 없어요</b>좌표가 등록된 자산만 지도에 나와요.<br>휴대폰으로 QR을 찍고 '지금 위치로 넣기'를 눌러 주세요.</div>`); }
+  if (!list.length) { el.parentElement.insertAdjacentHTML('beforeend', `<div class="map-fail">${icon('pin', 30)}<b>지도에 표시할 자산이 없어요</b>좌표가 등록된 자산만 지도에 나와요.<br>휴대폰으로 [QR 스캔]을 하면 위치가 들어가요.</div>`); }
   try { await loadKakao(); } catch (e) { el.parentElement.insertAdjacentHTML('beforeend', mapFail()); return; }
   if (!document.body.contains(el)) return;
-  MAP = new kakao.maps.Map(el, { center: new kakao.maps.LatLng(...CONFIG.MAP_CENTER), level: 4 });
+  MAP = new kakao.maps.Map(el, { center: new kakao.maps.LatLng(...CONFIG.MAP_CENTER), level: 3 });
   MAP.addControl(new kakao.maps.ZoomControl(), kakao.maps.ControlPosition.RIGHT);
   MAP_INFO = null;
-  const bounds = new kakao.maps.LatLngBounds();
-  list.forEach(a => {
-    const pin = document.createElement('button');
-    pin.className = 'pin ' + (a.out ? 'off' : ST_KEY[a.status]); pin.title = dispName(a); pin.setAttribute('aria-label', dispName(a));
-    pin.addEventListener('click', ev => { ev.stopPropagation(); mapSelect(a.id); });
-    const pos = new kakao.maps.LatLng(a.lat, a.lng);
-    new kakao.maps.CustomOverlay({ position: pos, content: pin, xAnchor: .5, yAnchor: .5, zIndex: 2 }).setMap(MAP);
+  const bounds = new kakao.maps.LatLngBounds(), overlays = [];
+  spotGroups(list).forEach(g => {
+    const a = g.items[0], n = g.items.length;
+    const wrap = document.createElement('div'); wrap.className = 'pin-wrap';
+    const worst = g.items.some(x => x.status === '하') ? 'bad' : g.items.some(x => x.status === '중') ? 'mid' : (a.out ? 'off' : 'ok');
+    wrap.innerHTML = `<button class="pin ${worst}" aria-label="${esc(dispName(a))}">${n > 1 ? `<b>${n}</b>` : ''}</button><span class="pin-label">${esc(shortNo(a.id))} ${esc(a.item)}${n > 1 ? ` 외 ${n - 1}` : ''}</span>`;
+    wrap.addEventListener('click', ev => { ev.stopPropagation(); n > 1 ? mapSpot(g) : mapSelect(a.id); });
+    const pos = new kakao.maps.LatLng(g.p.lat, g.p.lng);
+    overlays.push(new kakao.maps.CustomOverlay({ position: pos, content: wrap, xAnchor: .5, yAnchor: .5, zIndex: 2 }));
     bounds.extend(pos);
   });
+  if (kakao.maps.MarkerClusterer) {
+    MAP_CLUSTER = new kakao.maps.MarkerClusterer({ map: MAP, averageCenter: true, minLevel: LABEL_LEVEL + 2, gridSize: 50, disableClickZoom: false,
+      styles: [{ width: '40px', height: '40px', background: 'rgba(10,94,176,.88)', borderRadius: '50%', color: '#fff', textAlign: 'center', fontWeight: '800', lineHeight: '40px', fontSize: '14px', border: '3px solid #fff', boxShadow: '0 2px 8px rgba(0,0,0,.3)' }] });
+    MAP_CLUSTER.addMarkers(overlays);
+  } else overlays.forEach(o => o.setMap(MAP));
+  const labelToggle = () => { if (MAP) el.classList.toggle('show-labels', MAP.getLevel() <= LABEL_LEVEL); };
+  kakao.maps.event.addListener(MAP, 'zoom_changed', labelToggle);
   kakao.maps.event.addListener(MAP, 'click', closeMapInfo);
   setTimeout(() => {
     if (!MAP) return; MAP.relayout();
-    if (MAP_FOCUS) { const f = MAP_FOCUS; MAP_FOCUS = null; mapSelect(f, 3); }
+    if (MAP_FOCUS) { const f = MAP_FOCUS; MAP_FOCUS = null; mapSelect(f, 2); }
+    else if (list.length === 1) mapSelect(list[0].id, 2);                       // 1건이면 정보창 자동
     else if (list.length > 1) MAP.setBounds(bounds, 60, 60, 60, 60);
-    else if (list.length === 1) MAP.setCenter(new kakao.maps.LatLng(list[0].lat, list[0].lng));
+    labelToggle();
   }, 80);
 }
 function closeMapInfo() { if (MAP_INFO) { MAP_INFO.setMap(null); MAP_INFO = null; } }
+function mapCard(html, pos) {
+  closeMapInfo();
+  const el = document.createElement('div'); el.className = 'mapcard'; el.innerHTML = html;
+  ['click', 'mousedown'].forEach(t => el.addEventListener(t, e => e.stopPropagation()));
+  el.addEventListener('touchstart', e => e.stopPropagation(), { passive: true });
+  MAP_INFO = new kakao.maps.CustomOverlay({ position: pos, content: el, xAnchor: .5, yAnchor: 1, zIndex: 10 });
+  MAP_INFO.setMap(MAP); return el;
+}
 function mapSelect(id, level) {
   const a = getAsset(id); if (!MAP || !a || !hasCoord(a)) return;
-  closeMapInfo();
   const pos = new kakao.maps.LatLng(a.lat, a.lng);
-  const el = document.createElement('div'); el.className = 'mapcard';
-  el.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center"><span class="mono" style="color:var(--sub);font-size:12px">${a.id}</span>${stBadge(a)}</div>
-    <b>${esc(dispName(a))}</b><div style="color:var(--sub)">${esc(a.location)}</div>
-    <button class="btn sm primary" data-open>상세 보기</button>`;
-  el.addEventListener('click', e => e.stopPropagation());
-  el.addEventListener('mousedown', e => e.stopPropagation());
-  el.addEventListener('touchstart', e => e.stopPropagation(), { passive: true });
-  el.querySelector('[data-open]').onclick = () => openAsset(a.id);
-  MAP_INFO = new kakao.maps.CustomOverlay({ position: pos, content: el, xAnchor: .5, yAnchor: 1, zIndex: 10 });
-  MAP_INFO.setMap(MAP);
-  if (level) MAP.setLevel(level);
+  mapCard(`<div class="mc-row">${a.thumb ? `<img src="${a.thumb}" class="mc-img" alt="">` : ''}<div style="min-width:0;flex:1">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:6px"><span class="mono" style="color:var(--sub);font-size:12px">${a.id}</span>${stBadge(a)}</div>
+      <b>${esc(dispName(a))}</b><div style="color:var(--sub)">${esc(a.location)}</div></div></div>
+    <button class="btn sm primary" onclick="openAsset('${a.id}')">상세 보기</button>`, pos);
+  if (level && MAP.getLevel() > level) MAP.setLevel(level);
+  MAP.panTo(pos);
+}
+function mapSpot(g) {   // 같은 자리 여러 개 → 목록
+  const pos = new kakao.maps.LatLng(g.p.lat, g.p.lng);
+  mapCard(`<b style="margin:0 0 6px">이 위치의 자산 ${g.items.length}개</b><div class="spot-list">${g.items.map(a => `<button onclick="mapSelect('${a.id}')">${a.thumb ? `<img src="${a.thumb}" alt="">` : '<span class="ph"></span>'}<span><b>${esc(shortNo(a.id))}</b> ${esc(a.item)}<small>${esc(shortModel(a.model))}</small></span>${stBadge(a)}</button>`).join('')}</div>`, pos);
   MAP.panTo(pos);
 }
 function showOnMap(id) {
