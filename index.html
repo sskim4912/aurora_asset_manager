@@ -1486,10 +1486,7 @@ async function openScanner() {
   $('scanner').classList.remove('hidden', 'photo-mode'); document.body.style.overflow = 'hidden';
   SCAN = { stream: null, timer: null, watch: null, pos: null, best: null, last: { id: '', at: 0 }, step: 'start', cur: null, detector: null, since: Date.now() };
   scanUI();
-  if (navigator.geolocation) SCAN.watch = navigator.geolocation.watchPosition(
-    p => { if (!SCAN) return; SCAN.pos = { lat: p.coords.latitude, lng: p.coords.longitude, acc: p.coords.accuracy, at: Date.now() }; onGps(); },
-    e => { if (!SCAN) return; SCAN.gpsErr = e.code === 1 ? 'denied' : 'wait'; scanGpsBar(); if (e.code === 1) showLocGuide(); },
-    { enableHighAccuracy: true, maximumAge: 3000, timeout: 30000 });
+  startGps();
   try {
     SCAN.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1440 } }, audio: false });
   } catch (e) { closeScanner(true); return e.name === 'NotAllowedError' ? showCamGuide() : toast('카메라를 켜지 못했어요', 'err'); }
@@ -1498,11 +1495,42 @@ async function openScanner() {
   if (!SCAN.detector) { try { await loadJsQR(); } catch (e) { toast(e.message, 'err'); } }
   SCAN.step = 'scan'; scanUI(); scanLoop();
 }
+/* 위치: 정밀(GPS) 감시 + 8초 안에 못 잡으면 보조(와이파이·기지국) 감시도 함께. 더 정확한 값을 씀 */
+function startGps() {
+  if (!navigator.geolocation) { SCAN.gpsErr = 'nosupport'; return; }
+  if (!window.isSecureContext) { SCAN.gpsErr = 'insecure'; return; }
+  const onPos = (p, kind) => {
+    if (!SCAN) return;
+    const pos = { lat: p.coords.latitude, lng: p.coords.longitude, acc: p.coords.accuracy, at: Date.now(), kind };
+    const cur = SCAN.pos;
+    if (!cur || pos.acc <= cur.acc || Date.now() - cur.at > 8000) SCAN.pos = pos;   // 더 정확하거나, 기존 값이 오래됐으면 교체
+    SCAN.gpsErr = null; onGps();
+  };
+  const onErr = e => { if (!SCAN) return; SCAN.gpsErr = e.code === 1 ? 'denied' : e.code === 2 ? 'unavailable' : 'timeout'; scanGpsBar(); if (e.code === 1 && !SCAN.guided) { SCAN.guided = true; showLocGuide(); } };
+  SCAN.watch = navigator.geolocation.watchPosition(p => onPos(p, 'gps'), onErr, { enableHighAccuracy: true, maximumAge: 3000, timeout: 30000 });
+  SCAN.gpsTimer = setInterval(() => {
+    if (!SCAN) return;
+    if (!SCAN.watch2 && (!SCAN.pos || SCAN.pos.acc > GPS_YELLOW) && Date.now() - SCAN.since > 8000)
+      SCAN.watch2 = navigator.geolocation.watchPosition(p => onPos(p, 'net'), () => {}, { enableHighAccuracy: false, maximumAge: 10000, timeout: 30000 });
+    scanGpsBar();
+  }, 1000);
+  if (navigator.permissions) navigator.permissions.query({ name: 'geolocation' }).then(r => { if (SCAN) { SCAN.perm = r.state; if (r.state === 'denied') { SCAN.gpsErr = 'denied'; scanGpsBar(); } } }).catch(() => {});
+}
+function gpsDiag() {   // 위치 상태 자세히 보기 (원인 찾기용)
+  if (!SCAN) return;
+  const p = SCAN.pos, sec = Math.round((Date.now() - SCAN.since) / 1000);
+  alert([
+    `위치 권한: ${({ granted: '허용됨', denied: '거부됨', prompt: '아직 묻는 중' })[SCAN.perm] || '알 수 없음'}`,
+    `오류: ${({ denied: '권한 거부', unavailable: '위치를 알 수 없음 (GPS 꺼짐·신호 없음)', timeout: '시간 초과', insecure: '보안 연결(https) 아님', nosupport: '지원 안 함' })[SCAN.gpsErr] || '없음'}`,
+    `받은 위치: ${p ? `오차 ${Math.round(p.acc)}m (${p.kind === 'gps' ? '정밀' : '보조'}) · ${Math.round((Date.now() - p.at) / 1000)}초 전` : '아직 없음'}`,
+    `스캐너 연 지: ${sec}초`
+  ].join('\n'));
+}
 function closeScanner(force) {
   if (!force && SCAN && SCAN.cur && !SCAN.cur.photoDone && (SCAN.step === 'located' || SCAN.step === 'photo' || SCAN.step === 'upload-fail')) {
     if (!confirm('아직 장비 사진을 찍지 않았어요.\n사진을 찍어야 실사 확인이 돼요. 그래도 닫을까요?')) return;
   }
-  if (SCAN) { clearTimeout(SCAN.timer); if (SCAN.stream) SCAN.stream.getTracks().forEach(t => t.stop()); if (SCAN.watch != null) navigator.geolocation.clearWatch(SCAN.watch); }
+  if (SCAN) { clearTimeout(SCAN.timer); clearInterval(SCAN.gpsTimer); if (SCAN.stream) SCAN.stream.getTracks().forEach(t => t.stop()); if (SCAN.watch != null) navigator.geolocation.clearWatch(SCAN.watch); if (SCAN.watch2 != null) navigator.geolocation.clearWatch(SCAN.watch2); }
   SCAN = null; $('scanner').classList.add('hidden'); document.body.style.overflow = '';
   render();
 }
@@ -1571,12 +1599,16 @@ function pickOnMapForScan() {
 }
 function scanGpsBar() {
   const el = $('scan-gps'); if (!el || !SCAN) return;
-  const p = SCAN.pos, lv = gpsLevel(p);
+  const p = SCAN.pos, lv = gpsLevel(p), sec = Math.round((Date.now() - SCAN.since) / 1000);
   el.className = 'scan-gps ' + lv;
-  el.innerHTML = SCAN.gpsErr === 'denied' && !p ? '🔴 위치 권한이 꺼져 있어요'
-    : lv === 'green' ? `🟢 위치 준비됨 · 오차 ${Math.round(p.acc)}m`
-    : lv === 'yellow' ? `🟡 위치 보통 · 오차 ${Math.round(p.acc)}m (실외 쪽이면 더 정확해요)`
-    : `🔴 위치 잡는 중… 잠시 기다려 주세요${p ? ` · 오차 ${Math.round(p.acc)}m` : ''}`;
+  el.onclick = gpsDiag; el.title = '눌러서 자세히 보기';
+  el.innerHTML = lv === 'green' ? `🟢 위치 준비됨 · 오차 ${Math.round(p.acc)}m`
+    : lv === 'yellow' ? `🟡 위치 보통 · 오차 ${Math.round(p.acc)}m (창가·출입구 쪽이면 더 정확해요)`
+    : SCAN.gpsErr === 'denied' ? `🔴 위치 권한이 꺼져 있어요 <button class="link" onclick="event.stopPropagation();showLocGuide()">켜는 방법</button>`
+    : SCAN.gpsErr === 'unavailable' && !p ? '🔴 휴대폰 위치(GPS)가 꺼져 있거나 신호가 없어요 · 빠른 설정에서 \'위치\'를 켜 주세요'
+    : SCAN.gpsErr === 'insecure' ? '🔴 https 주소로 열어야 위치를 쓸 수 있어요'
+    : p ? `🔴 위치가 부정확해요 · 오차 ${Math.round(p.acc)}m (${sec}초) · 건물 안쪽이면 창가로`
+    : `🔴 위치 잡는 중… ${sec}초 (보통 5~20초)`;
 }
 function refreshLocTag() {
   const el = $('loc-tag'); if (!el || !SCAN || !SCAN.cur) return;
