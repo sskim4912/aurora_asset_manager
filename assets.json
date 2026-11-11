@@ -1,6 +1,6 @@
 {
   "version": 3,
-  "updatedAt": "2026-11-11T05:03:11.587Z",
+  "updatedAt": "2026-11-11T05:05:17.427Z",
   "catalog": {},
   "assets": [
     {
@@ -2231,6 +2231,36 @@
       "thumb": "",
       "photo": null,
       "photos": []
+    },
+    {
+      "id": "AURORA-080",
+      "contract": "",
+      "locInit": "현장 사무실 / 본관",
+      "out": null,
+      "status": "상",
+      "log": [
+        {
+          "at": "2026-11-11T05:05:17.427Z",
+          "t": "등록"
+        }
+      ],
+      "item": "금고",
+      "category": "사무/가전/생활",
+      "model": "삼성금고",
+      "qty": 1,
+      "unit": "EA",
+      "location": "현장 사무실 / 본관",
+      "acq": "임대/임차",
+      "manager": "관리팀장",
+      "lat": 36.996464,
+      "lng": 126.379088,
+      "nextCheck": "",
+      "rentalDue": "2027-02-11",
+      "note": "",
+      "leaseVendor": "삼성렌탈",
+      "leaseStart": "2026-11-11",
+      "leaseTel": "",
+      "updatedAt": "2026-11-11T05:05:17.427Z"
     }
   ],
   "audit": null,
