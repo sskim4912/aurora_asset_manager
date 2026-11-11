@@ -41,6 +41,7 @@ body{font-family:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFo
 button{font:inherit;cursor:pointer;color:inherit}
 input,select,textarea{font:inherit;color:inherit}
 .hidden{display:none!important}
+.install-box{margin-top:16px;padding:12px;border-radius:12px;background:#eef2ff;color:#312e81;font-size:13.5px;line-height:1.55;text-align:center}.install-box .btn{width:100%;margin-top:8px}
 .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:-.01em}
 .muted{color:var(--muted)}
 .sub{color:var(--sub);font-size:13.5px;margin:4px 0 0}
@@ -490,6 +491,7 @@ details[open].more summary::before{transform:rotate(90deg)}
       <button class="btn primary lg" type="submit">들어가기</button>
       <label class="remember"><input type="checkbox" id="remember" checked> 이 기기에서 30일 동안 로그인 유지</label>
     </form>
+    <div id="install-box" class="install-box hidden"></div>
   </div>
 </div>
 
@@ -2304,7 +2306,29 @@ window.addEventListener('hashchange', () => { render(); });
 window.addEventListener('keydown', e => { if (e.key === 'Escape') { if (!$('modal').classList.contains('hidden')) closeModal(); else closeDrawer(); } });
 let RESIZE_T; window.addEventListener('resize', () => { clearTimeout(RESIZE_T); RESIZE_T = setTimeout(() => { if ($('lab-sheets')) renderPrint(); if (MAP) MAP.relayout(); }, 150); });
 
+/* 휴대폰 앱 설치 안내 (카카오톡으로 받은 링크 → 외부 브라우저 → 설치) */
+let INSTALL_EVT = null;
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); INSTALL_EVT = e; showInstall(); });
+window.addEventListener('appinstalled', () => { $('install-box').classList.add('hidden'); toast('바탕화면에 비품관리 앱이 설치됐어요'); });
+const FIRST_URL = location.href; // QR(?id=) 주소도 그대로 넘김
+function openExternal() { location.href = 'kakaotalk://web/openExternal?url=' + encodeURIComponent(FIRST_URL); }
+async function doInstall() { if (!INSTALL_EVT) return; INSTALL_EVT.prompt(); await INSTALL_EVT.userChoice; INSTALL_EVT = null; showInstall(); }
+function showInstall() {
+  const box = $('install-box'), ua = navigator.userAgent;
+  if (matchMedia('(display-mode: standalone)').matches || navigator.standalone) return box.classList.add('hidden');
+  const ios = /iPhone|iPad|iPod/i.test(ua), android = /Android/i.test(ua);
+  if (!ios && !android) return box.classList.add('hidden');
+  let h;
+  if (/KAKAOTALK/i.test(ua)) h = `카카오톡 안에서는 앱 설치가 안 돼요.<br><button class="btn primary" type="button" onclick="openExternal()">${ios ? '사파리' : '크롬'}로 열기</button>`;
+  else if (INSTALL_EVT) h = `휴대폰 바탕화면에 앱으로 설치할 수 있어요.<br><button class="btn primary" type="button" onclick="doInstall()">📲 앱 설치</button>`;
+  else if (ios) h = /CriOS|FxiOS|NAVER|Whale/i.test(ua) ? '앱 설치는 <b>사파리</b>에서 이 주소를 열어 주세요.' : '📲 앱 설치: 아래 <b>공유(□↑)</b> → <b>홈 화면에 추가</b>';
+  else h = '📲 앱 설치: 브라우저 메뉴(⋮ 또는 ≡) → <b>앱 설치</b> / <b>홈 화면에 추가</b>';
+  box.innerHTML = h; box.classList.remove('hidden');
+}
+
 (function init() {
+  showInstall();
+  if (/KAKAOTALK/i.test(navigator.userAgent) && !sessionStorage.getItem('aam_ext')) { sessionStorage.setItem('aam_ext', '1'); setTimeout(openExternal, 300); }
   const p = new URLSearchParams(location.search);
   if (p.get('id')) { PENDING_ID = p.get('id').toUpperCase(); history.replaceState(null, '', location.pathname + '#assets'); }
   if (isAuthed()) startApp(); else { $('gate').classList.remove('hidden'); setTimeout(() => $('pw').focus(), 50); }
