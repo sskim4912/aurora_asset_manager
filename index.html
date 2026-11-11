@@ -361,6 +361,7 @@ details[open].more summary::before{transform:rotate(90deg)}
 #kmap{width:100%;height:100%}
 .map-fail{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;color:var(--sub);gap:6px}
 .map-fail b{color:var(--text);font-size:15px}
+.lease-link{display:inline-block;margin-top:6px;padding:3px 9px;border-radius:7px;background:#e8f1fb;color:#0a5eb0;font-weight:700;font-size:12.5px;cursor:pointer}.lease-link:hover,.lease-link.on{background:#0a5eb0;color:#fff}
 .tag-lease{display:inline-block;font-size:11px;font-weight:700;color:#7c3aed;background:#f3e8ff;border-radius:5px;padding:1px 6px;vertical-align:2px;margin-left:4px}
 .lease-box{border:1px dashed #c4b5fd;background:#faf5ff;border-radius:10px;padding:12px;margin-bottom:14px}
 .cluster{width:40px;height:40px;border-radius:50%;border:3px solid #fff;background:rgba(10,94,176,.9);color:#fff;font-weight:800;font-size:14px;box-shadow:0 2px 8px rgba(0,0,0,.3);padding:0;cursor:pointer}
@@ -533,7 +534,7 @@ const STATUSES = ['상', '중', '하'];
 const ST_KEY = { '상': 'ok', '중': 'mid', '하': 'bad' };
 const ST_DESC = { '상': '정상 사용, 이상 없음', '중': '사용 가능, 일부 노후·경미한 손상', '하': '수리·점검 필요 또는 사용 불가' };
 // 현장 종료(반출): 현장을 떠난 자산. 목록·지도·라벨에서 빠지고 기록만 남아요.
-const OUT_TYPES = ['GS 자재창고 반납', '타현장 전용', '렌탈업체 반납', '폐기'];
+const OUT_TYPES = ['GS 자재창고 반납', '타현장 전용', '임대/임차 반납', '폐기'];
 const UNITS = ['EA', 'SET'];
 const LEASE = '임대/임차';
 const ACQ_TYPES = ['계약', '계약외(온라인구매)', '계약외(견적)', '구자산', LEASE];
@@ -647,7 +648,7 @@ function normalizeDoc(d) {
   doc.auditSince = doc.auditSince || '2026-11-11';                          // 첫 정기 실사 알림 기준일
   doc.assets = doc.assets.filter(a => a && a.id).map(a => {
     const num = v => v === '' || v == null || !Number.isFinite(Number(v)) ? '' : Number(v);
-    let out = a.out && a.out.type ? { type: a.out.type, date: a.out.date || '', to: a.out.to || '', docNo: a.out.docNo || '', note: a.out.note || '' } : null;
+    let out = a.out && a.out.type ? { type: a.out.type === '렌탈업체 반납' ? '임대/임차 반납' : a.out.type, date: a.out.date || '', to: a.out.to || '', docNo: a.out.docNo || '', note: a.out.note || '' } : null;
     if (!out && a.status === '폐기') out = { type: '폐기', date: '', to: '', docNo: '', note: '' };
     return {
       id: String(a.id), category: a.category || '', item: a.item || (a.name ? '기타' : ''), model: a.model || a.name || '',
@@ -884,13 +885,13 @@ function cardsHTML() {
   const outs = DOC.assets.filter(a => a.out && a.out.type !== '폐기'), disp = DOC.assets.filter(a => a.out && a.out.type === '폐기');
   const month = l => l.filter(a => (a.out.date || '').startsWith(ym)).length;
   const by = t => outs.filter(a => a.out.type === t).length;
-  const coord = act.filter(hasCoord).length, lease = act.filter(isLease).length;
+  const coord = act.filter(hasCoord).length, lease = act.filter(isLease).length, leaseOut = DOC.assets.filter(a => a.out && isLease(a)).length;
   const card = (key, label, num, sub, cls = '') => `<button class="stat ${cls} ${UI.filter === key ? 'on' : ''}" onclick="setFilter('${key}')"><div class="lbl">${label}</div><div class="num">${num}</div><div class="stat-sub">${sub}</div></button>`;
   const st = s => `<span class="st-link ${UI.filter === 'st:' + s ? 'on' : ''}" onclick="event.stopPropagation();setFilter('st:${s}')">${s} ${cnt(s)}</span>`;
   return `<div class="stats">
-    ${card('all', '전체 자산', `${act.length}<small>건</small>`, STATUSES.map(st).join(' · ') + `<br><span class="st-link ${UI.filter === 'lease' ? 'on' : ''}" onclick="event.stopPropagation();setFilter('lease')">임대/임차 ${lease}건 ›</span>`)}
+    ${card('all', '전체 자산', `${act.length}<small>건</small>`, STATUSES.map(st).join(' · ') + `<br><span class="lease-link ${UI.filter === 'lease' ? 'on' : ''}" onclick="event.stopPropagation();setFilter('lease')">임대/임차 ${lease + leaseOut} · 사용 중 ${lease} · 반납 ${leaseOut} ›</span>`)}
     ${card('todo', '할 일', `${td}<small>건</small>`, '상태 하 · 점검·반납 임박 · 실사 미발견', td ? 'alert' : '')}
-    ${card('out', '현장 종료', `${outs.length}<small>건</small>`, `창고 ${by('GS 자재창고 반납')} · 타현장 ${by('타현장 전용')} · 렌탈 ${by('렌탈업체 반납')}<br>이번 달 ${month(outs)}건`, 'gray')}
+    ${card('out', '현장 종료', `${outs.length}<small>건</small>`, `창고 ${by('GS 자재창고 반납')} · 타현장 ${by('타현장 전용')} · 임대/임차 ${by('임대/임차 반납')}<br>이번 달 ${month(outs)}건`, 'gray')}
     ${card('disposed', '폐기', `${disp.length}<small>건</small>`, `이번 달 ${month(disp)}건`, 'gray')}
     ${auditCardHTML(act.length - coord)}
   </div>`;
@@ -958,13 +959,13 @@ function filteredAssets() {
   const q = UI.q.trim().toLowerCase(), f = UI.filter;
   const todo = f === 'todo' ? new Set(todos().map(t => t.a.id)) : null;
   return DOC.assets.filter(a => {
-    if (f === 'out') { if (!a.out || a.out.type === '폐기') return false; }
+    if (f === 'lease') { if (!isLease(a)) return false; }
+    else if (f === 'out') { if (!a.out || a.out.type === '폐기') return false; }
     else if (f === 'disposed') { if (!a.out || a.out.type !== '폐기') return false; }
     else {
       if (a.out) return false;
       if (f === 'todo' && !todo.has(a.id)) return false;
       if (f === 'nocoord' && hasCoord(a)) return false;
-      if (f === 'lease' && !isLease(a)) return false;
       if (f === 'unaudited' && (!DOC.audit || DOC.audit.checked[a.id])) return false;
       if (f.startsWith('st:') && a.status !== f.slice(3)) return false;
     }
@@ -1346,12 +1347,12 @@ async function setStatus(id, s) {
   renderDrawer();
 }
 
-/* 현장 종료 처리 (GS 자재창고 반납 · 타현장 전용 · 렌탈업체 반납 · 폐기) — 하나 또는 여러 개 */
+/* 현장 종료 처리 (GS 자재창고 반납 · 타현장 전용 · 임대/임차 반납 · 폐기) — 하나 또는 여러 개 */
 let OUT = null;
-const OUT_TO = { 'GS 자재창고 반납': ['받는 곳', 'GS 자재창고'], '타현장 전용': ['받는 현장', '예: ○○현장'], '렌탈업체 반납': ['렌탈업체', '예: ○○렌탈'], '폐기': ['', ''] };
+const OUT_TO = { 'GS 자재창고 반납': ['받는 곳', 'GS 자재창고'], '타현장 전용': ['받는 현장', '예: ○○현장'], '임대/임차 반납': ['임대 업체', '예: ○○렌탈'], '폐기': ['', ''] };
 function outDefaultTo(t) {
   if (t === 'GS 자재창고 반납') return 'GS 자재창고';
-  if (t === '렌탈업체 반납') { const v = [...new Set(OUT.ids.map(id => (getAsset(id) || {}).leaseVendor).filter(Boolean))]; return v.length === 1 ? v[0] : ''; }
+  if (t === '임대/임차 반납') { const v = [...new Set(OUT.ids.map(id => (getAsset(id) || {}).leaseVendor).filter(Boolean))]; return v.length === 1 ? v[0] : ''; }
   return '';
 }
 function openOut(ids) {
@@ -1381,7 +1382,7 @@ async function saveOut() {
   const o = { type: OUT.type, date: OUT.date || todayStr(), to: OUT.to.trim(), docNo: OUT.docNo.trim(), note: OUT.note.trim() }; const ids = OUT.ids;
   $('out-go').disabled = true; $('out-go').textContent = '저장 중…';
   const logT = `현장 종료: ${o.type}${o.to && o.type !== 'GS 자재창고 반납' ? ' (' + o.to + ')' : ''}${o.docNo ? ' · 반출증 ' + o.docNo : ''}`;
-  const res = await saveChange(doc => { const now = new Date().toISOString(); ids.forEach(id => { const x = doc.assets.find(y => y.id === id); if (x && !x.out) { x.out = { ...o }; x.updatedAt = now; addLog(x, logT, now); } }); return true; },
+  const res = await saveChange(doc => { const now = new Date().toISOString(); ids.forEach(id => { const x = doc.assets.find(y => y.id === id); if (x && !x.out) { x.out = { ...o }; if (o.type === '임대/임차 반납') x.acq = LEASE; x.updatedAt = now; addLog(x, logT, now); } }); return true; },
     `현장 종료: ${ids.length === 1 ? ids[0] : ids.length + '건'} → ${o.type}${o.docNo ? ' (반출증 ' + o.docNo + ')' : ''}`, `${ids.length > 1 ? ids.length + '건을 ' : ''}'${o.type}'(으)로 처리했어요`);
   if (res) { closeModal(); UI.sel.clear(); if (ids.length === 1) openAsset(ids[0]); else render(); } else if ($('out-go')) { $('out-go').disabled = false; $('out-go').textContent = '처리하기'; }
 }
@@ -1948,7 +1949,7 @@ function downloadTemplate() {
     ['위도 · 경도', '', '비워두고 현장에서 휴대폰으로 넣어도 돼요'],
     ['임대업체 · 임대시작일 · 반납예정일 · 업체연락처', '', '임대/임차 장비만 적어요. 임대업체를 적으면 취득 구분이 자동으로 임대/임차가 돼요. 날짜는 2026-12-01. 연락처는 업체 대표번호만 (공개 저장소라 개인 휴대폰 X)'],
     ['좌표 기록', '', '내려받기 전용(언제·어떻게 좌표를 넣었는지). 올릴 때는 읽지 않아요.'],
-    ['다음점검일 · 렌탈반납일', '', '예: 2026-12-01'],
+    ['다음점검일', '', '예: 2026-12-01'],
     ['현장종료구분 · 종료일 · 받는곳 · 반출증번호', '', OUT_TYPES.join(', ') + ' 중 하나. 보통은 비워둬요'],
     [],
     ['기존 자산 고치기', '', '관리번호와 바꿀 칸만 채우세요. 빈칸은 원래 값이 그대로 남아요.'],
@@ -2008,7 +2009,8 @@ function buildPlan(rows) {
       else errs.push(`'${item}'은(는) 새 품목이에요 · 대분류(${CATEGORIES.join(', ')})를 적어 주세요`);
     }
     // 상태 · 현장 종료
-    const st = cellStr(r.status), ot = cellStr(r.outType);
+    const fixOut = v => v === '렌탈업체 반납' || v === '렌탈 반납' || v === '임대 반납' ? '임대/임차 반납' : v;
+    const st = fixOut(cellStr(r.status)), ot = fixOut(cellStr(r.outType));
     if (ot) { OUT_TYPES.includes(ot) ? f.out = { type: ot, date: cellDate(r.outDate) || todayStr(), to: cellStr(r.outTo), docNo: cellStr(r.outDoc), note: '' } : errs.push(`현장종료구분 '${ot}'는 쓸 수 없어요`); }
     if (st) {
       if (OUT_TYPES.includes(st)) { if (!f.out) f.out = { type: st, date: cellDate(r.outDate) || todayStr(), to: cellStr(r.outTo), docNo: cellStr(r.outDoc), note: '' }; }
