@@ -361,6 +361,7 @@ details[open].more summary::before{transform:rotate(90deg)}
 #kmap{width:100%;height:100%}
 .map-fail{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;color:var(--sub);gap:6px}
 .map-fail b{color:var(--text);font-size:15px}
+.cluster{width:40px;height:40px;border-radius:50%;border:3px solid #fff;background:rgba(10,94,176,.9);color:#fff;font-weight:800;font-size:14px;box-shadow:0 2px 8px rgba(0,0,0,.3);padding:0;cursor:pointer}
 .pin-wrap{position:relative;display:flex;align-items:center;cursor:pointer}
 .pin-label{display:none;position:absolute;left:24px;top:50%;transform:translateY(-50%);white-space:nowrap;background:#fff;border:1px solid var(--line2);border-radius:7px;padding:2px 7px;font-size:12px;font-weight:700;box-shadow:0 2px 6px rgba(0,0,0,.15)}
 #kmap.show-labels .pin-label{display:block}
@@ -1052,7 +1053,7 @@ function loadKakao() {
   if (KAKAO_P) return KAKAO_P;
   KAKAO_P = new Promise((res, rej) => {
     const s = document.createElement('script');
-    s.src = 'https://dapi.kakao.com/v2/maps/sdk.js?autoload=false&libraries=clusterer&appkey=' + CONFIG.KAKAO_KEY;
+    s.src = 'https://dapi.kakao.com/v2/maps/sdk.js?autoload=false&appkey=' + CONFIG.KAKAO_KEY;
     const to = setTimeout(() => rej(new Error('timeout')), 10000);
     s.onload = () => { try { kakao.maps.load(() => { clearTimeout(to); res(); }); } catch (e) { clearTimeout(to); rej(e); } };
     s.onerror = () => { clearTimeout(to); rej(new Error('load')); };
@@ -1065,7 +1066,37 @@ const mapFail = () => `<div class="map-fail">${icon('map', 30)}<b>지도를 불�
 /* 지도 자동 표시: 축소하면 묶음 숫자 · 확대하면 이름표 · 1건이면 정보창 자동 · 같은 자리는 목록 */
 const LABEL_LEVEL = 3;              // 이 레벨 이하(확대)에서 이름표 표시
 const SAME_SPOT = 3;                // m: 이 안쪽은 같은 자리로 묶음
-let MAP_CLUSTER = null;
+let MAP_LIST = [], MAP_PINS = [];
+// 핀 그리기: 매번 전부 지우고 다시 그림 (중복 없음). 멀리서는 화면상 44px 안의 것끼리 숫자로 묶음
+function drawPins() {
+  MAP_PINS.forEach(o => o.setMap(null)); MAP_PINS = [];
+  if (!MAP) return;
+  const far = MAP.getLevel() > LABEL_LEVEL + 1, proj = MAP.getProjection && MAP.getProjection();
+  let groups = spotGroups(MAP_LIST);
+  if (far && proj) {
+    const big = [];
+    groups.forEach(g => {
+      const pt = proj.containerPointFromCoords(new kakao.maps.LatLng(g.p.lat, g.p.lng));
+      const hit = big.find(c => Math.hypot(c.x - pt.x, c.y - pt.y) < 44);
+      if (hit) hit.items.push(...g.items); else big.push({ x: pt.x, y: pt.y, p: g.p, items: [...g.items] });
+    });
+    groups = big;
+  }
+  groups.forEach(g => {
+    const a = g.items[0], n = g.items.length, pos = new kakao.maps.LatLng(g.p.lat, g.p.lng);
+    const wrap = document.createElement('div'); wrap.className = 'pin-wrap';
+    if (far && n > 1) {          // 묶음 동그라미 → 누르면 확대
+      wrap.innerHTML = `<button class="cluster">${n}</button>`;
+      wrap.addEventListener('click', ev => { ev.stopPropagation(); MAP.setLevel(Math.max(LABEL_LEVEL, MAP.getLevel() - 2), { anchor: pos }); });
+    } else {
+      const worst = g.items.some(x => x.status === '하') ? 'bad' : g.items.some(x => x.status === '중') ? 'mid' : (a.out ? 'off' : 'ok');
+      wrap.innerHTML = `<button class="pin ${worst}" aria-label="${esc(dispName(a))}">${n > 1 ? `<b>${n}</b>` : ''}</button><span class="pin-label">${esc(shortNo(a.id))} ${esc(a.item)}${n > 1 ? ` 외 ${n - 1}` : ''}</span>`;
+      wrap.addEventListener('click', ev => { ev.stopPropagation(); n > 1 ? mapSpot(g) : mapSelect(a.id); });
+    }
+    const o = new kakao.maps.CustomOverlay({ position: pos, content: wrap, xAnchor: .5, yAnchor: .5, zIndex: 2 });
+    o.setMap(MAP); MAP_PINS.push(o);
+  });
+}
 function spotGroups(list) {         // 거의 같은 자리(3m) 자산끼리 묶기
   const groups = [];
   list.forEach(a => { const p = { lat: +a.lat, lng: +a.lng }; const g = groups.find(g => distM(g.p, p) < SAME_SPOT); g ? g.items.push(a) : groups.push({ p, items: [a] }); });
@@ -1085,23 +1116,10 @@ async function initMainMap() {
   MAP = new kakao.maps.Map(el, { center: new kakao.maps.LatLng(...CONFIG.MAP_CENTER), level: 3 });
   MAP.addControl(new kakao.maps.ZoomControl(), kakao.maps.ControlPosition.RIGHT);
   MAP_INFO = null;
-  const bounds = new kakao.maps.LatLngBounds(), overlays = [];
-  spotGroups(list).forEach(g => {
-    const a = g.items[0], n = g.items.length;
-    const wrap = document.createElement('div'); wrap.className = 'pin-wrap';
-    const worst = g.items.some(x => x.status === '하') ? 'bad' : g.items.some(x => x.status === '중') ? 'mid' : (a.out ? 'off' : 'ok');
-    wrap.innerHTML = `<button class="pin ${worst}" aria-label="${esc(dispName(a))}">${n > 1 ? `<b>${n}</b>` : ''}</button><span class="pin-label">${esc(shortNo(a.id))} ${esc(a.item)}${n > 1 ? ` 외 ${n - 1}` : ''}</span>`;
-    wrap.addEventListener('click', ev => { ev.stopPropagation(); n > 1 ? mapSpot(g) : mapSelect(a.id); });
-    const pos = new kakao.maps.LatLng(g.p.lat, g.p.lng);
-    overlays.push(new kakao.maps.CustomOverlay({ position: pos, content: wrap, xAnchor: .5, yAnchor: .5, zIndex: 2 }));
-    bounds.extend(pos);
-  });
-  if (kakao.maps.MarkerClusterer) {
-    MAP_CLUSTER = new kakao.maps.MarkerClusterer({ map: MAP, averageCenter: true, minLevel: LABEL_LEVEL + 2, gridSize: 50, disableClickZoom: false,
-      styles: [{ width: '40px', height: '40px', background: 'rgba(10,94,176,.88)', borderRadius: '50%', color: '#fff', textAlign: 'center', fontWeight: '800', lineHeight: '40px', fontSize: '14px', border: '3px solid #fff', boxShadow: '0 2px 8px rgba(0,0,0,.3)' }] });
-    MAP_CLUSTER.addMarkers(overlays);
-  } else overlays.forEach(o => o.setMap(MAP));
-  const labelToggle = () => { if (MAP) el.classList.toggle('show-labels', MAP.getLevel() <= LABEL_LEVEL); };
+  const bounds = new kakao.maps.LatLngBounds();
+  list.forEach(x => bounds.extend(new kakao.maps.LatLng(x.lat, x.lng)));
+  MAP_LIST = list;
+  const labelToggle = () => { if (!MAP) return; el.classList.toggle('show-labels', MAP.getLevel() <= LABEL_LEVEL); drawPins(); };
   kakao.maps.event.addListener(MAP, 'zoom_changed', labelToggle);
   kakao.maps.event.addListener(MAP, 'click', closeMapInfo);
   setTimeout(() => {
