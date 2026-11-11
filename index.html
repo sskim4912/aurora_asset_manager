@@ -363,6 +363,9 @@ details[open].more summary::before{transform:rotate(90deg)}
 .map-fail b{color:var(--text);font-size:15px}
 .lease-link{display:inline-block;margin-top:6px;padding:3px 9px;border-radius:7px;background:#e8f1fb;color:#0a5eb0;font-weight:700;font-size:12.5px;cursor:pointer}.lease-link:hover,.lease-link.on{background:#0a5eb0;color:#fff}
 .empty-row{text-align:center;padding:28px 10px!important;color:var(--sub);cursor:default}
+.btn.danger{background:var(--red);border-color:var(--red);color:#fff}
+.hist-list>div{display:flex;align-items:center;gap:12px;padding:9px 4px;border-bottom:1px solid #eef0f4}.hist-list>div.base{background:#fffbeb}.hist-at{font-family:var(--mono,monospace);font-size:12.5px;color:var(--sub);flex:none}.hist-msg{flex:1;min-width:0;font-size:13.5px}.hist-star{color:#b45309;font-size:12px}
+@media(max-width:640px){.hist-list>div{flex-wrap:wrap;gap:4px 10px}.hist-msg{flex-basis:100%;order:3}}
 .tag-lease{display:inline-block;font-size:11px;font-weight:700;color:#7c3aed;background:#f3e8ff;border-radius:5px;padding:1px 6px;vertical-align:2px;margin-left:4px}
 .lease-box{border:1px dashed #c4b5fd;background:#faf5ff;border-radius:10px;padding:12px;margin-bottom:14px}
 .cluster{width:40px;height:40px;border-radius:50%;border:3px solid #fff;background:rgba(10,94,176,.9);color:#fff;font-weight:800;font-size:14px;box-shadow:0 2px 8px rgba(0,0,0,.3);padding:0;cursor:pointer}
@@ -738,6 +741,23 @@ const Store = {
     }
   }
 };
+Object.assign(Store, {
+  repoApi(c = this.cfg()) { return `https://api.github.com/repos/${encodeURIComponent(c.owner)}/${encodeURIComponent(c.repo)}`; },
+  async history() {   // 데이터 파일의 저장 기록 (최근 50개)
+    const c = this.cfg();
+    const r = await fetch(`${this.repoApi(c)}/commits?path=${encodeURIComponent(c.path)}&sha=${encodeURIComponent(c.branch)}&per_page=50&_=${Date.now()}`, { headers: this.headers(false, c), cache: 'no-store' });
+    if (!r.ok) throw new Error(ghErr(r.status));
+    return (await r.json()).map(x => ({ sha: x.sha, at: x.commit.committer.date, msg: x.commit.message.split('\n')[0].replace(/\s*\(Aurora 앱\)$/, '') }));
+  },
+  async readAt(sha) {   // 그 시점의 데이터
+    const c = this.cfg();
+    const r = await fetch(this.url(c) + '?ref=' + sha, { headers: this.headers(false, c), cache: 'no-store' });
+    if (!r.ok) throw new Error(ghErr(r.status));
+    const j = await r.json();
+    const text = j.content ? b64decode(j.content) : await (await fetch(j.download_url, { cache: 'no-store' })).text();
+    return normalizeDoc(JSON.parse(text));
+  }
+});
 function ghErr(s) {
   return s === 401 ? '토큰이 올바르지 않아요 (401)' : s === 403 ? '권한이 없거나 요청 한도를 넘었어요 (403)'
     : s === 404 ? '저장소를 찾을 수 없어요 (404)' : `GitHub 오류 (${s})`;
@@ -2122,6 +2142,11 @@ function openSettings() {
         <div class="loc-list">${DOC.locations.map((l, i) => `<div><span>${esc(l)} <span class="muted">${locCount(l)}건</span></span><span><button class="link" onclick="renameLoc(${i})">이름 바꾸기</button>${locCount(l) ? '' : ` · <button class="link" style="color:var(--red)" onclick="removeLoc(${i})">삭제</button>`}</span></div>`).join('')}</div>
         <button class="btn" style="margin-top:8px;width:100%" onclick="addLoc()">${icon('plus', 16)} 위치 추가</button>
       </div>
+      ${Store.mode() === 'github' ? `<div class="set-block">
+        <h3>저장 기록 · 되돌리기</h3>
+        <p class="hint" style="margin:2px 0 10px">데이터(assets.json)만 고른 시점으로 되돌려요. <b>화면·기능(시스템)은 그대로</b>예요. 되돌린 것도 기록으로 남아서 다시 되돌릴 수 있어요.</p>
+        <button class="btn" style="width:100%" onclick="openHistory()">${icon('clock', 16)} 저장 기록 보기</button>
+      </div>` : ''}
       <details class="set-block adv"><summary>고급 설정 (평소에는 바꾸지 마세요)</summary>
         <div class="set-grid" style="margin-top:10px">
           <label>저장소 주인<input class="inp" id="s-owner" value="${esc(c.owner)}"></label>
@@ -2139,6 +2164,63 @@ function openSettings() {
     </div>
     <div class="m-foot"><button class="btn" onclick="testConn()">연결 확인</button><span class="sp"></span>
       <button class="btn" onclick="closeModal()">취소</button><button class="btn primary" onclick="saveSettings()">저장</button></div>`);
+}
+/* 저장 기록 · 되돌리기 — 데이터 파일만 옛 시점 내용으로 새로 저장 (시스템 index.html 은 그대로) */
+let HIST = null;
+const fmtFull = iso => { const d = new Date(iso); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`; };
+async function openHistory() {
+  openModal(`<div class="m-head"><h2>저장 기록</h2><button class="icon-btn" onclick="closeModal()">${icon('x', 20)}</button></div><div class="m-body"><p class="sub">불러오는 중…</p></div>`);
+  try { HIST = await Store.history(); } catch (e) { return toast('기록을 불러오지 못했어요 · ' + e.message, 'err'); }
+  const base = m => /자산대장|엑셀/.test(m);
+  openModal(`
+    <div class="m-head"><h2>저장 기록 · 되돌리기</h2><button class="icon-btn" onclick="closeModal()">${icon('x', 20)}</button></div>
+    <div class="m-body">
+      <p class="sub" style="margin:0 0 12px">되돌릴 시점을 고르면 무엇이 바뀌는지 먼저 보여 드려요. <b>★ 엑셀 기준</b>은 엑셀로 자산을 올린 시점이에요.</p>
+      <div class="hist-list">${HIST.map((h, i) => `<div class="${base(h.msg) ? 'base' : ''}">
+        <span class="hist-at">${fmtFull(h.at)}</span>
+        <span class="hist-msg">${base(h.msg) ? '<b class="hist-star">★ 엑셀 기준</b> ' : ''}${esc(h.msg)}</span>
+        ${i === 0 ? '<span class="muted" style="font-size:12.5px">지금</span>' : `<button class="btn sm" onclick="previewRestore(${i})">이 시점으로</button>`}</div>`).join('')}</div>
+      ${HIST.length >= 50 ? '<p class="hint">최근 50개만 보여요.</p>' : ''}
+    </div>
+    <div class="m-foot"><span class="sp"></span><button class="btn" onclick="openSettings()">설정으로</button></div>`, 'wide');
+}
+async function previewRestore(i) {
+  const h = HIST[i]; let old;
+  try { old = await Store.readAt(h.sha); } catch (e) { return toast('그 시점 데이터를 읽지 못했어요 · ' + e.message, 'err'); }
+  const key = a => JSON.stringify({ ...a, log: 0, updatedAt: 0 });
+  const nowM = new Map(DOC.assets.map(a => [a.id, a])), oldM = new Map(old.assets.map(a => [a.id, a]));
+  const gone = DOC.assets.filter(a => !oldM.has(a.id)).map(a => a.id), back = old.assets.filter(a => !nowM.has(a.id)).map(a => a.id);
+  const changed = DOC.assets.filter(a => oldM.has(a.id) && key(a) !== key(oldM.get(a.id))).map(a => a.id);
+  const cur = DOC; const tdNow = todos().length; DOC = old; let tdOld; try { tdOld = todos().length; } finally { DOC = cur; }
+  const auditTxt = d => d.audit ? `진행 중 (${Object.keys(d.audit.checked).length}건 확인)` : '없음';
+  const list = ids => ids.length ? `<span class="mono" style="font-size:12px">${ids.slice(0, 8).join(', ')}${ids.length > 8 ? ` 외 ${ids.length - 8}건` : ''}</span>` : '';
+  HIST.target = { old, h };
+  openModal(`
+    <div class="m-head"><h2>되돌리기 미리보기</h2><button class="icon-btn" onclick="closeModal()">${icon('x', 20)}</button></div>
+    <div class="m-body">
+      <p class="sub" style="margin:0 0 12px"><b>${fmtFull(h.at)}</b> · ${esc(h.msg)}<br>이 시점의 데이터로 되돌려요. 화면·기능은 그대로예요.</p>
+      <dl class="info">
+        <div><dt>자산 수</dt><dd>${DOC.assets.length}건 → <b>${old.assets.length}건</b></dd></div>
+        <div><dt>내용 바뀜</dt><dd><b>${changed.length}건</b> ${list(changed)}</dd></div>
+        ${gone.length ? `<div><dt>없어짐</dt><dd><b style="color:var(--red)">${gone.length}건</b> ${list(gone)}<div class="muted" style="font-size:12px">그 뒤에 새로 등록한 자산</div></dd></div>` : ''}
+        ${back.length ? `<div><dt>다시 생김</dt><dd><b>${back.length}건</b> ${list(back)}</dd></div>` : ''}
+        <div><dt>할 일</dt><dd>${tdNow}건 → <b>${tdOld}건</b></dd></div>
+        <div><dt>정기 실사</dt><dd>${auditTxt(DOC)} → <b>${auditTxt(old)}</b> · 지난 실사 기록 ${DOC.auditLog.length}개 → ${old.auditLog.length}개</dd></div>
+        <div><dt>위치·품목</dt><dd>위치 ${DOC.locations.length}개 → ${old.locations.length}개 · 추가 품목 ${Object.keys(DOC.catalog).length}개 → ${Object.keys(old.catalog).length}개</dd></div>
+      </dl>
+      <p class="hint" style="margin-top:12px">사진 파일은 저장소에 그대로 남고, 자산과의 연결만 그 시점 상태로 돌아가요.</p>
+      <div class="field" style="margin:14px 0 0"><div class="flabel">확인을 위해 <b>되돌리기</b> 라고 입력해 주세요</div><input class="inp" id="rs-ok" placeholder="되돌리기" autocomplete="off"></div>
+    </div>
+    <div class="m-foot"><button class="btn" onclick="openHistory()">‹ 기록 목록</button><span class="sp"></span><button class="btn danger" id="rs-go" onclick="doRestore()">되돌리기</button></div>`);
+}
+async function doRestore() {
+  if (($('rs-ok').value || '').trim() !== '되돌리기') return toast("'되돌리기'라고 입력해 주세요", 'warn');
+  const { old, h } = HIST.target;
+  $('rs-go').disabled = true; $('rs-go').textContent = '되돌리는 중…';
+  const ok = await saveChange(next => { Object.keys(next).forEach(k => delete next[k]); Object.assign(next, structuredClone(old)); return true; },
+    `되돌리기: ${fmtFull(h.at)} 시점 (${h.msg})`, `${fmtFull(h.at)} 시점으로 되돌렸어요`);
+  if (ok) { closeModal(); if (DRAWER) closeDrawer(); UI.sel.clear(); UI.filter = 'all'; render(); }
+  else if ($('rs-go')) { $('rs-go').disabled = false; $('rs-go').textContent = '되돌리기'; }
 }
 async function addLoc() {
   const name = (prompt('새 위치 이름 (건물 · 층 · 실 순서)\n예: 본관 2층 회의실, 식당동, 야적장 A구역') || '').trim().replace(/\s+/g, ' ');
