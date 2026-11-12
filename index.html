@@ -209,7 +209,10 @@ h1{font-size:25px;margin:0;letter-spacing:-.025em}
 .photo-pick{width:100%;background:#fff;display:flex;justify-content:center;align-items:center;gap:6px;margin-top:10px;border:1px dashed var(--line2);border-radius:10px;padding:10px;font-weight:700;font-size:13.5px;color:var(--acc);cursor:pointer}
 .thumb{width:40px;height:40px;border-radius:8px;object-fit:cover;flex:none;background:#eef1f5;display:block}
 .thumb.empty{display:block}
-.thumb-btn{border:0;background:none;padding:0;border-radius:8px;cursor:pointer;display:block}
+.pcount{position:absolute;right:-4px;bottom:-4px;min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:#1e3a8a;color:#fff;font-size:10.5px;font-weight:700;line-height:17px;text-align:center;border:1.5px solid #fff}
+.photo-tools{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:10px}.photo-tools .del{color:#b91c1c}
+.dl-pill{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom));z-index:9999;background:#111827;color:#fff;padding:8px 16px;border-radius:999px;font-size:13px;font-weight:600}
+.thumb-btn{position:relative;border:0;background:none;padding:0;border-radius:8px;cursor:pointer;display:block}
 .thumb-btn.add{width:40px;height:40px;border:1.5px dashed var(--line2);color:var(--muted);display:grid;place-items:center;background:#fafbfc}
 .thumb-btn.add:hover{border-color:var(--acc);color:var(--acc)}
 .mc-photo{position:absolute;right:14px;bottom:14px}
@@ -777,6 +780,14 @@ const Store = {
       throw new Error(ghErr(r.status));
     }
   },
+  async deleteFile(path, message) {   // 사진 지우기 (없으면 그냥 통과)
+    const c = this.cfg();
+    const url = `https://api.github.com/repos/${encodeURIComponent(c.owner)}/${encodeURIComponent(c.repo)}/contents/${path.split('/').map(encodeURIComponent).join('/')}`;
+    const g = await fetch(url + '?ref=' + encodeURIComponent(c.branch) + '&_=' + Date.now(), { headers: this.headers(false, c), cache: 'no-store' });
+    if (g.status === 404) return true; if (!g.ok) throw new Error(ghErr(g.status));
+    const r = await fetch(url, { method: 'DELETE', headers: this.headers(true, c), body: JSON.stringify({ message: message + ' (Aurora 앱)', sha: (await g.json()).sha, branch: c.branch }) });
+    if (!r.ok && r.status !== 404) throw new Error(ghErr(r.status)); return true;
+  },
   async commit(mutator, message) {
     if (this.mode() === 'local') {
       const next = structuredClone(DOC); const result = mutator(next);
@@ -1112,7 +1123,8 @@ function updateAssetList() {
 
 /* ── 체크해서 한꺼번에: 상태 바꾸기 · 라벨 인쇄 · 현장 종료 ── */
 function photoCell(a) {   // 목록의 사진 칸: 사진 있으면 작은 사진(누르면 크게), 없으면 📷(누르면 바로 촬영)
-  if (a.thumb || PHOTO_LOCAL[a.id]) return `<button class="thumb-btn" onclick="showPhoto('${a.id}')" title="사진 크게 보기"><img class="thumb" src="${a.thumb || PHOTO_LOCAL[a.id]}" alt=""></button>`;
+  const pn = photoList(a).length;
+  if (a.thumb || PHOTO_LOCAL[a.id]) return `<button class="thumb-btn" onclick="showPhoto('${a.id}')" title="사진 크게 보기 (${pn}장)"><img class="thumb" src="${a.thumb || PHOTO_LOCAL[a.id]}" alt="">${pn > 1 ? `<span class="pcount">${pn}</span>` : ''}</button>`;
   return a.out ? '<span class="thumb empty"></span>' : `<button class="thumb-btn add" onclick="photoInput('${a.id}')" title="사진 넣기">${icon('camera', 18)}</button>`;
 }
 function selOne(id, on) { on ? UI.sel.add(id) : UI.sel.delete(id); updateAssetList(); }
@@ -1124,6 +1136,7 @@ function updateSelBar() {
     <b>☑ ${ids.length}개 선택</b>
     ${anyActive ? `<span class="muted">상태</span>${STATUSES.map(s => `<button class="btn sm" onclick="bulkStatus('${s}')">${s}</button>`).join('')}<span class="vsep"></span>` : ''}
     <button class="btn sm" onclick="openPrint([...UI.sel])">${icon('printer', 14)} 라벨 인쇄</button>
+    <button class="btn sm" onclick="askZip([...UI.sel])">⬇ 사진 내려받기</button>
     ${anyActive ? `<button class="btn sm" onclick="openOut([...UI.sel].filter(id=>!getAsset(id).out))">${icon('logout', 14)} 현장 종료</button>` : ''}
     <span class="sp"></span><button class="link" onclick="UI.sel.clear();updateAssetList()">선택 해제</button></div>` : '';
 }
@@ -1948,10 +1961,78 @@ async function pickPhoto(id, input, confirm) {
   const r = await savePhoto(id, shot, { confirm: !!confirm });
   if (r) { toast(r.audit ? '사진 저장 · 실사 확인 ✓' : '사진을 저장했어요'); if (DRAWER && DRAWER.id === id) renderDrawer(); else render(); }
 }
+/* 사진: 장수·삭제·내려받기 (zip은 외부 도구 없이 '묶기만') */
+const photoList = a => a.photos && a.photos.length ? a.photos : (a.photo ? [a.photo] : []);
+const fname = p => p.path.split('/').pop();
+function pill(t) { let el = $('dl-pill'); if (!el) { el = document.createElement('div'); el.id = 'dl-pill'; el.className = 'dl-pill'; document.body.appendChild(el); } el.textContent = t; el.classList.toggle('hidden', !t); }
+async function fetchBytes(url) { const r = await fetch(url, { cache: 'no-store' }); if (!r.ok) throw new Error(r.status); return new Uint8Array(await r.arrayBuffer()); }
+function saveBlob(blob, name) { const u = URL.createObjectURL(blob), l = document.createElement('a'); l.href = u; l.download = name; document.body.appendChild(l); l.click(); l.remove(); setTimeout(() => URL.revokeObjectURL(u), 60000); }
+async function dlPhoto(id, idx) {
+  const a = getAsset(id), p = photoList(a)[idx]; if (!p) return;
+  try { saveBlob(new Blob([await fetchBytes(photoUrl(a, p))], { type: 'image/jpeg' }), fname(p)); }
+  catch (e) { toast('내려받지 못했어요 · 방금 올린 사진이면 1~2분 뒤 다시 해 주세요', 'err'); }
+}
+const CRC_T = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+function crc32(u) { let c = 0xFFFFFFFF; for (let i = 0; i < u.length; i++) c = CRC_T[(c ^ u[i]) & 255] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
+function makeZip(files) {   // [{name, data:Uint8Array}] → zip (압축 없이 묶기, 한글 이름 UTF-8)
+  const enc = new TextEncoder(), parts = [], cen = []; let off = 0; const d = new Date();
+  const tm = (d.getHours() << 11) | (d.getMinutes() << 5) | (d.getSeconds() >> 1), dt = ((d.getFullYear() - 1980) << 9) | ((d.getMonth() + 1) << 5) | d.getDate();
+  for (const f of files) {
+    const nm = enc.encode(f.name), crc = crc32(f.data), sz = f.data.length;
+    const h = new DataView(new ArrayBuffer(30)); h.setUint32(0, 0x04034b50, true); h.setUint16(4, 20, true); h.setUint16(6, 0x0800, true); h.setUint16(10, tm, true); h.setUint16(12, dt, true); h.setUint32(14, crc, true); h.setUint32(18, sz, true); h.setUint32(22, sz, true); h.setUint16(26, nm.length, true);
+    parts.push(h.buffer, nm, f.data);
+    const c = new DataView(new ArrayBuffer(46)); c.setUint32(0, 0x02014b50, true); c.setUint16(4, 20, true); c.setUint16(6, 20, true); c.setUint16(8, 0x0800, true); c.setUint16(12, tm, true); c.setUint16(14, dt, true); c.setUint32(16, crc, true); c.setUint32(20, sz, true); c.setUint32(24, sz, true); c.setUint16(28, nm.length, true); c.setUint32(42, off, true);
+    cen.push(c.buffer, nm); off += 30 + nm.length + sz;
+  }
+  const cs = cen.reduce((s, b) => s + b.byteLength, 0), e = new DataView(new ArrayBuffer(22));
+  e.setUint32(0, 0x06054b50, true); e.setUint16(8, files.length, true); e.setUint16(10, files.length, true); e.setUint32(12, cs, true); e.setUint32(16, off, true);
+  return new Blob([...parts, ...cen, e.buffer], { type: 'application/zip' });
+}
+function askZip(ids) {
+  const as = ids.map(getAsset).filter(Boolean), last = as.filter(a => photoList(a).length).length, all = as.reduce((s, a) => s + photoList(a).length, 0);
+  if (!all) return toast('선택한 자산에 사진이 없어요', 'warn');
+  openModal(`<div class="m-head"><h2>⬇ 사진 내려받기 · ${as.length}개 자산</h2><button class="icon-btn" onclick="closeModal()">${icon('x', 20)}</button></div>
+    <div class="m-body"><p class="hint">zip 파일 1개로 받아요. 안에는 관리번호별 폴더로 정리돼요.</p></div>
+    <div class="m-foot"><span class="sp"></span><button class="btn" onclick="closeModal();dlZip(${JSON.stringify(ids).replace(/"/g, "'")},false)">최신 사진만 (${last}장)</button><button class="btn primary" onclick="closeModal();dlZip(${JSON.stringify(ids).replace(/"/g, "'")},true)">전체 이력 (${all}장)</button></div>`, 'sm');
+}
+async function dlZip(ids, all) {
+  const jobs = []; ids.forEach(id => { const a = getAsset(id); if (a) (all ? photoList(a) : photoList(a).slice(0, 1)).forEach(p => jobs.push({ a, p })); });
+  if (!jobs.length) return toast('내려받을 사진이 없어요', 'warn');
+  const files = []; let fail = 0;
+  for (let i = 0; i < jobs.length; i++) {
+    pill(`⬇ 사진 모으는 중… ${i + 1}/${jobs.length}`);
+    try { files.push({ name: `${jobs[i].a.id}/${fname(jobs[i].p)}`, data: await fetchBytes(photoUrl(jobs[i].a, jobs[i].p)) }); } catch (e) { fail++; }
+  }
+  pill('');
+  if (!files.length) return toast('사진을 받지 못했어요 · 잠시 뒤 다시 해 주세요', 'err');
+  const d = new Date(), day = `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}`;
+  saveBlob(makeZip(files), ids.length === 1 ? `${ids[0]}_사진_${day}.zip` : `비품사진_${day}.zip`);
+  toast(`사진 ${files.length}장을 내려받았어요${fail ? ` · ${fail}장은 못 받았어요` : ''}`, fail ? 'warn' : '');
+}
+async function makeThumbFrom(url) {
+  try { const b = await createImageBitmap(new Blob([await fetchBytes(url)])); const t = document.createElement('canvas'), s = Math.min(b.width, b.height); t.width = t.height = 64;
+    t.getContext('2d').drawImage(b, (b.width - s) / 2, (b.height - s) / 2, s, s, 0, 0, 64, 64); return t.toDataURL('image/jpeg', 0.6); } catch (e) { return ''; }
+}
+async function delPhoto(id, idx) {
+  const a = getAsset(id), list = photoList(a), p = list[idx]; if (!p || list.length < 2) return;
+  if (UPQ.some(j => j.shot.path === p.path)) return toast('아직 저장 중인 사진이에요 · 저장이 끝난 뒤 지워 주세요', 'warn');
+  if (prompt(`이 사진을 지울까요? 되돌릴 수 없어요.\n${fname(p)}\n\n지우려면 '삭제'라고 입력하세요`) !== '삭제') return;
+  if (!(await ensureToken())) return;
+  closeModal(); pill('🗑 사진 지우는 중…');
+  try { await Store.deleteFile(p.path, `사진 삭제: ${fname(p)}`); } catch (e) { pill(''); return toast('사진을 지우지 못했어요 · ' + e.message, 'err'); }
+  const isMain = a.photo && a.photo.path === p.path, rest = list.filter(x => x.path !== p.path);
+  const thumb = isMain ? await makeThumbFrom(photoUrl(a, rest[0])) : null;
+  if (isMain) delete PHOTO_LOCAL[id];
+  await saveChange(doc => { const x = doc.assets.find(y => y.id === id); if (!x) return false; const now = new Date().toISOString();
+    x.photos = (x.photos || []).filter(y => y.path !== p.path);
+    if (x.photo && x.photo.path === p.path) { x.photo = x.photos[0] || null; x.thumb = thumb || ''; }
+    x.updatedAt = now; addLog(x, '사진 삭제 · ' + fname(p), now); return true; }, `사진 삭제: ${id}`, '사진을 지웠어요');
+  pill('');
+}
 /* 사진 크게 보기 (+ 이력) */
 function showPhoto(id, idx = 0) {
   const a = getAsset(id); if (!a) return;
-  const list = a.photos && a.photos.length ? a.photos : (a.photo ? [a.photo] : []);
+  const list = photoList(a);
   const p = list[idx];
   openModal(`
     <div class="m-head"><h2>${esc(a.id)} · ${esc(a.item)}</h2><button class="icon-btn" onclick="closeModal()">${icon('x', 20)}</button></div>
@@ -1959,6 +2040,8 @@ function showPhoto(id, idx = 0) {
       ${p || PHOTO_LOCAL[id] ? `<img class="big-photo" src="${photoUrl(a, p)}" alt="" onerror="this.alt='사진을 불러오는 중이에요 (올린 직후에는 1~2분 걸릴 수 있어요)'">` : `<div class="empty"><b>등록된 사진이 없어요</b></div>`}
       ${p ? `<p class="hint" style="text-align:center">${fmtAt(p.at)} · ${esc(p.path.split('/').pop())}</p>` : ''}
       ${list.length > 1 ? `<div class="photo-hist">${list.map((x, i) => `<button class="${i === idx ? 'on' : ''}" onclick="showPhoto('${id}',${i})">${fmtAt(x.at)}</button>`).join('')}</div>` : ''}
+      ${p ? `<div class="photo-tools"><button class="btn sm" onclick="dlPhoto('${id}',${idx})">⬇ 이 사진</button>${list.length > 1 ? `<button class="btn sm" onclick="dlZip(['${id}'],true)">⬇ 전체 ${list.length}장 (zip)</button><button class="btn sm del" onclick="delPhoto('${id}',${idx})">🗑 이 사진 삭제</button>` : ''}</div>
+        ${list.length === 1 ? '<p class="hint" style="text-align:center">사진이 1장뿐이라 삭제는 안 돼요 (새로 찍기는 돼요)</p>' : ''}` : ''}
     </div>
     <div class="m-foot"><span class="sp"></span><button class="btn" onclick="closeModal()">닫기</button>${a.out ? '' : `<button class="btn primary" onclick="closeModal();photoInput('${id}')">${icon('camera', 16)} 사진 ${p ? '바꾸기' : '넣기'}</button>`}</div>`, 'wide');
 }
@@ -2449,7 +2532,7 @@ function showInstall() {
   box.innerHTML = h; box.classList.remove('hidden');
 }
 
-const BUILD = '2026-11-12e';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
+const BUILD = '2026-11-12f';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
 async function checkUpdate() {
   try {
     const t = await (await fetch(location.pathname + '?v=' + Date.now(), { cache: 'reload' })).text();
