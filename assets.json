@@ -1,6 +1,6 @@
 {
   "version": 3,
-  "updatedAt": "2026-11-12T01:09:15.381Z",
+  "updatedAt": "2026-11-12T01:09:31.723Z",
   "catalog": {},
   "assets": [
     {
@@ -2661,33 +2661,48 @@
     },
     {
       "id": "AURORA-086",
+      "category": "사무/가전/생활",
+      "item": "기타",
+      "model": "4구 토스터기",
       "contract": "",
+      "acq": "계약외(온라인구매)",
+      "qty": 1,
+      "unit": "EA",
+      "location": "현장 사무실 / 본관",
       "locInit": "현장 사무실 / 본관",
-      "out": null,
+      "manager": "관리팀장",
       "status": "상",
+      "lat": 36.996219,
+      "lng": 126.37874,
+      "nextCheck": "",
+      "rentalDue": "",
+      "leaseVendor": "",
+      "leaseStart": "",
+      "leaseTel": "",
+      "note": "",
+      "out": null,
+      "updatedAt": "2026-11-12T01:09:31.722Z",
       "log": [
+        {
+          "at": "2026-11-12T01:09:31.722Z",
+          "t": "사진 등록 · AURORA-086_기타_20261112_100928.jpg"
+        },
         {
           "at": "2026-11-12T01:09:15.381Z",
           "t": "등록"
         }
       ],
-      "item": "기타",
-      "category": "사무/가전/생활",
-      "model": "4구 토스터기",
-      "qty": 1,
-      "unit": "EA",
-      "location": "현장 사무실 / 본관",
-      "acq": "계약외(온라인구매)",
-      "manager": "관리팀장",
-      "lat": 36.996219,
-      "lng": 126.37874,
-      "nextCheck": "",
-      "rentalDue": "",
-      "note": "",
-      "leaseVendor": "",
-      "leaseStart": "",
-      "leaseTel": "",
-      "updatedAt": "2026-11-12T01:09:15.381Z"
+      "thumb": "data:image/jpeg;base64,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",
+      "photo": {
+        "path": "photos/AURORA-086/AURORA-086_기타_20261112_100928.jpg",
+        "at": "2026-11-12T01:09:28.396Z"
+      },
+      "photos": [
+        {
+          "path": "photos/AURORA-086/AURORA-086_기타_20261112_100928.jpg",
+          "at": "2026-11-12T01:09:28.396Z"
+        }
+      ]
     }
   ],
   "audit": null,
