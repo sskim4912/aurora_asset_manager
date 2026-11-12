@@ -1,6 +1,6 @@
 {
   "version": 3,
-  "updatedAt": "2026-11-12T01:04:40.777Z",
+  "updatedAt": "2026-11-12T01:04:46.907Z",
   "catalog": {},
   "assets": [
     {
@@ -25,8 +25,12 @@
       "leaseTel": "",
       "note": "",
       "out": null,
-      "updatedAt": "2026-11-12T00:50:21.315Z",
+      "updatedAt": "2026-11-12T01:04:46.907Z",
       "log": [
+        {
+          "at": "2026-11-12T01:04:46.907Z",
+          "t": "사진 등록 · AURORA-001_공기청정기_20261112_100443.jpg"
+        },
         {
           "at": "2026-11-12T00:50:21.315Z",
           "t": "사진 등록 · AURORA-001_공기청정기_20261112_095017.jpg"
@@ -60,12 +64,16 @@
           "t": "좌표 입력 (QR, 오차 약 11m)"
         }
       ],
-      "thumb": "data:image/jpeg;base64,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",
+      "thumb": "data:image/jpeg;base64,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",
       "photo": {
-        "path": "photos/AURORA-001/AURORA-001_공기청정기_20261112_095017.jpg",
-        "at": "2026-11-12T00:50:17.960Z"
+        "path": "photos/AURORA-001/AURORA-001_공기청정기_20261112_100443.jpg",
+        "at": "2026-11-12T01:04:43.607Z"
       },
       "photos": [
+        {
+          "path": "photos/AURORA-001/AURORA-001_공기청정기_20261112_100443.jpg",
+          "at": "2026-11-12T01:04:43.607Z"
+        },
         {
           "path": "photos/AURORA-001/AURORA-001_공기청정기_20261112_095017.jpg",
           "at": "2026-11-12T00:50:17.960Z"
@@ -2539,33 +2547,36 @@
     },
     {
       "id": "AURORA-084",
+      "category": "사무/가전/생활",
+      "item": "기타",
+      "model": "[렌탈]캐논 C3930",
       "contract": "",
+      "acq": "임대/임차",
+      "qty": 1,
+      "unit": "EA",
+      "location": "현장 사무실 / 본관",
       "locInit": "현장 사무실 / 본관",
-      "out": null,
+      "manager": "관리팀장",
       "status": "상",
+      "lat": 36.996458,
+      "lng": 126.379089,
+      "nextCheck": "",
+      "rentalDue": "",
+      "leaseVendor": "(주)세중S&C",
+      "leaseStart": "",
+      "leaseTel": "15771091",
+      "note": "",
+      "out": null,
+      "updatedAt": "2026-11-12T01:04:40.777Z",
       "log": [
         {
           "at": "2026-11-12T01:04:40.777Z",
           "t": "등록"
         }
       ],
-      "item": "기타",
-      "category": "사무/가전/생활",
-      "model": "[렌탈]캐논 C3930",
-      "qty": 1,
-      "unit": "EA",
-      "location": "현장 사무실 / 본관",
-      "acq": "임대/임차",
-      "manager": "관리팀장",
-      "lat": 36.996458,
-      "lng": 126.379089,
-      "nextCheck": "",
-      "rentalDue": "",
-      "note": "",
-      "leaseVendor": "(주)세중S&C",
-      "leaseStart": "",
-      "leaseTel": "15771091",
-      "updatedAt": "2026-11-12T01:04:40.777Z"
+      "thumb": "",
+      "photo": null,
+      "photos": []
     }
   ],
   "audit": null,
