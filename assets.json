@@ -1,6 +1,6 @@
 {
   "version": 4,
-  "updatedAt": "2026-11-12T05:12:11.591Z",
+  "updatedAt": "2026-11-12T05:13:16.659Z",
   "catalog": {},
   "assets": [
     {
@@ -3313,6 +3313,37 @@
           "at": "2026-11-12T05:12:08.273Z"
         }
       ]
+    },
+    {
+      "id": "AURORA-096",
+      "contract": "",
+      "locInit": "현장 사무실 / 본관",
+      "out": null,
+      "status": "상",
+      "log": [
+        {
+          "at": "2026-11-12T05:13:16.656Z",
+          "t": "등록"
+        }
+      ],
+      "item": "기타",
+      "category": "사무/가전/생활",
+      "model": "사무용 코팅기",
+      "qty": 1,
+      "unit": "EA",
+      "location": "현장 사무실 / 본관",
+      "acq": "계약",
+      "manager": "관리팀장",
+      "lat": 36.996219,
+      "lng": 126.378714,
+      "nextCheck": "",
+      "rentalDue": "",
+      "note": "시운전팀 구역",
+      "leaseVendor": "",
+      "leaseStart": "",
+      "leaseTel": "",
+      "leaseContact": "",
+      "updatedAt": "2026-11-12T05:13:16.656Z"
     }
   ],
   "audit": null,
