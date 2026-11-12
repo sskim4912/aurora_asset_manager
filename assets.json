@@ -1,6 +1,6 @@
 {
   "version": 3,
-  "updatedAt": "2026-11-12T00:56:00.424Z",
+  "updatedAt": "2026-11-12T00:56:14.180Z",
   "catalog": {},
   "assets": [
     {
@@ -2482,33 +2482,48 @@
     },
     {
       "id": "AURORA-083",
+      "category": "사무/가전/생활",
+      "item": "기타",
+      "model": "매직쉐프 전자레인지",
       "contract": "",
+      "acq": "",
+      "qty": 1,
+      "unit": "EA",
+      "location": "현장 사무실 / 본관",
       "locInit": "현장 사무실 / 본관",
-      "out": null,
+      "manager": "관리팀장",
       "status": "상",
+      "lat": 36.996483,
+      "lng": 126.379158,
+      "nextCheck": "",
+      "rentalDue": "",
+      "leaseVendor": "",
+      "leaseStart": "",
+      "leaseTel": "",
+      "note": "",
+      "out": null,
+      "updatedAt": "2026-11-12T00:56:14.180Z",
       "log": [
+        {
+          "at": "2026-11-12T00:56:14.180Z",
+          "t": "사진 등록 · AURORA-083_기타_20261112_095610.jpg"
+        },
         {
           "at": "2026-11-12T00:56:00.424Z",
           "t": "등록"
         }
       ],
-      "item": "기타",
-      "category": "사무/가전/생활",
-      "model": "매직쉐프 전자레인지",
-      "qty": 1,
-      "unit": "EA",
-      "location": "현장 사무실 / 본관",
-      "acq": "",
-      "manager": "관리팀장",
-      "lat": 36.996483,
-      "lng": 126.379158,
-      "nextCheck": "",
-      "rentalDue": "",
-      "note": "",
-      "leaseVendor": "",
-      "leaseStart": "",
-      "leaseTel": "",
-      "updatedAt": "2026-11-12T00:56:00.424Z"
+      "thumb": "data:image/jpeg;base64,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",
+      "photo": {
+        "path": "photos/AURORA-083/AURORA-083_기타_20261112_095610.jpg",
+        "at": "2026-11-12T00:56:10.532Z"
+      },
+      "photos": [
+        {
+          "path": "photos/AURORA-083/AURORA-083_기타_20261112_095610.jpg",
+          "at": "2026-11-12T00:56:10.532Z"
+        }
+      ]
     }
   ],
   "audit": null,
