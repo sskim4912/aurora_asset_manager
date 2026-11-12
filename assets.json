@@ -1,6 +1,6 @@
 {
   "version": 4,
-  "updatedAt": "2026-11-12T05:24:48.011Z",
+  "updatedAt": "2026-11-12T05:25:28.780Z",
   "catalog": {},
   "assets": [
     {
@@ -864,10 +864,15 @@
       "leaseStart": "",
       "leaseTel": "",
       "leaseContact": "",
-      "note": "",
+      "note": "관리팀 구역",
       "out": null,
-      "updatedAt": "2026-11-10T09:00:00+09:00",
-      "log": [],
+      "updatedAt": "2026-11-12T05:25:28.780Z",
+      "log": [
+        {
+          "at": "2026-11-12T05:25:28.780Z",
+          "t": "수정: 비고"
+        }
+      ],
       "thumb": "",
       "photo": null,
       "photos": []
