@@ -1,6 +1,6 @@
 {
   "version": 3,
-  "updatedAt": "2026-11-12T00:50:49.937Z",
+  "updatedAt": "2026-11-12T00:52:18.349Z",
   "catalog": {},
   "assets": [
     {
@@ -2372,6 +2372,36 @@
           "at": "2026-11-12T00:49:54.372Z"
         }
       ]
+    },
+    {
+      "id": "AURORA-081",
+      "contract": "",
+      "locInit": "현장 사무실 / 본관",
+      "out": null,
+      "status": "상",
+      "log": [
+        {
+          "at": "2026-11-12T00:52:18.349Z",
+          "t": "등록"
+        }
+      ],
+      "item": "기타",
+      "category": "사무/가전/생활",
+      "model": "[렌탈]직수형정수기",
+      "qty": 1,
+      "unit": "EA",
+      "location": "현장 사무실 / 본관",
+      "acq": "임대/임차",
+      "manager": "관리팀장",
+      "lat": 36.996481,
+      "lng": 126.379172,
+      "nextCheck": "",
+      "rentalDue": "",
+      "note": "",
+      "leaseVendor": "진로석수",
+      "leaseStart": "",
+      "leaseTel": "",
+      "updatedAt": "2026-11-12T00:52:18.349Z"
     }
   ],
   "audit": null,
