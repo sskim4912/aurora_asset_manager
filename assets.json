@@ -1,6 +1,6 @@
 {
   "version": 4,
-  "updatedAt": "2026-11-12T05:11:58.898Z",
+  "updatedAt": "2026-11-12T05:12:11.591Z",
   "catalog": {},
   "assets": [
     {
@@ -3270,34 +3270,49 @@
     },
     {
       "id": "AURORA-095",
+      "category": "사무/가전/생활",
+      "item": "세단기",
+      "model": "",
       "contract": "",
+      "acq": "구자산",
+      "qty": 1,
+      "unit": "EA",
+      "location": "현장 사무실 / 본관",
       "locInit": "현장 사무실 / 본관",
-      "out": null,
+      "manager": "관리팀장",
       "status": "상",
+      "lat": 36.996205,
+      "lng": 126.378697,
+      "nextCheck": "",
+      "rentalDue": "",
+      "leaseVendor": "",
+      "leaseStart": "",
+      "leaseTel": "",
+      "leaseContact": "",
+      "note": "안전팀 구역",
+      "out": null,
+      "updatedAt": "2026-11-12T05:12:11.591Z",
       "log": [
+        {
+          "at": "2026-11-12T05:12:11.591Z",
+          "t": "사진 등록 · AURORA-095_세단기_20261112_141208.jpg"
+        },
         {
           "at": "2026-11-12T05:11:58.897Z",
           "t": "등록"
         }
       ],
-      "item": "세단기",
-      "category": "사무/가전/생활",
-      "model": "",
-      "qty": 1,
-      "unit": "EA",
-      "location": "현장 사무실 / 본관",
-      "acq": "구자산",
-      "manager": "관리팀장",
-      "lat": 36.996205,
-      "lng": 126.378697,
-      "nextCheck": "",
-      "rentalDue": "",
-      "note": "안전팀 구역",
-      "leaseVendor": "",
-      "leaseStart": "",
-      "leaseTel": "",
-      "leaseContact": "",
-      "updatedAt": "2026-11-12T05:11:58.897Z"
+      "thumb": "data:image/jpeg;base64,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",
+      "photo": {
+        "path": "photos/AURORA-095/AURORA-095_세단기_20261112_141208.jpg",
+        "at": "2026-11-12T05:12:08.273Z"
+      },
+      "photos": [
+        {
+          "path": "photos/AURORA-095/AURORA-095_세단기_20261112_141208.jpg",
+          "at": "2026-11-12T05:12:08.273Z"
+        }
+      ]
     }
   ],
   "audit": null,
