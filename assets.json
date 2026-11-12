@@ -1,6 +1,6 @@
 {
   "version": 4,
-  "updatedAt": "2026-11-12T04:51:46.918Z",
+  "updatedAt": "2026-11-12T04:52:16.460Z",
   "catalog": {},
   "assets": [
     {
@@ -2966,33 +2966,48 @@
     },
     {
       "id": "AURORA-092",
+      "category": "사무/가전/생활",
+      "item": "TV",
+      "model": "LG LED TV",
       "contract": "",
+      "acq": "",
+      "qty": 1,
+      "unit": "EA",
+      "location": "현장 사무실 / 본관",
       "locInit": "현장 사무실 / 본관",
-      "out": null,
+      "manager": "관리팀장",
       "status": "상",
+      "lat": 36.99619,
+      "lng": 126.378653,
+      "nextCheck": "",
+      "rentalDue": "",
+      "leaseVendor": "",
+      "leaseStart": "",
+      "leaseTel": "",
+      "note": "75UT8300ENA",
+      "out": null,
+      "updatedAt": "2026-11-12T04:52:16.460Z",
       "log": [
+        {
+          "at": "2026-11-12T04:52:16.460Z",
+          "t": "사진 등록 · AURORA-092_TV_20261112_135213.jpg"
+        },
         {
           "at": "2026-11-12T04:51:46.918Z",
           "t": "등록"
         }
       ],
-      "item": "TV",
-      "category": "사무/가전/생활",
-      "model": "LG LED TV",
-      "qty": 1,
-      "unit": "EA",
-      "location": "현장 사무실 / 본관",
-      "acq": "",
-      "manager": "관리팀장",
-      "lat": 36.99619,
-      "lng": 126.378653,
-      "nextCheck": "",
-      "rentalDue": "",
-      "note": "75UT8300ENA",
-      "leaseVendor": "",
-      "leaseStart": "",
-      "leaseTel": "",
-      "updatedAt": "2026-11-12T04:51:46.918Z"
+      "thumb": "data:image/jpeg;base64,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",
+      "photo": {
+        "path": "photos/AURORA-092/AURORA-092_TV_20261112_135213.jpg",
+        "at": "2026-11-12T04:52:13.567Z"
+      },
+      "photos": [
+        {
+          "path": "photos/AURORA-092/AURORA-092_TV_20261112_135213.jpg",
+          "at": "2026-11-12T04:52:13.567Z"
+        }
+      ]
     }
   ],
   "audit": null,
