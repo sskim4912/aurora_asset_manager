@@ -221,6 +221,8 @@ h1{font-size:25px;margin:0;letter-spacing:-.025em}
 .photo-hist{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-top:8px}
 .photo-hist button{border:1px solid var(--line2);background:#fff;border-radius:99px;padding:4px 10px;font-size:12px}
 .photo-hist button.on{background:var(--acc);border-color:var(--acc);color:#fff}
+.ph-chip{display:inline-flex;align-items:center;border:1px solid var(--line2);border-radius:99px;background:#fff;overflow:hidden}.ph-chip.on{background:var(--acc);border-color:var(--acc)}.ph-chip.on button{color:#fff}
+.photo-hist .ph-chip button{border:0;background:none;border-radius:0;padding:4px 4px 4px 10px}.photo-hist .ph-chip button.x{padding:4px 9px 4px 5px;color:#b91c1c;font-weight:700}.ph-chip.on button.x{color:#fecaca}
 .photo-pick.strong{background:var(--acc);color:#fff;border:0}
 .step-guide{background:var(--acc-bg);color:var(--acc);border-radius:10px;padding:10px 12px;font-size:13px;margin-bottom:10px}
 .scan-res>div{min-width:0}.scan-res .ri-sub{white-space:normal}
@@ -2013,21 +2015,37 @@ async function makeThumbFrom(url) {
   try { const b = await createImageBitmap(new Blob([await fetchBytes(url)])); const t = document.createElement('canvas'), s = Math.min(b.width, b.height); t.width = t.height = 64;
     t.getContext('2d').drawImage(b, (b.width - s) / 2, (b.height - s) / 2, s, s, 0, 0, 64, 64); return t.toDataURL('image/jpeg', 0.6); } catch (e) { return ''; }
 }
-async function delPhoto(id, idx) {
-  const a = getAsset(id), list = photoList(a), p = list[idx]; if (!p || list.length < 2) return;
-  if (UPQ.some(j => j.shot.path === p.path)) return toast('아직 저장 중인 사진이에요 · 저장이 끝난 뒤 지워 주세요', 'warn');
-  if (prompt(`이 사진을 지울까요? 되돌릴 수 없어요.\n${fname(p)}\n\n지우려면 '삭제'라고 입력하세요`) !== '삭제') return;
+const dayOf = p => ymd(new Date(p.at));
+function sameDayExtra(list) { const seen = new Set(); return list.filter(p => { const d = dayOf(p); if (seen.has(d)) return true; seen.add(d); return false; }); }   // 날짜별 최신 1장 빼고 나머지
+function delPhoto(id, idx) {
+  const a = getAsset(id), list = photoList(a), p = list[idx]; if (!p) return;
+  if (list.length < 2) return toast('마지막 1장은 지울 수 없어요 (새로 찍기는 돼요)', 'warn');
+  if (!confirm(`이 사진을 지울까요? 되돌릴 수 없어요.\n${fmtAt(p.at)} · ${fname(p)}`)) return;
+  delPhotos(id, [p]);
+}
+function cleanSameDay(id) {
+  const a = getAsset(id), ex = sameDayExtra(photoList(a)); if (!ex.length) return;
+  if (!confirm(`같은 날 찍은 사진은 날짜별로 마지막 1장만 남기고\n${ex.length}장을 지울까요? 되돌릴 수 없어요.`)) return;
+  delPhotos(id, ex);
+}
+async function delPhotos(id, ps) {
+  if (ps.some(p => UPQ.some(j => j.shot.path === p.path))) return toast('아직 저장 중인 사진이 있어요 · 저장이 끝난 뒤 지워 주세요', 'warn');
   if (!(await ensureToken())) return;
-  closeModal(); pill('🗑 사진 지우는 중…');
-  try { await Store.deleteFile(p.path, `사진 삭제: ${fname(p)}`); } catch (e) { pill(''); return toast('사진을 지우지 못했어요 · ' + e.message, 'err'); }
-  const isMain = a.photo && a.photo.path === p.path, rest = list.filter(x => x.path !== p.path);
-  const thumb = isMain ? await makeThumbFrom(photoUrl(a, rest[0])) : null;
+  closeModal(); const done = [];
+  for (let i = 0; i < ps.length; i++) {
+    pill(`🗑 사진 지우는 중… ${i + 1}/${ps.length}`);
+    try { await Store.deleteFile(ps[i].path, `사진 삭제: ${fname(ps[i])}`); done.push(ps[i].path); } catch (e) { toast('일부 사진을 지우지 못했어요 · ' + e.message, 'err'); break; }
+  }
+  if (!done.length) return pill('');
+  const a = getAsset(id), rest = photoList(a).filter(x => !done.includes(x.path));
+  const isMain = a.photo && done.includes(a.photo.path);
+  const thumb = isMain && rest[0] ? await makeThumbFrom(photoUrl(a, rest[0])) : null;
   if (isMain) delete PHOTO_LOCAL[id];
   await saveChange(doc => { const x = doc.assets.find(y => y.id === id); if (!x) return false; const now = new Date().toISOString();
-    x.photos = (x.photos || []).filter(y => y.path !== p.path);
-    if (x.photo && x.photo.path === p.path) { x.photo = x.photos[0] || null; x.thumb = thumb || ''; }
-    x.updatedAt = now; addLog(x, '사진 삭제 · ' + fname(p), now); return true; }, `사진 삭제: ${id}`, '사진을 지웠어요');
-  pill('');
+    x.photos = (x.photos || []).filter(y => !done.includes(y.path));
+    if (x.photo && done.includes(x.photo.path)) { x.photo = x.photos[0] || null; x.thumb = thumb || ''; }
+    x.updatedAt = now; addLog(x, `사진 삭제 ${done.length}장 · ` + done.map(d => d.split('/').pop()).join(', '), now); return true; }, `사진 삭제: ${id} (${done.length}장)`, `사진 ${done.length}장을 지웠어요`);
+  pill(''); showPhoto(id);
 }
 /* 사진 크게 보기 (+ 이력) */
 function showPhoto(id, idx = 0) {
@@ -2039,11 +2057,11 @@ function showPhoto(id, idx = 0) {
     <div class="m-body">
       ${p || PHOTO_LOCAL[id] ? `<img class="big-photo" src="${photoUrl(a, p)}" alt="" onerror="this.alt='사진을 불러오는 중이에요 (올린 직후에는 1~2분 걸릴 수 있어요)'">` : `<div class="empty"><b>등록된 사진이 없어요</b></div>`}
       ${p ? `<p class="hint" style="text-align:center">${fmtAt(p.at)} · ${esc(p.path.split('/').pop())}</p>` : ''}
-      ${list.length > 1 ? `<div class="photo-hist">${list.map((x, i) => `<button class="${i === idx ? 'on' : ''}" onclick="showPhoto('${id}',${i})">${fmtAt(x.at)}</button>`).join('')}</div>` : ''}
-      ${p ? `<div class="photo-tools"><button class="btn sm" onclick="dlPhoto('${id}',${idx})">⬇ 이 사진</button>${list.length > 1 ? `<button class="btn sm" onclick="dlZip(['${id}'],true)">⬇ 전체 ${list.length}장 (zip)</button><button class="btn sm del" onclick="delPhoto('${id}',${idx})">🗑 이 사진 삭제</button>` : ''}</div>
-        ${list.length === 1 ? '<p class="hint" style="text-align:center">사진이 1장뿐이라 삭제는 안 돼요 (새로 찍기는 돼요)</p>' : ''}` : ''}
+      ${list.length > 1 ? `<div class="photo-hist">${list.map((x, i) => `<span class="ph-chip ${i === idx ? 'on' : ''}"><button onclick="showPhoto('${id}',${i})">${fmtAt(x.at)}</button><button class="x" title="이 사진 지우기" onclick="delPhoto('${id}',${i})">✕</button></span>`).join('')}</div>` : ''}
+      ${p ? `<div class="photo-tools"><button class="btn sm" onclick="dlPhoto('${id}',${idx})">⬇ 이 사진</button>${list.length > 1 ? `<button class="btn sm" onclick="dlZip(['${id}'],true)">⬇ 전체 ${list.length}장 (zip)</button>` : ''}</div>
+        ` : ''}
     </div>
-    <div class="m-foot"><span class="sp"></span><button class="btn" onclick="closeModal()">닫기</button>${a.out ? '' : `<button class="btn primary" onclick="closeModal();photoInput('${id}')">${icon('camera', 16)} 사진 ${p ? '바꾸기' : '넣기'}</button>`}</div>`, 'wide');
+    <div class="m-foot"><span class="sp"></span>${sameDayExtra(list).length ? `<button class="btn" onclick="cleanSameDay('${id}')">🧹 같은 날 사진 정리 (${sameDayExtra(list).length}장)</button>` : ''}<button class="btn" onclick="closeModal()">닫기</button>${a.out ? '' : `<button class="btn primary" onclick="closeModal();photoInput('${id}')">${icon('camera', 16)} 사진 ${p ? '바꾸기' : '넣기'}</button>`}</div>`, 'wide');
 }
 
 /* ── 스캐너 화면 ── */
@@ -2532,7 +2550,7 @@ function showInstall() {
   box.innerHTML = h; box.classList.remove('hidden');
 }
 
-const BUILD = '2026-11-12f';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
+const BUILD = '2026-11-12g';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
 async function checkUpdate() {
   try {
     const t = await (await fetch(location.pathname + '?v=' + Date.now(), { cache: 'reload' })).text();
