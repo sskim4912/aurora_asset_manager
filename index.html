@@ -144,7 +144,10 @@ h1{font-size:25px;margin:0;letter-spacing:-.025em}
 .card-link.strong{margin-left:auto;color:#fff;background:var(--acc);border-radius:7px;padding:3px 10px}
 .card-link.warn{color:var(--chk);margin-top:6px;display:block}
 .card-link.on{text-decoration:underline}
-.stat-sub{font-size:12px;color:var(--sub);margin-top:2px;line-height:1.5}
+.stat-sub{font-size:12px;color:var(--sub);margin-top:2px;line-height:1.5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stat{display:flex;flex-direction:column;justify-content:flex-start;align-items:stretch}.stat-badge{margin-top:auto;padding-top:8px;min-height:34px;display:flex;align-items:flex-end}
+.stat .progress{margin:7px 0 4px}
+.coord-link{display:inline-block;padding:3px 9px;border-radius:7px;background:#fff4e5;color:#b45309;font-weight:700;font-size:12.5px;cursor:pointer;white-space:nowrap}.coord-link:hover,.coord-link.on{background:#b45309;color:#fff}
 .st-link{border-radius:6px;padding:1px 4px;margin:0 -2px;cursor:pointer}
 .st-link:hover,.st-link.on{background:var(--acc-bg);color:var(--acc)}
 .banner{display:flex;gap:12px;align-items:center;flex-wrap:wrap;border-radius:var(--r);padding:14px 18px;margin-bottom:14px}
@@ -379,9 +382,9 @@ details[open].more summary::before{transform:rotate(90deg)}
 #kmap{width:100%;height:100%}
 .map-fail{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;color:var(--sub);gap:6px}
 .map-fail b{color:var(--text);font-size:15px}
-.trash-link{display:inline-block;margin-top:6px;padding:3px 9px;border-radius:7px;background:#dcfce7;color:#15803d;font-weight:700;font-size:12.5px;cursor:pointer}.trash-link:hover{background:#15803d;color:#fff}
+.trash-link{display:inline-block;white-space:nowrap;padding:3px 9px;border-radius:7px;background:#dcfce7;color:#15803d;font-weight:700;font-size:12.5px;cursor:pointer}.trash-link:hover{background:#15803d;color:#fff}
 .trash-row{display:flex;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}.trash-row .info{flex:1;min-width:0;font-size:13px;line-height:1.5}.trash-row .info b{font-size:14px}.trash-row.done{opacity:.55}.trash-imgs{display:flex;gap:4px;flex-wrap:wrap}.trash-imgs img{width:48px;height:48px;object-fit:cover;border-radius:6px;cursor:pointer}
-.lease-link{display:inline-block;margin-top:6px;padding:3px 9px;border-radius:7px;background:#e8f1fb;color:#0a5eb0;font-weight:700;font-size:12.5px;cursor:pointer}.lease-link:hover,.lease-link.on{background:#0a5eb0;color:#fff}
+.lease-link{display:inline-block;white-space:nowrap;padding:3px 9px;border-radius:7px;background:#e8f1fb;color:#0a5eb0;font-weight:700;font-size:12.5px;cursor:pointer}.lease-link:hover,.lease-link.on{background:#0a5eb0;color:#fff}
 .empty-row{text-align:center;padding:28px 10px!important;color:var(--sub);cursor:default}
 .btn.danger{background:var(--red);border-color:var(--red);color:#fff}
 .hist-list>div{display:flex;align-items:center;gap:12px;padding:9px 4px;border-bottom:1px solid #eef0f4}.hist-list>div.base{background:#fffbeb}.hist-at{font-family:var(--mono,monospace);font-size:12.5px;color:var(--sub);flex:none}.hist-msg{flex:1;min-width:0;font-size:13.5px}.hist-star{color:#b45309;font-size:12px}
@@ -457,9 +460,13 @@ details[open].more summary::before{transform:rotate(90deg)}
   .page-head{align-items:center;margin-bottom:14px}
   .desktop-only{display:none!important}
   .mobile-only{display:inline-flex!important}
-  .stats{display:flex;overflow-x:auto;gap:8px;margin:0 -12px 12px;padding:0 12px 4px;scroll-snap-type:x mandatory}
-  .stat{flex:0 0 46%;scroll-snap-align:start;padding:12px 14px}
-  .stat .num{font-size:26px}
+  .stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 0 12px}
+  .stats>.stat:last-child{grid-column:1/-1}
+  .stat{padding:11px 12px 10px}
+  .stat .num{font-size:24px;margin-top:2px}
+  .stat-sub{font-size:11.5px;white-space:normal;line-height:1.4}
+  .stat-badge{min-height:0;padding-top:7px}
+  .lease-link,.trash-link,.coord-link{font-size:11.5px;padding:3px 7px;white-space:normal}
   .banner{padding:12px 14px}
   .banner .ri-main{flex-basis:100%;min-width:0}
   .banner .btn{flex:1}
@@ -961,6 +968,7 @@ function todos() {
 }
 
 /* ── 요약 카드 (누르면 아래 목록이 걸러져요) ── */
+const cardBody = (label, num, l1, l2, badge) => `<div class="lbl">${label}</div><div class="num">${num}</div><div class="stat-sub">${l1 || '&nbsp;'}</div><div class="stat-sub">${l2 || '&nbsp;'}</div><div class="stat-badge">${badge || ''}</div>`;
 function cardsHTML() {
   const act = activeAssets(); const cnt = s => act.filter(a => a.status === s).length;
   const td = todos().length, ym = todayStr().slice(0, 7);
@@ -968,13 +976,13 @@ function cardsHTML() {
   const month = l => l.filter(a => (a.out.date || '').startsWith(ym)).length;
   const by = t => outs.filter(a => a.out.type === t).length;
   const coord = act.filter(hasCoord).length, lease = act.filter(isLease).length, leaseOut = DOC.assets.filter(a => a.out && isLease(a)).length;
-  const card = (key, label, num, sub, cls = '') => `<button class="stat ${cls} ${UI.filter === key ? 'on' : ''}" onclick="setFilter('${key}')"><div class="lbl">${label}</div><div class="num">${num}</div><div class="stat-sub">${sub}</div></button>`;
+  const card = (key, label, num, l1, l2, badge, cls = '') => `<button class="stat ${cls} ${UI.filter === key ? 'on' : ''}" onclick="setFilter('${key}')">${cardBody(label, num, l1, l2, badge)}</button>`;
   const st = s => `<span class="st-link ${UI.filter === 'st:' + s ? 'on' : ''}" onclick="event.stopPropagation();setFilter('st:${s}')">${s} ${cnt(s)}</span>`;
   return `<div class="stats">
-    ${card('all', '전체 자산', `${act.length}<small>건</small>`, STATUSES.map(st).join(' · ') + `<br><span class="lease-link ${UI.filter === 'lease' ? 'on' : ''}" onclick="event.stopPropagation();setFilter('lease')">임대/임차 총 ${lease + leaseOut}건 · 사용 중 ${lease}건 ›</span>`)}
-    ${card('todo', '할 일', `${td}<small>건</small>`, '상태 하 · 점검·반납 임박 · 실사 미발견', td ? 'alert' : '')}
-    ${card('out', '현장 종료', `${outs.length}<small>건</small>`, `창고 ${by('GS 자재창고 반납')} · 타현장 ${by('타현장 전용')} · 이번 달 ${month(outs)}건<br><span class="lease-link ${UI.filter === 'leaseOut' ? 'on' : ''}" onclick="event.stopPropagation();setFilter('leaseOut')">임대/임차 반납 ${leaseOut}건 ›</span>`, 'gray')}
-    ${card('disposed', '폐기 · 분실', `${disp.length}<small>건</small>`, `폐기 ${disp.filter(a => a.out.type === '폐기').length} · 분실/망실 ${disp.filter(a => a.out.type === LOSS).length}<br>이번 달 ${month(disp)}건<br><span class="trash-link" onclick="event.stopPropagation();openTrash()">🗂 삭제 보관 ${DOC.trash.filter(t => !t.restoredAt).length}건 ›</span>`, 'gray')}
+    ${card('all', '전체 자산', `${act.length}<small>건</small>`, STATUSES.map(st).join(' · '), '', `<span class="lease-link ${UI.filter === 'lease' ? 'on' : ''}" onclick="event.stopPropagation();setFilter('lease')">임대/임차 ${lease + leaseOut}건 · 사용 중 ${lease} ›</span>`)}
+    ${card('todo', '할 일', `${td}<small>건</small>`, '상태 하 · 점검 임박', '임대 반납 임박 · 실사 미발견', '', td ? 'alert' : '')}
+    ${card('out', '현장 종료', `${outs.length}<small>건</small>`, `창고 ${by('GS 자재창고 반납')} · 타현장 ${by('타현장 전용')}`, `이번 달 ${month(outs)}건`, `<span class="lease-link ${UI.filter === 'leaseOut' ? 'on' : ''}" onclick="event.stopPropagation();setFilter('leaseOut')">임대/임차 반납 ${leaseOut}건 ›</span>`, 'gray')}
+    ${card('disposed', '폐기 · 분실', `${disp.length}<small>건</small>`, `폐기 ${disp.filter(a => a.out.type === '폐기').length} · 분실/망실 ${disp.filter(a => a.out.type === LOSS).length}`, `이번 달 ${month(disp)}건`, `<span class="trash-link" onclick="event.stopPropagation();openTrash()">🗂 삭제 보관 ${DOC.trash.filter(t => !t.restoredAt).length}건 ›</span>`, 'gray')}
     ${auditCardHTML(act.length - coord)}
   </div>`;
 }
@@ -994,24 +1002,18 @@ function auditDue() {
 }
 /* 정기 실사 카드: 진행 중 / 시기 됨 / 다음 예정 + 좌표 미등록 한 줄(0건이면 사라짐) */
 function auditCardHTML(noCoord) {
-  const coordLine = noCoord ? `<button class="card-link warn ${UI.filter === 'nocoord' ? 'on' : ''}" onclick="setFilter('nocoord')">● 좌표 미등록 ${noCoord}건 ›</button>` : '';
+  const coord = noCoord ? `<span class="coord-link ${UI.filter === 'nocoord' ? 'on' : ''}" onclick="setFilter('nocoord')">● 좌표 미등록 ${noCoord}건 ›</span>` : '';
   if (DOC.audit) {
     const st = auditStats(), pct = st.total ? Math.round(st.done / st.total * 100) : 0;
-    return `<div class="stat audit-card on-audit"><div class="lbl">정기 실사 · 진행 중</div>
-      <div class="num">${st.done}<small>/${st.total}</small></div>
-      <div class="progress"><i style="width:${pct}%"></i></div>
-      <div class="card-links"><button class="card-link ${UI.filter === 'unaudited' ? 'on' : ''}" onclick="setFilter('unaudited')">미확인 ${st.total - st.done}건 ›</button><button class="card-link strong" onclick="finishAudit()">마치기</button></div>
-      ${coordLine}</div>`;
+    return `<div class="stat audit-card on-audit">${cardBody('정기 실사 · 진행 중', `${st.done}<small>/${st.total}</small>`, `<div class="progress"><i style="width:${pct}%"></i></div>`,
+      `<button class="card-link ${UI.filter === 'unaudited' ? 'on' : ''}" onclick="setFilter('unaudited')">미확인 ${st.total - st.done}건 ›</button> &nbsp; <button class="card-link strong" onclick="finishAudit()">마치기</button>`, coord)}</div>`;
   }
   const d = auditDue(); const last = DOC.auditLog[0];
   const lastTxt = last ? `지난 실사 ${last.endedAt.slice(5, 10).replace('-', '/')} · ${last.checked}/${last.total}${last.missing.length ? ` · <button class="card-link" onclick="showAuditResult(0)">못 찾음 ${last.missing.length}</button>` : ''}` : '';
-  if (d.left <= 0) return `<div class="stat audit-card due"><div class="lbl">정기 실사 · 시기예요</div>
-      <div class="num" style="font-size:22px">${d.left === 0 ? '오늘' : -d.left + '일 지남'}</div>
-      <div class="stat-sub">${lastTxt}</div><div class="card-links"><button class="btn sm primary" onclick="startAudit()">실사 시작</button></div>${coordLine}</div>`;
-  return `<div class="stat audit-card"><div class="lbl">정기 실사</div>
-      <div class="num">D-${d.left}</div>
-      <div class="stat-sub">다음 예정 ${d.due}${lastTxt ? ' · ' + lastTxt : ''}</div>
-      <div class="card-links"><button class="card-link" onclick="startAudit()">지금 시작 ›</button></div>${coordLine}</div>`;
+  if (d.left <= 0) return `<div class="stat audit-card due">${cardBody('정기 실사 · 시기예요', d.left === 0 ? '오늘' : -d.left + '<small>일 지남</small>', lastTxt,
+      `<button class="card-link strong" onclick="startAudit()">▶ 실사 시작 ›</button>`, coord)}</div>`;
+  return `<div class="stat audit-card">${cardBody('정기 실사', `D-${d.left}`, `다음 예정 ${d.due}${lastTxt ? ' · ' + lastTxt : ''}`,
+      `<button class="card-link" onclick="startAudit()">지금 시작 ›</button>`, coord)}</div>`;
 }
 
 /* ── 자산 화면 ── */
@@ -2504,7 +2506,7 @@ function showInstall() {
   box.innerHTML = h; box.classList.remove('hidden');
 }
 
-const BUILD = '2026-11-12j';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
+const BUILD = '2026-11-12k';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
 async function checkUpdate() {
   try {
     const t = await (await fetch(location.pathname + '?v=' + Date.now(), { cache: 'reload' })).text();
