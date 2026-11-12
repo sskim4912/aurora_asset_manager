@@ -1,6 +1,6 @@
 {
   "version": 4,
-  "updatedAt": "2026-11-12T05:27:25.537Z",
+  "updatedAt": "2026-11-12T05:27:45.669Z",
   "catalog": {},
   "assets": [
     {
@@ -3437,7 +3437,7 @@
       "item": "기타",
       "model": "[렌탈]직수형 정수기",
       "contract": "",
-      "acq": "",
+      "acq": "임대/임차",
       "qty": 1,
       "unit": "EA",
       "location": "현장 사무실 / 본관",
@@ -3448,14 +3448,18 @@
       "lng": 126.378651,
       "nextCheck": "",
       "rentalDue": "",
-      "leaseVendor": "",
+      "leaseVendor": "진로석수",
       "leaseStart": "",
       "leaseTel": "",
       "leaseContact": "",
       "note": "감리실 구역",
       "out": null,
-      "updatedAt": "2026-11-12T05:27:25.536Z",
+      "updatedAt": "2026-11-12T05:27:45.669Z",
       "log": [
+        {
+          "at": "2026-11-12T05:27:45.669Z",
+          "t": "수정: 취득 구분, 임대 업체"
+        },
         {
           "at": "2026-11-12T05:27:25.536Z",
           "t": "사진 등록 · AURORA-098_기타_20261112_142722.jpg"
