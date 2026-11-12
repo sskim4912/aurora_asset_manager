@@ -41,6 +41,7 @@ body{font-family:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFo
 button{font:inherit;cursor:pointer;color:inherit}
 input,select,textarea{font:inherit;color:inherit}
 .hidden{display:none!important}
+.upq-pill{position:fixed;left:50%;transform:translateX(-50%);top:calc(10px + env(safe-area-inset-top));z-index:9999;background:#1e3a8a;color:#fff;padding:7px 14px;border-radius:999px;font-size:13px;font-weight:600;box-shadow:0 4px 14px rgba(0,0,0,.25);white-space:nowrap}.upq-pill.bad{background:#b91c1c}.upq-pill button{margin-left:8px;background:#fff;color:#b91c1c;border:0;border-radius:999px;padding:3px 10px;font-weight:700}
 .hdr-install{padding:6px 11px;font-size:12.5px;background:#eef2ff;border-color:#c7d2fe;color:#312e81;flex:none}@media(max-width:400px){.hdr-install{padding:6px 8px;font-size:12px}}
 .ins-steps{margin:4px 0 0;padding-left:20px;line-height:1.9;font-size:15px}.ins-arrow{text-align:center;font-size:34px;animation:insb 1s infinite}@keyframes insb{50%{transform:translateY(8px)}}
 .install-box{margin-top:16px;padding:12px;border-radius:12px;background:#eef2ff;color:#312e81;font-size:13.5px;line-height:1.55;text-align:center}.install-box .btn{width:100%;margin-top:8px}
@@ -767,8 +768,8 @@ const Store = {
     const c = this.cfg();
     const url = `https://api.github.com/repos/${encodeURIComponent(c.owner)}/${encodeURIComponent(c.repo)}/contents/${path.split('/').map(encodeURIComponent).join('/')}`;
     for (let attempt = 0; attempt < 2; attempt++) {
-      const g = await fetch(url + '?ref=' + encodeURIComponent(c.branch) + '&_=' + Date.now(), { headers: this.headers(false, c), cache: 'no-store' });
-      const sha = g.ok ? (await g.json()).sha : null;
+      let sha = null;   // 사진은 이름이 매번 새로워서 첫 시도는 확인 없이 바로 올림 (빠름)
+      if (attempt > 0) { const g = await fetch(url + '?ref=' + encodeURIComponent(c.branch) + '&_=' + Date.now(), { headers: this.headers(false, c), cache: 'no-store' }); sha = g.ok ? (await g.json()).sha : null; }
       const body = { message: message + ' (Aurora 앱)', content: b64, branch: c.branch }; if (sha) body.sha = sha;
       const r = await fetch(url, { method: 'PUT', headers: this.headers(true, c), body: JSON.stringify(body) });
       if (r.ok) return true;
@@ -1711,6 +1712,7 @@ function gpsDiag() {   // 위치 상태 자세히 보기 (원인 찾기용)
   ].join('\n'));
 }
 function closeScanner(force) {
+  if (!force && UPQ.length && !UPQ_BUSY && UPQ[0].err) toast(`⚠ 아직 저장 안 된 사진 ${UPQ.length}건 · 앱을 닫지 말고 신호 좋은 곳에서 '다시 시도'`, 'warn');
   if (!force && SCAN && SCAN.cur && !SCAN.cur.photoDone && (SCAN.step === 'located' || SCAN.step === 'photo' || SCAN.step === 'upload-fail')) {
     if (!confirm('아직 장비 사진을 찍지 않았어요.\n사진을 찍어야 실사 확인이 돼요. 그래도 닫을까요?')) return;
   }
@@ -1741,9 +1743,10 @@ function nextScan() { if (!SCAN) return; if (SCAN.cur && SCAN.cur.photoDone) SCA
 /* ── ① QR 인식 ── */
 async function onScan(id) {
   if (navigator.vibrate) navigator.vibrate(80);
-  if (Store.mode() === 'github') { try { DOC = await Store.load(); } catch (e) {} }   // 다른 기기 변경(실사 시작 등) 반영
+  if (!getAsset(id) && Store.mode() === 'github') { try { DOC = await Store.load(); } catch (e) {} }   // 다른 기기에서 새로 등록한 자산
   if (!SCAN) return;
   const a = getAsset(id);
+  if (a && Store.mode() === 'github') Store.load().then(d => { DOC = d; if (SCAN && SCAN.cur && SCAN.cur.id === id) { const b = getAsset(id); if (b && b.out && SCAN.step === 'located') SCAN.step = 'out'; if (SCAN.step !== 'photo') scanUI(); } }).catch(() => {});   // 다른 기기 변경(실사 시작 등)은 뒤에서 반영
   if (!a) { SCAN.step = 'unknown'; SCAN.cur = { id }; return scanUI(); }
   SCAN.cur = { id, loc: 'wait', acc: null, photoDone: false, scannedAt: Date.now() };
   SCAN.step = a.out ? 'out' : 'located';
@@ -1752,10 +1755,11 @@ async function onScan(id) {
 /* ── ② 위치: 🟢이면 자동 저장 ── */
 function onGps() {
   scanGpsBar();
-  if (!SCAN || !SCAN.cur || SCAN.cur.loc !== 'wait' || !SCAN.pos) return;
+  if (!SCAN || !SCAN.cur || !SCAN.pos) return;
   const a = getAsset(SCAN.cur.id); if (!a || a.out) return;
-  if (gpsLevel(SCAN.pos) === 'green') saveLocation(SCAN.cur.id, SCAN.pos, 'QR');
-  else refreshLocTag();
+  const c = SCAN.cur; if (c.loc === 'map') return;
+  if (gpsLevel(SCAN.pos) !== 'red' && (!c.pos || SCAN.pos.acc < c.pos.acc)) { c.pos = { ...SCAN.pos }; c.acc = Math.round(c.pos.acc); }
+  refreshLocTag();
 }
 async function saveLocation(id, pos, how) {
   if (!SCAN || !SCAN.cur || SCAN.cur.id !== id || SCAN.cur.saving) return;
@@ -1778,7 +1782,7 @@ function pickOnMapForScan() {
   openPicker(async pt => {
     const ok = await saveChange(doc => { const x = doc.assets.find(y => y.id === id); if (!x) return false; const now = new Date().toISOString();
       x.lat = pt.lat; x.lng = pt.lng; x.updatedAt = now; addLog(x, '좌표 입력 (지도에서 찍기)', now); return true; }, `위치 저장: ${id} (지도)`, '위치를 저장했어요');
-    if (ok && SCAN && SCAN.cur && SCAN.cur.id === id) { SCAN.cur.loc = 'map'; refreshLocTag(); }
+    if (ok && SCAN && SCAN.cur && SCAN.cur.id === id) { SCAN.cur.loc = 'map'; SCAN.cur.pos = null; refreshLocTag(); }
   }, hasCoord(a) ? { lat: +a.lat, lng: +a.lng } : (SCAN.pos ? { lat: SCAN.pos.lat, lng: SCAN.pos.lng } : null));
 }
 function scanGpsBar() {
@@ -1801,10 +1805,10 @@ function refreshLocTag() {
   if (c.loc === 'saved') html = `<span class="ok">📍 위치 저장됨 (오차 ${c.acc}m)</span>`;
   else if (c.loc === 'same') html = `<span class="ok">📍 위치 그대로 (오차 ${c.acc}m)</span>`;
   else if (c.loc === 'map') html = `<span class="ok">📍 지도에서 찍은 위치로 저장됨</span>`;
-  else if (lv === 'yellow') html = `<span class="warn">📍 위치 보통 (오차 ${Math.round(SCAN.pos.acc)}m) · 🟢 되면 자동 저장</span><button class="btn sm" onclick="saveYellow()">이 위치로 저장</button>`;
+  else if (c.pos) html = `<span class="${c.acc <= GPS_GREEN ? 'ok' : 'warn'}">📍 위치 잡힘 (오차 ${c.acc}m) · 사진과 함께 저장돼요</span>`;
   else html = `<span class="warn">📍 위치 잡는 중… 🟢 되면 자동 저장</span>${waited > 20 ? `<button class="btn sm" onclick="pickOnMapForScan()">지도에서 찍기</button>` : ''}`;
   el.innerHTML = html;
-  if (c.loc === 'wait' && waited <= 21) setTimeout(() => { if (SCAN && SCAN.cur === c && c.loc === 'wait') refreshLocTag(); }, 21000 - waited * 1000);
+  if (c.loc === 'wait' && !c.pos && waited <= 21) setTimeout(() => { if (SCAN && SCAN.cur === c && c.loc === 'wait') refreshLocTag(); }, 21000 - waited * 1000);
 }
 
 /* ── ③ 사진(필수) → 저장되면 실사 확인 ── */
@@ -1813,9 +1817,63 @@ async function takePhoto() {
   if (!SCAN || !SCAN.cur) return;
   const a = getAsset(SCAN.cur.id), v = $('scan-video');
   if (navigator.vibrate) navigator.vibrate(40);
-  SCAN.cur.shot = makePhoto(v, a);
-  await uploadShot();
+  const c = SCAN.cur; c.shot = makePhoto(v, a);
+  enqueueUpload({ id: a.id, shot: c.shot, pos: c.loc === 'wait' && c.pos ? { lat: c.pos.lat, lng: c.pos.lng, acc: c.pos.acc } : null });
+  c.photoDone = true; toast(`📸 ${a.id} 사진 찍음 · 저장은 자동으로 돼요`);
+  nextScan();
 }
+/* 저장 대기열: 사진 파일 → (위치 + 사진 기록 + 실사 확인) 한 번에. 앱이 열려 있는 동안 계속 재시도 */
+const UPQ = []; let UPQ_BUSY = false;
+function enqueueUpload(job) { job.tries = 0; job.fileDone = false; UPQ.push(job); PHOTO_LOCAL[job.id] = job.shot.full; updUpq(); runUploads(); }
+function photoMutator(j) {
+  const { id, shot, pos } = j;
+  return doc => {
+    const x = doc.assets.find(y => y.id === id); if (!x) return null; const now = new Date().toISOString(); const r = { audit: false, found: false, done: false };
+    if (pos && !(hasCoord(x) && distM({ lat: +x.lat, lng: +x.lng }, pos) < GPS_SAME)) {
+      const had = hasCoord(x); x.lat = +pos.lat.toFixed(6); x.lng = +pos.lng.toFixed(6);
+      addLog(x, `${had ? '위치 갱신' : '좌표 입력'} (QR, 오차 약 ${Math.round(pos.acc)}m)`, now);
+    }
+    x.photo = { path: shot.path, at: shot.at }; x.photos = [{ path: shot.path, at: shot.at }, ...(x.photos || []).filter(p => p.path !== shot.path)].slice(0, PHOTO_KEEP);
+    x.thumb = shot.thumb; x.updatedAt = now; addLog(x, '사진 등록 · ' + shot.path.split('/').pop(), now);
+    if (!x.out) {
+      if (doc.audit && !doc.audit.checked[id]) { doc.audit.checked[id] = now; addLog(x, '실사 확인 (QR + 사진)', now); r.audit = true;
+        if (doc.assets.filter(y => !y.out).every(y => doc.audit.checked[y.id])) { closeAuditDoc(doc, now); r.done = true; } }
+      const lm = doc.auditLog[0];
+      if (lm && lm.missing.includes(id)) { lm.missing = lm.missing.filter(z => z !== id); addLog(x, '실사 미발견 → 찾음', now); r.found = true; }
+    }
+    return r;
+  };
+}
+async function runUploads() {
+  if (UPQ_BUSY) return; UPQ_BUSY = true; updUpq();
+  while (UPQ.length) {
+    const j = UPQ[0];
+    if (!(await ensureToken())) { j.err = '저장 연결 없음'; break; }
+    try {
+      if (!j.fileDone) { await Store.putFile(j.shot.path, j.shot.full.split(',')[1], `사진: ${j.shot.path.split('/').pop()}`); j.fileDone = true; }
+      setSync('saving');
+      const { doc, result } = await Store.commit(photoMutator(j), `사진${j.pos ? '·위치' : ''}: ${j.id}${DOC.audit ? ' · 실사 확인' : ''}`);
+      DOC = doc; setSync('ok'); UPQ.shift();
+      if (!SCAN || SCAN.step !== 'photo') { if (SCAN) scanUI(); else render(); }
+      if (result && result.done) toast('🎉 모든 자산을 확인해서 실사가 완료됐어요');
+    } catch (e) {
+      j.tries++; j.err = e.message; setSync('err', e.message); updUpq();
+      if (j.tries >= 5) break;
+      await new Promise(r => setTimeout(r, Math.min(30000, 2000 * 2 ** j.tries)));
+    }
+    updUpq();
+  }
+  UPQ_BUSY = false; updUpq();
+}
+function updUpq() {
+  let el = $('upq-pill'); if (!el) { el = document.createElement('div'); el.id = 'upq-pill'; el.className = 'upq-pill'; document.body.appendChild(el); }
+  if (!UPQ.length) { el.classList.add('hidden'); return; }
+  const fail = !UPQ_BUSY && UPQ[0].err;
+  el.className = 'upq-pill' + (fail ? ' bad' : '');
+  el.innerHTML = fail ? `⚠ 사진 저장 안 됨 ${UPQ.length}건 <button onclick="UPQ.forEach(j=>j.tries=0);runUploads()">다시 시도</button>` : `⏫ 사진 저장 중 ${UPQ.length}건`;
+}
+window.addEventListener('online', () => { if (UPQ.length) { UPQ.forEach(j => j.tries = 0); runUploads(); } });
+window.addEventListener('beforeunload', e => { if (UPQ.length) { e.preventDefault(); e.returnValue = ''; } });
 async function uploadShot() {
   const c = SCAN.cur; SCAN.step = 'uploading'; $('scanner').classList.remove('photo-mode'); scanUI();
   const res = await savePhoto(c.id, c.shot, { confirm: true });
@@ -1830,7 +1888,7 @@ function stampText(a, d) { return [`${a.id} · ${a.item}`, `${ymd(d)} ${pad(d.ge
 function makePhoto(src, a) {
   const d = new Date();
   const w0 = src.videoWidth || src.naturalWidth, h0 = src.videoHeight || src.naturalHeight;
-  const k = Math.min(1, 1280 / Math.max(w0, h0)); const c = document.createElement('canvas');
+  const k = Math.min(1, 1024 / Math.max(w0, h0)); const c = document.createElement('canvas');
   c.width = Math.round(w0 * k); c.height = Math.round(h0 * k);
   const g = c.getContext('2d'); g.drawImage(src, 0, 0, c.width, c.height);
   // 날짜 도장: 아래쪽 띠에 관리번호·품목 / 날짜·시각·위치
@@ -1840,7 +1898,7 @@ function makePhoto(src, a) {
   const [l1, l2] = stampText(a, d);
   g.font = `700 ${fs}px Pretendard, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif`; g.fillText(l1, fs * .7, c.height - band + fs * .95, c.width - fs * 1.4);
   g.font = `500 ${Math.round(fs * .82)}px Pretendard, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif`; g.fillText(l2, fs * .7, c.height - band + fs * 2.05, c.width - fs * 1.4);
-  const full = c.toDataURL('image/jpeg', 0.72);
+  const full = c.toDataURL('image/jpeg', 0.68);
   const t = document.createElement('canvas'), s = Math.min(w0, h0); t.width = t.height = 64;
   t.getContext('2d').drawImage(src, (w0 - s) / 2, (h0 - s) / 2, s, s, 0, 0, 64, 64);
   const stamp = `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
@@ -2389,7 +2447,7 @@ function showInstall() {
   box.innerHTML = h; box.classList.remove('hidden');
 }
 
-const BUILD = '2026-11-12c';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
+const BUILD = '2026-11-12d';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
 async function checkUpdate() {
   try {
     const t = await (await fetch(location.pathname + '?v=' + Date.now(), { cache: 'reload' })).text();
