@@ -1,6 +1,6 @@
 {
   "version": 3,
-  "updatedAt": "2026-11-12T01:16:03.197Z",
+  "updatedAt": "2026-11-12T02:16:37.412Z",
   "catalog": {},
   "assets": [
     {
@@ -25,8 +25,12 @@
       "leaseTel": "",
       "note": "",
       "out": null,
-      "updatedAt": "2026-11-12T01:08:10.647Z",
+      "updatedAt": "2026-11-12T02:16:37.412Z",
       "log": [
+        {
+          "at": "2026-11-12T02:16:37.412Z",
+          "t": "사진 삭제 1장 · AURORA-001_공기청정기_20261112_100807.jpg"
+        },
         {
           "at": "2026-11-12T01:08:10.647Z",
           "t": "사진 등록 · AURORA-001_공기청정기_20261112_100807.jpg"
@@ -76,16 +80,12 @@
           "t": "좌표 입력 (QR, 오차 약 11m)"
         }
       ],
-      "thumb": "data:image/jpeg;base64,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",
+      "thumb": "data:image/jpeg;base64,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",
       "photo": {
-        "path": "photos/AURORA-001/AURORA-001_공기청정기_20261112_100807.jpg",
-        "at": "2026-11-12T01:08:07.351Z"
+        "path": "photos/AURORA-001/AURORA-001_공기청정기_20261112_100710.jpg",
+        "at": "2026-11-12T01:07:10.448Z"
       },
       "photos": [
-        {
-          "path": "photos/AURORA-001/AURORA-001_공기청정기_20261112_100807.jpg",
-          "at": "2026-11-12T01:08:07.351Z"
-        },
         {
           "path": "photos/AURORA-001/AURORA-001_공기청정기_20261112_100710.jpg",
           "at": "2026-11-12T01:07:10.448Z"
@@ -2768,33 +2768,36 @@
     },
     {
       "id": "AURORA-088",
+      "category": "사무/가전/생활",
+      "item": "기타",
+      "model": "[렌탈]직수형정수기",
       "contract": "",
+      "acq": "임대/임차",
+      "qty": 1,
+      "unit": "EA",
+      "location": "현장 사무실 / 본관",
       "locInit": "현장 사무실 / 본관",
-      "out": null,
+      "manager": "관리팀장",
       "status": "상",
+      "lat": 36.996223,
+      "lng": 126.378715,
+      "nextCheck": "",
+      "rentalDue": "",
+      "leaseVendor": "진로석수",
+      "leaseStart": "",
+      "leaseTel": "",
+      "note": "",
+      "out": null,
+      "updatedAt": "2026-11-12T01:16:03.197Z",
       "log": [
         {
           "at": "2026-11-12T01:16:03.197Z",
           "t": "등록"
         }
       ],
-      "item": "기타",
-      "category": "사무/가전/생활",
-      "model": "[렌탈]직수형정수기",
-      "qty": 1,
-      "unit": "EA",
-      "location": "현장 사무실 / 본관",
-      "acq": "임대/임차",
-      "manager": "관리팀장",
-      "lat": 36.996223,
-      "lng": 126.378715,
-      "nextCheck": "",
-      "rentalDue": "",
-      "note": "",
-      "leaseVendor": "진로석수",
-      "leaseStart": "",
-      "leaseTel": "",
-      "updatedAt": "2026-11-12T01:16:03.197Z"
+      "thumb": "",
+      "photo": null,
+      "photos": []
     }
   ],
   "audit": null,
