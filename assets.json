@@ -1,6 +1,6 @@
 {
   "version": 3,
-  "updatedAt": "2026-11-12T01:08:13.179Z",
+  "updatedAt": "2026-11-12T01:08:28.052Z",
   "catalog": {},
   "assets": [
     {
@@ -2616,33 +2616,48 @@
     },
     {
       "id": "AURORA-085",
+      "category": "사무/가전/생활",
+      "item": "기타",
+      "model": "에어프라이기",
       "contract": "",
+      "acq": "계약외(온라인구매)",
+      "qty": 1,
+      "unit": "EA",
+      "location": "현장 사무실 / 본관",
       "locInit": "현장 사무실 / 본관",
-      "out": null,
+      "manager": "관리팀장",
       "status": "상",
+      "lat": 36.996226,
+      "lng": 126.378718,
+      "nextCheck": "",
+      "rentalDue": "",
+      "leaseVendor": "",
+      "leaseStart": "",
+      "leaseTel": "",
+      "note": "",
+      "out": null,
+      "updatedAt": "2026-11-12T01:08:28.052Z",
       "log": [
+        {
+          "at": "2026-11-12T01:08:28.052Z",
+          "t": "사진 등록 · AURORA-085_기타_20261112_100824.jpg"
+        },
         {
           "at": "2026-11-12T01:08:13.178Z",
           "t": "등록"
         }
       ],
-      "item": "기타",
-      "category": "사무/가전/생활",
-      "model": "에어프라이기",
-      "qty": 1,
-      "unit": "EA",
-      "location": "현장 사무실 / 본관",
-      "acq": "계약외(온라인구매)",
-      "manager": "관리팀장",
-      "lat": 36.996226,
-      "lng": 126.378718,
-      "nextCheck": "",
-      "rentalDue": "",
-      "note": "",
-      "leaseVendor": "",
-      "leaseStart": "",
-      "leaseTel": "",
-      "updatedAt": "2026-11-12T01:08:13.178Z"
+      "thumb": "data:image/jpeg;base64,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",
+      "photo": {
+        "path": "photos/AURORA-085/AURORA-085_기타_20261112_100824.jpg",
+        "at": "2026-11-12T01:08:24.883Z"
+      },
+      "photos": [
+        {
+          "path": "photos/AURORA-085/AURORA-085_기타_20261112_100824.jpg",
+          "at": "2026-11-12T01:08:24.883Z"
+        }
+      ]
     }
   ],
   "audit": null,
