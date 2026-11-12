@@ -2340,6 +2340,7 @@ function startApp() {
   document.querySelectorAll('[data-ic]').forEach(el => el.outerHTML = icon(el.dataset.ic));
   DOC = normalizeDoc((Store.mode() === 'local' ? lsGet('aam_local') : null) || lsGet('aam_cache') || seedDoc());
   render(); reloadData();
+  if (OPEN_SET) { OPEN_SET = false; setTimeout(openSettings, 400); }
 }
 window.addEventListener('hashchange', () => { render(); });
 window.addEventListener('keydown', e => { if (e.key === 'Escape') { if (!$('modal').classList.contains('hidden')) closeModal(); else closeDrawer(); } });
@@ -2376,10 +2377,12 @@ function showInstall() {
   box.innerHTML = h; box.classList.remove('hidden');
 }
 
+let OPEN_SET = false;   // ?settings 주소로 열면 로그인 뒤 설정 바로 열기
 (function init() {
   showInstall();
   if (/KAKAOTALK/i.test(navigator.userAgent) && !sessionStorage.getItem('aam_ext')) { sessionStorage.setItem('aam_ext', '1'); setTimeout(openExternal, 300); }
   const p = new URLSearchParams(location.search);
+  if (p.has('settings')) { OPEN_SET = true; history.replaceState(null, '', location.pathname); }
   if (p.get('id')) { PENDING_ID = p.get('id').toUpperCase(); history.replaceState(null, '', location.pathname + '#assets'); }
   if (isAuthed()) startApp(); else { $('gate').classList.remove('hidden'); setTimeout(() => $('pw').focus(), 50); }
 })();
