@@ -1,6 +1,6 @@
 {
   "version": 3,
-  "updatedAt": "2026-11-12T00:53:58.200Z",
+  "updatedAt": "2026-11-12T00:54:44.266Z",
   "catalog": {},
   "assets": [
     {
@@ -2434,6 +2434,36 @@
           "at": "2026-11-12T00:52:37.646Z"
         }
       ]
+    },
+    {
+      "id": "AURORA-082",
+      "contract": "",
+      "locInit": "현장 사무실 / 본관",
+      "out": null,
+      "status": "상",
+      "log": [
+        {
+          "at": "2026-11-12T00:54:44.265Z",
+          "t": "등록"
+        }
+      ],
+      "item": "냉장고",
+      "category": "사무/가전/생활",
+      "model": "쇼케이스 냉장고",
+      "qty": 1,
+      "unit": "EA",
+      "location": "현장 사무실 / 본관",
+      "acq": "",
+      "manager": "관리팀장",
+      "lat": 36.996483,
+      "lng": 126.379158,
+      "nextCheck": "",
+      "rentalDue": "",
+      "note": "",
+      "leaseVendor": "",
+      "leaseStart": "",
+      "leaseTel": "",
+      "updatedAt": "2026-11-12T00:54:44.265Z"
     }
   ],
   "audit": null,
