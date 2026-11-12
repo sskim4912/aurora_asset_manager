@@ -1,6 +1,6 @@
 {
   "version": 3,
-  "updatedAt": "2026-11-12T00:49:11.789Z",
+  "updatedAt": "2026-11-12T00:49:58.169Z",
   "catalog": {},
   "assets": [
     {
@@ -2305,33 +2305,48 @@
     },
     {
       "id": "AURORA-080",
+      "category": "사무/가전/생활",
+      "item": "기타",
+      "model": "[렌탈]커피머신",
       "contract": "",
+      "acq": "임대/임차",
+      "qty": 1,
+      "unit": "EA",
+      "location": "현장 사무실 / 본관",
       "locInit": "현장 사무실 / 본관",
-      "out": null,
+      "manager": "관리팀장",
       "status": "상",
+      "lat": 36.996492,
+      "lng": 126.379163,
+      "nextCheck": "",
+      "rentalDue": "",
+      "leaseVendor": "보클라빈",
+      "leaseStart": "",
+      "leaseTel": "",
+      "note": "",
+      "out": null,
+      "updatedAt": "2026-11-12T00:49:58.169Z",
       "log": [
+        {
+          "at": "2026-11-12T00:49:58.169Z",
+          "t": "사진 등록 · AURORA-080_기타_20261112_094954.jpg"
+        },
         {
           "at": "2026-11-12T00:49:11.788Z",
           "t": "등록"
         }
       ],
-      "item": "기타",
-      "category": "사무/가전/생활",
-      "model": "[렌탈]커피머신",
-      "qty": 1,
-      "unit": "EA",
-      "location": "현장 사무실 / 본관",
-      "acq": "임대/임차",
-      "manager": "관리팀장",
-      "lat": 36.996492,
-      "lng": 126.379163,
-      "nextCheck": "",
-      "rentalDue": "",
-      "note": "",
-      "leaseVendor": "보클라빈",
-      "leaseStart": "",
-      "leaseTel": "",
-      "updatedAt": "2026-11-12T00:49:11.788Z"
+      "thumb": "data:image/jpeg;base64,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",
+      "photo": {
+        "path": "photos/AURORA-080/AURORA-080_기타_20261112_094954.jpg",
+        "at": "2026-11-12T00:49:54.372Z"
+      },
+      "photos": [
+        {
+          "path": "photos/AURORA-080/AURORA-080_기타_20261112_094954.jpg",
+          "at": "2026-11-12T00:49:54.372Z"
+        }
+      ]
     }
   ],
   "audit": null,
