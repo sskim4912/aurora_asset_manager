@@ -1,6 +1,6 @@
 {
   "version": 3,
-  "updatedAt": "2026-11-12T01:00:18.749Z",
+  "updatedAt": "2026-11-12T01:04:40.777Z",
   "catalog": {},
   "assets": [
     {
@@ -2536,6 +2536,36 @@
           "at": "2026-11-12T00:56:10.532Z"
         }
       ]
+    },
+    {
+      "id": "AURORA-084",
+      "contract": "",
+      "locInit": "현장 사무실 / 본관",
+      "out": null,
+      "status": "상",
+      "log": [
+        {
+          "at": "2026-11-12T01:04:40.777Z",
+          "t": "등록"
+        }
+      ],
+      "item": "기타",
+      "category": "사무/가전/생활",
+      "model": "[렌탈]캐논 C3930",
+      "qty": 1,
+      "unit": "EA",
+      "location": "현장 사무실 / 본관",
+      "acq": "임대/임차",
+      "manager": "관리팀장",
+      "lat": 36.996458,
+      "lng": 126.379089,
+      "nextCheck": "",
+      "rentalDue": "",
+      "note": "",
+      "leaseVendor": "(주)세중S&C",
+      "leaseStart": "",
+      "leaseTel": "15771091",
+      "updatedAt": "2026-11-12T01:04:40.777Z"
     }
   ],
   "audit": null,
