@@ -1,6 +1,6 @@
 {
   "version": 4,
-  "updatedAt": "2026-11-12T05:24:01.056Z",
+  "updatedAt": "2026-11-12T05:24:18.702Z",
   "catalog": {},
   "assets": [
     {
@@ -3446,34 +3446,49 @@
     },
     {
       "id": "AURORA-099",
+      "category": "사무/가전/생활",
+      "item": "기타",
+      "model": "플로터",
       "contract": "",
+      "acq": "구자산",
+      "qty": 1,
+      "unit": "EA",
+      "location": "현장 사무실 / 본관",
       "locInit": "현장 사무실 / 본관",
-      "out": null,
+      "manager": "관리팀장",
       "status": "상",
+      "lat": 36.996459,
+      "lng": 126.379083,
+      "nextCheck": "",
+      "rentalDue": "",
+      "leaseVendor": "",
+      "leaseStart": "",
+      "leaseTel": "",
+      "leaseContact": "",
+      "note": "관리팀 구역",
+      "out": null,
+      "updatedAt": "2026-11-12T05:24:18.702Z",
       "log": [
+        {
+          "at": "2026-11-12T05:24:18.702Z",
+          "t": "사진 등록 · AURORA-099_기타_20261112_142415.jpg"
+        },
         {
           "at": "2026-11-12T05:24:01.056Z",
           "t": "등록"
         }
       ],
-      "item": "기타",
-      "category": "사무/가전/생활",
-      "model": "플로터",
-      "qty": 1,
-      "unit": "EA",
-      "location": "현장 사무실 / 본관",
-      "acq": "구자산",
-      "manager": "관리팀장",
-      "lat": 36.996459,
-      "lng": 126.379083,
-      "nextCheck": "",
-      "rentalDue": "",
-      "note": "관리팀 구역",
-      "leaseVendor": "",
-      "leaseStart": "",
-      "leaseTel": "",
-      "leaseContact": "",
-      "updatedAt": "2026-11-12T05:24:01.056Z"
+      "thumb": "data:image/jpeg;base64,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",
+      "photo": {
+        "path": "photos/AURORA-099/AURORA-099_기타_20261112_142415.jpg",
+        "at": "2026-11-12T05:24:15.347Z"
+      },
+      "photos": [
+        {
+          "path": "photos/AURORA-099/AURORA-099_기타_20261112_142415.jpg",
+          "at": "2026-11-12T05:24:15.347Z"
+        }
+      ]
     }
   ],
   "audit": null,
