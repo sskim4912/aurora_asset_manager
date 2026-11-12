@@ -1,6 +1,6 @@
 {
   "version": 4,
-  "updatedAt": "2026-11-12T05:13:32.964Z",
+  "updatedAt": "2026-11-12T05:15:29.800Z",
   "catalog": {},
   "assets": [
     {
@@ -3359,6 +3359,37 @@
           "at": "2026-11-12T05:13:29.997Z"
         }
       ]
+    },
+    {
+      "id": "AURORA-097",
+      "contract": "",
+      "locInit": "현장 사무실 / 본관",
+      "out": null,
+      "status": "상",
+      "log": [
+        {
+          "at": "2026-11-12T05:15:29.799Z",
+          "t": "등록"
+        }
+      ],
+      "item": "기타",
+      "category": "사무/가전/생활",
+      "model": "캐논 C3930 복합기",
+      "qty": 1,
+      "unit": "EA",
+      "location": "현장 사무실 / 본관",
+      "acq": "임대/임차",
+      "manager": "관리팀장",
+      "lat": 36.996113,
+      "lng": 126.378666,
+      "nextCheck": "",
+      "rentalDue": "",
+      "note": "",
+      "leaseVendor": "세중S&C",
+      "leaseStart": "",
+      "leaseTel": "1577-1091",
+      "leaseContact": "",
+      "updatedAt": "2026-11-12T05:15:29.799Z"
     }
   ],
   "audit": null,
