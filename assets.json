@@ -1,6 +1,6 @@
 {
   "version": 4,
-  "updatedAt": "2026-11-12T05:15:29.800Z",
+  "updatedAt": "2026-11-12T05:15:44.552Z",
   "catalog": {},
   "assets": [
     {
@@ -3362,34 +3362,49 @@
     },
     {
       "id": "AURORA-097",
+      "category": "사무/가전/생활",
+      "item": "기타",
+      "model": "캐논 C3930 복합기",
       "contract": "",
+      "acq": "임대/임차",
+      "qty": 1,
+      "unit": "EA",
+      "location": "현장 사무실 / 본관",
       "locInit": "현장 사무실 / 본관",
-      "out": null,
+      "manager": "관리팀장",
       "status": "상",
+      "lat": 36.996113,
+      "lng": 126.378666,
+      "nextCheck": "",
+      "rentalDue": "",
+      "leaseVendor": "세중S&C",
+      "leaseStart": "",
+      "leaseTel": "1577-1091",
+      "leaseContact": "",
+      "note": "",
+      "out": null,
+      "updatedAt": "2026-11-12T05:15:44.552Z",
       "log": [
+        {
+          "at": "2026-11-12T05:15:44.552Z",
+          "t": "사진 등록 · AURORA-097_기타_20261112_141541.jpg"
+        },
         {
           "at": "2026-11-12T05:15:29.799Z",
           "t": "등록"
         }
       ],
-      "item": "기타",
-      "category": "사무/가전/생활",
-      "model": "캐논 C3930 복합기",
-      "qty": 1,
-      "unit": "EA",
-      "location": "현장 사무실 / 본관",
-      "acq": "임대/임차",
-      "manager": "관리팀장",
-      "lat": 36.996113,
-      "lng": 126.378666,
-      "nextCheck": "",
-      "rentalDue": "",
-      "note": "",
-      "leaseVendor": "세중S&C",
-      "leaseStart": "",
-      "leaseTel": "1577-1091",
-      "leaseContact": "",
-      "updatedAt": "2026-11-12T05:15:29.799Z"
+      "thumb": "data:image/jpeg;base64,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",
+      "photo": {
+        "path": "photos/AURORA-097/AURORA-097_기타_20261112_141541.jpg",
+        "at": "2026-11-12T05:15:41.502Z"
+      },
+      "photos": [
+        {
+          "path": "photos/AURORA-097/AURORA-097_기타_20261112_141541.jpg",
+          "at": "2026-11-12T05:15:41.502Z"
+        }
+      ]
     }
   ],
   "audit": null,
