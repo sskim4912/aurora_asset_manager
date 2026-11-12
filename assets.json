@@ -1,6 +1,6 @@
 {
   "version": 4,
-  "updatedAt": "2026-11-12T05:04:18.821Z",
+  "updatedAt": "2026-11-12T05:05:03.093Z",
   "catalog": {},
   "assets": [
     {
@@ -3071,6 +3071,36 @@
           "at": "2026-11-12T04:52:13.567Z"
         }
       ]
+    },
+    {
+      "id": "AURORA-093",
+      "contract": "",
+      "locInit": "현장 사무실 / 본관",
+      "out": null,
+      "status": "상",
+      "log": [
+        {
+          "at": "2026-11-12T05:05:03.092Z",
+          "t": "등록"
+        }
+      ],
+      "item": "안전화건조기",
+      "category": "가설비품",
+      "model": "안전화건조기",
+      "qty": 1,
+      "unit": "EA",
+      "location": "현장 사무실 / 본관",
+      "acq": "",
+      "manager": "관리팀장",
+      "lat": 36.996241,
+      "lng": 126.378463,
+      "nextCheck": "",
+      "rentalDue": "",
+      "note": "안전팀 구역",
+      "leaseVendor": "",
+      "leaseStart": "",
+      "leaseTel": "",
+      "updatedAt": "2026-11-12T05:05:03.092Z"
     }
   ],
   "audit": null,
