@@ -293,7 +293,7 @@ table.tbl{width:100%;border-collapse:collapse}
 .p-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding:20px 20px 14px;border-bottom:1px solid var(--line)}
 .p-head h2{font-size:20px;margin:3px 0 0;letter-spacing:-.02em;line-height:1.3}
 .p-body{flex:1;overflow:auto;padding:18px 20px 24px}
-.p-foot{display:flex;gap:8px;padding:14px 20px calc(14px + env(safe-area-inset-bottom));border-top:1px solid var(--line)}
+.p-foot{display:flex;flex-wrap:wrap;gap:8px;padding:14px 20px calc(14px + env(safe-area-inset-bottom));border-top:1px solid var(--line)}
 .p-foot .btn{flex:1}
 .flabel{font-size:13px;font-weight:700;color:#344054;margin:0 0 7px;display:flex;gap:4px;align-items:center}
 .flabel em{color:var(--red);font-style:normal}
@@ -385,7 +385,9 @@ details[open].more summary::before{transform:rotate(90deg)}
 #kmap{width:100%;height:100%}
 .map-fail{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;color:var(--sub);gap:6px}
 .map-fail b{color:var(--text);font-size:15px}
+.del-line{flex-basis:100%;text-align:center;margin-top:2px}.link-gray{border:0;background:none;color:#98a2b3;font-size:12px;text-decoration:underline;cursor:pointer;padding:2px 6px}.link-gray:hover{color:#b91c1c}
 .trash-link{display:inline-block;white-space:nowrap;padding:3px 9px;border-radius:7px;background:#dcfce7;color:#15803d;font-weight:700;font-size:12.5px;cursor:pointer}.trash-link:hover{background:#15803d;color:#fff}
+.trash-kind{font-size:11px;font-weight:700;padding:1px 7px;border-radius:6px;background:#eef2ff;color:#3730a3}.trash-kind.asset{background:#fee2e2;color:#b91c1c}
 .trash-row{display:flex;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}.trash-row .info{flex:1;min-width:0;font-size:13px;line-height:1.5}.trash-row .info b{font-size:14px}.trash-row.done{opacity:.55}.trash-imgs{display:flex;gap:4px;flex-wrap:wrap}.trash-imgs img{width:48px;height:48px;object-fit:cover;border-radius:6px;cursor:pointer}
 .lease-link{display:inline-block;white-space:nowrap;padding:3px 9px;border-radius:7px;background:#e8f1fb;color:#0a5eb0;font-weight:700;font-size:12.5px;cursor:pointer}.lease-link:hover,.lease-link.on{background:#0a5eb0;color:#fff}
 .empty-row{text-align:center;padding:28px 10px!important;color:var(--sub);cursor:default}
@@ -832,7 +834,7 @@ function ghErr(s) {
     : s === 404 ? '저장소를 찾을 수 없어요 (404)' : `GitHub 오류 (${s})`;
 }
 function nextId(doc) {
-  const max = doc.assets.reduce((m, a) => { const id = String(a.id); if (!id.startsWith(ID_PREFIX)) return m; const n = parseInt(id.slice(ID_PREFIX.length), 10); return Number.isFinite(n) && n > m ? n : m; }, 0);
+  const max = [...doc.assets, ...(doc.trash || []).filter(t => t.kind === 'asset').map(t => ({ id: t.id }))].reduce((m, a) => { const id = String(a.id); if (!id.startsWith(ID_PREFIX)) return m; const n = parseInt(id.slice(ID_PREFIX.length), 10); return Number.isFinite(n) && n > m ? n : m; }, 0);
   return ID_PREFIX + String(max + 1).padStart(3, '0');
 }
 function qrBase() {
@@ -894,6 +896,7 @@ async function reloadData() {
   if (PENDING_ID) {
     const id = PENDING_ID; PENDING_ID = null;
     if (getAsset(id)) { openAsset(id); qrOpened(id); }
+    else if (trashedAsset(id)) { toast(`${id}은(는) 삭제 보관함에 있는 자산이에요`, 'warn'); openTrash(); }
     else toast(`${id} 자산을 찾을 수 없어요`, 'warn');
   }
 }
@@ -1426,7 +1429,7 @@ function detailHTML(a) {
     <div class="flabel" style="margin-top:20px">변경 이력</div>
     <div class="hist">${(a.log || []).length ? a.log.map(l => `<div><span>${esc(l.t)}</span><span class="muted">${fmtAt(l.at)}</span></div>`).join('') : `<div><span class="muted">기록 없음 · 최종 변경 ${relTime(a.updatedAt)}</span></div>`}</div>
   </div>
-  <div class="p-foot"><button class="btn" onclick="openForm('${a.id}')">${icon('edit', 16)} 정보 수정</button>${a.out ? '' : `<button class="btn" onclick="openOut(['${a.id}'])">${icon('logout', 16)} 현장 종료 처리</button>`}</div>`;
+  <div class="p-foot"><button class="btn" onclick="openForm('${a.id}')">${icon('edit', 16)} 정보 수정</button>${a.out ? '' : `<button class="btn" onclick="openOut(['${a.id}'])">${icon('logout', 16)} 현장 종료 처리</button>`}<div class="del-line"><button class="link-gray" onclick="openRemoveAsset('${a.id}')">잘못 등록한 자산 지우기</button></div></div>`;
 }
 function coordLog(a) {   // 마지막 좌표 기록 (기록 목록에서) → { at, how }
   const l = (a.log || []).find(x => /^(좌표 입력|위치 갱신|좌표 변경)/.test(x.t));
@@ -1756,7 +1759,7 @@ async function onScan(id) {
   if (!SCAN) return;
   const a = getAsset(id);
   if (a && Store.mode() === 'github') Store.load().then(d => { DOC = d; if (SCAN && SCAN.cur && SCAN.cur.id === id) { const b = getAsset(id); if (b && b.out && SCAN.step === 'located') SCAN.step = 'out'; if (SCAN.step !== 'photo') scanUI(); } }).catch(() => {});   // 다른 기기 변경(실사 시작 등)은 뒤에서 반영
-  if (!a) { SCAN.step = 'unknown'; SCAN.cur = { id }; return scanUI(); }
+  if (!a) { SCAN.step = trashedAsset(id) ? 'trashed' : 'unknown'; SCAN.cur = { id }; return scanUI(); }
   SCAN.cur = { id, loc: 'wait', acc: null, photoDone: false, scannedAt: Date.now() };
   SCAN.step = a.out ? 'out' : 'located';
   scanUI(); onGps();
@@ -2043,12 +2046,36 @@ async function delPhotos(id, ps) {
     if (main) { x.photo = x.photos[0] || null; x.thumb = thumb || ''; }
     x.updatedAt = now; addLog(x, `사진 ${moved.length}장 → 삭제 보관함 · ` + moved.map(m => fname(m)).join(', '), now); return true; }, `사진 → 삭제 보관함: ${id} (${paths.length}장)`, null);
 }
+/* 잘못 등록한 자산 지우기 → 삭제 보관함 (번호는 다시 쓰지 않음) */
+const trashedAsset = id => (DOC.trash || []).find(t => t.kind === 'asset' && t.id === id && !t.restoredAt);
+const DEL_REASONS = ['중복 등록', '잘못 입력', '시험 등록'];
+function openRemoveAsset(id) {
+  const a = getAsset(id); if (!a) return; const pn = photoList(a).length;
+  openModal(`<div class="m-head"><h2>${esc(a.id)} · ${esc(a.item)}을(를) 지울까요?</h2><button class="icon-btn" onclick="closeModal()">${icon('x', 20)}</button></div>
+    <div class="m-body"><p class="sub" style="margin:0 0 12px">목록·지도·엑셀·실사에서 빠지고 <b>삭제 보관함</b>으로 가요. 언제든 되살릴 수 있어요.</p>
+      <div class="flabel">이유<em>*</em></div><div style="display:flex;gap:14px;flex-wrap:wrap;margin:6px 0 12px">${DEL_REASONS.map(r => `<label><input type="radio" name="rm-r" value="${r}"> ${r}</label>`).join('')}</div>
+      <div class="flabel">메모 (선택)</div><input class="inp" id="rm-memo" placeholder="예: AURORA-012와 같은 물건">
+      ${pn || a.out ? `<p class="hint" style="color:#b45309;margin-top:12px">⚠ 이 자산은 ${pn ? `사진 ${pn}장` : ''}${pn && a.out ? '·' : ''}${a.out ? '현장 종료 기록' : ''}이 있어요. <b>실제 물건이면 '현장 종료'</b>를 써 주세요.</p>` : ''}
+      <p class="hint">관리번호 ${esc(a.id)}은(는) 비워 두고 다시 쓰지 않아요.</p></div>
+    <div class="m-foot"><span class="sp"></span><button class="btn" onclick="closeModal()">취소</button><button class="btn danger" onclick="removeAsset('${a.id}')">삭제 보관함으로</button></div>`, 'sm');
+}
+async function removeAsset(id) {
+  const r = (document.querySelector('input[name=rm-r]:checked') || {}).value; if (!r) return toast('이유를 골라 주세요', 'warn');
+  const memo = ($('rm-memo').value || '').trim();
+  if (!(await ensureToken())) return;
+  closeModal(); closeDrawer();
+  await saveChange(doc => { const i = doc.assets.findIndex(y => y.id === id); if (i < 0) return false; const x = doc.assets[i]; const now = new Date().toISOString();
+    addLog(x, `잘못 등록 → 삭제 보관함 (${r}${memo ? ' · ' + memo : ''})`, now);
+    doc.trash.unshift({ at: now, kind: 'asset', id, reason: r, memo, snap: snapOf(x), photos: photoList(x).map(p => ({ path: p.path, at: p.at })), asset: x });
+    doc.assets.splice(i, 1); if (doc.audit) delete doc.audit.checked[id]; return true; }, `자산 → 삭제 보관함: ${id} (${r})`, `${id}을(를) 삭제 보관함으로 옮겼어요`);
+}
+function restoreAssetById(id) { const i = DOC.trash.findIndex(t => t.kind === 'asset' && t.id === id && !t.restoredAt); if (i >= 0) restoreTrash(i); }
 function openTrash() {
   const T = DOC.trash;
   const rows = T.map((t, i) => { const a = getAsset(t.id) || { id: t.id };
     return `<div class="trash-row ${t.restoredAt ? 'done' : ''}"><div class="info">
-      <b>${esc(t.id)} · ${esc(t.snap.item || '')}</b> <span class="muted">${fmtAt(t.at)} 삭제${t.restoredAt ? ` · ${fmtAt(t.restoredAt)} 되살림` : ''}</span><br>
-      ${esc(t.snap.category || '')} · ${esc(t.snap.location || '')} · ${esc(String(t.snap.qty ?? ''))}${esc(t.snap.unit || '')} · 상태 ${esc(t.snap.status || '')} · 사진 ${t.photos.length}장
+      <b>${esc(t.id)} · ${esc(t.snap.item || '')}</b> <span class="${t.kind === 'asset' ? 'trash-kind asset' : 'trash-kind'}">${t.kind === 'asset' ? '자산 전체 · ' + esc(t.reason || '') : '사진'}</span> <span class="muted">${fmtAt(t.at)} 삭제${t.restoredAt ? ` · ${fmtAt(t.restoredAt)} 되살림` : ''}</span><br>
+      ${esc(t.snap.category || '')} · ${esc(t.snap.location || '')} · ${esc(String(t.snap.qty ?? ''))}${esc(t.snap.unit || '')} · 상태 ${esc(t.snap.status || '')} · 사진 ${t.photos.length}장${t.memo ? ' · 메모: ' + esc(t.memo) : ''}
       <div class="trash-imgs">${t.photos.map(p => `<img src="${photoUrl(a, p)}" loading="lazy" title="${esc(fname(p))}" onclick="window.open(this.src)">`).join('')}</div></div>
       ${t.restoredAt ? '' : `<button class="btn sm" onclick="restoreTrash(${i})">↩ 되살리기</button>`}</div>`; }).join('');
   openModal(`<div class="m-head"><h2>🗂 삭제 보관함 · ${T.filter(t => !t.restoredAt).length}건</h2><button class="icon-btn" onclick="closeModal()">${icon('x', 20)}</button></div>
@@ -2057,16 +2084,19 @@ function openTrash() {
 }
 async function restoreTrash(i) {
   const t = DOC.trash[i]; if (!t || t.restoredAt) return;
-  if (!confirm(`${t.id} 사진 ${t.photos.length}장을 되살릴까요?`)) return;
+  if (!confirm(t.kind === 'asset' ? `${t.id} · ${t.snap.item} 자산을 지우기 전 모습 그대로 되살릴까요?` : `${t.id} 사진 ${t.photos.length}장을 되살릴까요?`)) return;
   if (!(await ensureToken())) return;
   const key = t.at + t.id;
   if (await saveChange(doc => { const e = doc.trash.find(z => z.at + z.id === key); if (!e || e.restoredAt) return false;
+    if (e.kind === 'asset') { if (doc.assets.some(y => y.id === e.id)) return false; const now = new Date().toISOString(); const x = e.asset;
+      addLog(x, '삭제 보관함에서 되살림', now); x.updatedAt = now; doc.assets.push(x); doc.assets.sort((m, n) => String(m.id).localeCompare(String(n.id)));
+      e.restoredAt = now; delete e.asset; return true; }
     const x = doc.assets.find(y => y.id === e.id); if (!x) return false; const now = new Date().toISOString();
     const have = new Set((x.photos || []).map(p => p.path));
     x.photos = [...(x.photos || []), ...e.photos.filter(p => !have.has(p.path))].sort((m, n) => String(n.at || '').localeCompare(String(m.at || ''))).slice(0, PHOTO_KEEP);
     if (!x.photo || (e.wasMain && x.photos[0] && e.photos.some(p => p.path === x.photos[0].path))) { x.photo = x.photos[0]; if (e.thumb) x.thumb = e.thumb; }
     e.restoredAt = now; x.updatedAt = now; addLog(x, `삭제 보관함에서 사진 ${e.photos.length}장 되살림`, now); return true; },
-    `삭제 보관함 되살리기: ${t.id}`, '되살렸어요')) openTrash();
+    `삭제 보관함 되살리기: ${t.id}`, '되살렸어요')) { if (t.kind === 'asset') { closeModal(); openAsset(t.id); } else openTrash(); }
 }
 /* 사진 크게 보기 (+ 이력) */
 function showPhoto(id, idx = 0) {
@@ -2105,6 +2135,7 @@ function scanUI() {
   else if (st === 'scan') { const L = SCAN.lastShot;
     h = (L ? `<div class="scan-res ok" style="display:flex;gap:12px;align-items:center"><img src="${L.img}" class="shot-mini"><div><b>✓ ${esc(L.id)} 완료</b><div class="ri-sub">${esc(L.name)} · 사진은 자동으로 저장돼요</div></div></div>
       <div class="scan-msg">👉 <b>다음 자산</b>의 QR을 비춰 주세요</div>` : `<div class="scan-msg">자산의 QR 라벨을 화면에 비춰 주세요</div>`) + auditProgressHTML(); }
+  else if (st === 'trashed') { const t = trashedAsset(c.id); h = `<div class="scan-res bad"><b>${esc(c.id)}은(는) 삭제 보관함에 있는 자산이에요</b><div class="ri-sub">${esc(t.snap.item || '')} · ${fmtAt(t.at)} '${esc(t.reason || '')}'</div></div><div class="scan-btns"><button class="btn lg" onclick="const id='${c.id}';closeScanner(true);restoreAssetById(id)">↩ 되살리기</button><button class="btn lg primary" onclick="nextScan()">다음 스캔</button></div>`; }
   else if (st === 'unknown') h = `<div class="scan-res bad"><b>등록되지 않은 QR이에요</b><div class="ri-sub">${esc(c.id)}</div></div><div class="scan-btns"><button class="btn lg primary" onclick="nextScan()">다시 스캔</button></div>`;
   else if (st === 'out') h = `<div class="scan-res">${assetHead(a)}<div class="scan-tags"><span class="warn">현장 종료: ${esc(a.out.type)} · ${esc(a.out.date)}</span></div></div>
       <div class="scan-btns"><button class="btn lg" onclick="const id='${a.id}';closeScanner(true);openAsset(id)">상세 보기</button><button class="btn lg primary" onclick="nextScan()">다음 스캔</button></div>`;
@@ -2509,7 +2540,7 @@ function showInstall() {
   box.innerHTML = h; box.classList.remove('hidden');
 }
 
-const BUILD = '2026-11-12l';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
+const BUILD = '2026-11-12m';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
 async function checkUpdate() {
   try {
     const t = await (await fetch(location.pathname + '?v=' + Date.now(), { cache: 'reload' })).text();
