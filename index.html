@@ -655,6 +655,16 @@ async function fetchSharedToken(pw) {   // 실패하면 '' (조용히)
     return new TextDecoder().decode(out);
   } catch (e) { return ''; }
 }
+/* 토큰 없으면 공유 토큰을 비밀번호로 풀어 자동 적용 (처음 한 번) */
+async function ensureToken() {
+  if (Store.mode() === 'github') return true;
+  const pw = PW_PLAIN || prompt('사진·저장을 위해 비밀번호를 한 번만 더 넣어 주세요') || '';
+  if (!pw) return false;
+  if ((await sha256(pw)) !== CONFIG.PW_HASH) { toast('비밀번호가 맞지 않아요', 'err'); return false; }
+  PW_PLAIN = pw; const t = await fetchSharedToken(pw);
+  if (!t) { toast('공유 토큰을 불러오지 못했어요 · 관리자에게 설정 → 자동 적용을 요청하세요', 'err'); return false; }
+  Store.saveCfg({ ...Store.cfg(), token: t }); toast('저장 연결 완료 ✅'); return true;
+}
 async function shareToken() {
   const t = $('s-token').value.trim(); const out = $('s-test');
   if (!t) { out.style.color = 'var(--red)'; out.textContent = '먼저 위 칸에 토큰을 넣어 주세요'; return; }
@@ -1655,7 +1665,7 @@ function idFromQR(text) {
 /* ── 스캐너 열기/닫기 ── */
 async function openScanner() {
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return toast('이 브라우저에서는 카메라를 쓸 수 없어요', 'err');
-  if (Store.mode() !== 'github') toast('GitHub 토큰이 없어 사진·위치가 저장되지 않아요 (설정 확인)', 'warn');
+  if (!(await ensureToken())) toast('저장 연결이 안 돼 사진·위치가 저장되지 않아요', 'warn');
   $('scanner').classList.remove('hidden', 'photo-mode'); document.body.style.overflow = 'hidden';
   SCAN = { stream: null, timer: null, watch: null, pos: null, best: null, last: { id: '', at: 0 }, step: 'start', cur: null, detector: null, since: Date.now() };
   scanUI();
@@ -1837,7 +1847,7 @@ function makePhoto(src, a) {
 }
 /* 사진 저장: 파일 올리기 → 데이터에 기록 (confirm이면 실사 확인 + 미발견 해제) */
 async function savePhoto(id, shot, opt = {}) {
-  if (Store.mode() !== 'github') { toast('사진은 GitHub 연결(설정의 토큰) 후에 저장돼요', 'warn'); return null; }
+  if (!(await ensureToken())) { toast('저장 연결이 안 돼 사진을 올리지 못했어요', 'warn'); return null; }
   PHOTO_LOCAL[id] = shot.full;
   try { await Store.putFile(shot.path, shot.full.split(',')[1], `사진: ${shot.path.split('/').pop()}`); }
   catch (e) { toast('사진을 올리지 못했어요 · ' + e.message, 'err'); return null; }
@@ -2377,8 +2387,18 @@ function showInstall() {
   box.innerHTML = h; box.classList.remove('hidden');
 }
 
+const BUILD = '2026-11-12b';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
+async function checkUpdate() {
+  try {
+    const t = await (await fetch(location.pathname + '?v=' + Date.now(), { cache: 'reload' })).text();
+    const m = t.match(/const BUILD = '([^']+)'/);
+    if (m && m[1] !== BUILD && sessionStorage.getItem('aam_upd') !== m[1]) { sessionStorage.setItem('aam_upd', m[1]); location.reload(); }
+  } catch (e) {}
+}
+document.addEventListener('visibilitychange', () => { if (!document.hidden) checkUpdate(); });
 let OPEN_SET = false;   // ?settings 주소로 열면 로그인 뒤 설정 바로 열기
 (function init() {
+  checkUpdate();
   showInstall();
   if (/KAKAOTALK/i.test(navigator.userAgent) && !sessionStorage.getItem('aam_ext')) { sessionStorage.setItem('aam_ext', '1'); setTimeout(openExternal, 300); }
   const p = new URLSearchParams(location.search);
