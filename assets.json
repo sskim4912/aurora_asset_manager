@@ -1,6 +1,6 @@
 {
   "version": 3,
-  "updatedAt": "2026-11-12T01:10:14.571Z",
+  "updatedAt": "2026-11-12T01:10:39.539Z",
   "catalog": {},
   "assets": [
     {
@@ -2706,33 +2706,48 @@
     },
     {
       "id": "AURORA-087",
+      "category": "사무/가전/생활",
+      "item": "기타",
+      "model": "쿠쿠 전자레인지",
       "contract": "",
+      "acq": "",
+      "qty": 1,
+      "unit": "EA",
+      "location": "현장 사무실 / 본관",
       "locInit": "현장 사무실 / 본관",
-      "out": null,
+      "manager": "관리팀장",
       "status": "상",
+      "lat": 36.996226,
+      "lng": 126.378779,
+      "nextCheck": "",
+      "rentalDue": "",
+      "leaseVendor": "",
+      "leaseStart": "",
+      "leaseTel": "",
+      "note": "",
+      "out": null,
+      "updatedAt": "2026-11-12T01:10:39.539Z",
       "log": [
+        {
+          "at": "2026-11-12T01:10:39.539Z",
+          "t": "사진 등록 · AURORA-087_기타_20261112_101035.jpg"
+        },
         {
           "at": "2026-11-12T01:10:14.571Z",
           "t": "등록"
         }
       ],
-      "item": "기타",
-      "category": "사무/가전/생활",
-      "model": "쿠쿠 전자레인지",
-      "qty": 1,
-      "unit": "EA",
-      "location": "현장 사무실 / 본관",
-      "acq": "",
-      "manager": "관리팀장",
-      "lat": 36.996226,
-      "lng": 126.378779,
-      "nextCheck": "",
-      "rentalDue": "",
-      "note": "",
-      "leaseVendor": "",
-      "leaseStart": "",
-      "leaseTel": "",
-      "updatedAt": "2026-11-12T01:10:14.571Z"
+      "thumb": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADb/2wBDAA0JCgsKCA0LCgsODg0PEyAVExISEyccHhcgLikxMC4pLSwzOko+MzZGNywtQFdBRkxOUlNSMj5aYVpQYEpRUk//2wBDAQ4ODhMREyYVFSZPNS01T09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT0//wAARCABAAEADASIAAhEBAxEB/8QAGwAAAgMAAwAAAAAAAAAAAAAAAwUCBAYAAQf/xAAzEAACAQMDAgMHAwMFAAAAAAABAgMABBEFEiExQSJRYQYTFXGBkaEUMsEj0eFCYpKi8P/EABgBAQEBAQEAAAAAAAAAAAAAAAECAAME/8QAHREAAwABBQEAAAAAAAAAAAAAAAECEQMSEyFBUf/aAAwDAQACEQMRAD8AYWukS6hCsjOEiDZ45J/tUG0DUBIu0wNGoxhnYbhnvhcjp2+9MLZ0WwjldgqLGCzMcAADk1BdU04NuXULUN5iZf70pIybQpW39o7aXDRGWAEAlZ9xxkZIyOuM9Rjnp0wC5TWluvHZSyWrg7o1iRgDzwADnHQck8edapZ2dFZJ2KMAylXOCOoNE99Ked/4FOELpsxdraz27h2tBEjqWctbGMh+pGRkbeOOR8hTeDTf17CWcuo3bhtO3j5j+KfCZlXlUJ8yKlDcMzMfdghRnw8YrYWQKfwjTy257KB27s0YYn5k81YNpaAB2t4vB4gSg4460X9UCM7C3fJb/FDubpDEQoIwMksOPQffH5rAKYUkv/Z5ovCrywtEPIcFRXm8cMjeE4BGM16J7MljoVvvk3tl8+niPFYhNN1SGVkk0+6JBwSsTMOPUdaPBKyQBJMPk5/aTxTCK8vIYxHFdTxoAcKshAHfpVSXcC0bgq6HGGGCpFdrOpXI70GG2n6vqC3tvF+rkZJZ0Vw/i4z0yc4+lbNASsp6Hz+lYTRohda1aITjEvvP+ILfxW+Q7RJx1yPxSjC2XSoLyKE3jOt17j3cksfIZe6kMCvU5HGcgEdKNcR22n6K8asEjXLMcDjncTgAAd+BgeQozrvA3Z3DgEbx4WwMZB6579vLjNV9Zdo9OaRgMkqMDkdx/NLfRksijT76TSrWSNrYyAuXzu29gPI+VXR7UWG9V9zdAEgFii4H/bNLF1wdJrRSe+0kY+9F+J6fKu2WFxn0DCvMrteHdxD9Gp17TpJBFBfIrscBpInC/UnAH1NSjj0S6mKxJp00zZYhQjMe5PnSbbpE/G5FPltwa6bR7KUZinX6Nmq5vqDh+Md22iadaXC3FvbbJUztbexxkY6E+tWpZUht5ppDhIwWOPQZrKjR7q0ZnsppIywwTG20kepBrgj1y3R40upGVyCd7B/y2cVS1pJelRom1TbcLbCAEblVnzkgH0/99alNYjWZHtzcCI24V8GMscNn1A7ev0755NU1q3TZJDBMy8b5I/F8vCRTDQLy4uL25luk2u4QqEU8AA9Byf8AJpdqug2tdim2ljkiVWI3HgA8bvl50Q20LdY1+1K49QCsjbWI5Jzj8Veg1CCYhclGPY1Tk55CNYRH9uV+Rofw4gkpJj6UaS6RBgMM1xL4KMOrE/7cVO3I5Ai2u4xiOYjyw3P5ogudTj/1E/MZzVsMGAYHgjIqYxUuEyldL0p/E7lW/qwqc+YqSauoYl4CPl3q3tBHSom3ic8ov2qeKS+Wj//Z",
+      "photo": {
+        "path": "photos/AURORA-087/AURORA-087_기타_20261112_101035.jpg",
+        "at": "2026-11-12T01:10:35.698Z"
+      },
+      "photos": [
+        {
+          "path": "photos/AURORA-087/AURORA-087_기타_20261112_101035.jpg",
+          "at": "2026-11-12T01:10:35.698Z"
+        }
+      ]
     }
   ],
   "audit": null,
