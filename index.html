@@ -1819,7 +1819,7 @@ async function takePhoto() {
   if (navigator.vibrate) navigator.vibrate(40);
   const c = SCAN.cur; c.shot = makePhoto(v, a);
   enqueueUpload({ id: a.id, shot: c.shot, pos: c.loc === 'wait' && c.pos ? { lat: c.pos.lat, lng: c.pos.lng, acc: c.pos.acc } : null });
-  c.photoDone = true; toast(`📸 ${a.id} 사진 찍음 · 저장은 자동으로 돼요`);
+  c.photoDone = true; SCAN.lastShot = { id: a.id, name: dispName(a), img: c.shot.thumb };
   nextScan();
 }
 /* 저장 대기열: 사진 파일 → (위치 + 사진 기록 + 실사 확인) 한 번에. 앱이 열려 있는 동안 계속 재시도 */
@@ -1980,7 +1980,9 @@ function scanUI() {
   const note = `<p class="scan-note">사진은 공개 저장소에 올라가요 · 사람 얼굴·도면·출입시설이 나오지 않게 찍어 주세요</p>`;
   let h = '';
   if (st === 'start') h = `<div class="scan-msg">카메라를 켜는 중…</div>`;
-  else if (st === 'scan') h = `<div class="scan-msg">자산의 QR 라벨을 네모 안에 맞춰 주세요</div>${auditProgressHTML()}`;
+  else if (st === 'scan') { const L = SCAN.lastShot;
+    h = (L ? `<div class="scan-res ok" style="display:flex;gap:12px;align-items:center"><img src="${L.img}" class="shot-mini"><div><b>✓ ${esc(L.id)} 완료</b><div class="ri-sub">${esc(L.name)} · 사진은 자동으로 저장돼요</div></div></div>
+      <div class="scan-msg">👉 <b>다음 자산</b>의 QR을 비춰 주세요</div>` : `<div class="scan-msg">자산의 QR 라벨을 화면에 비춰 주세요</div>`) + auditProgressHTML(); }
   else if (st === 'unknown') h = `<div class="scan-res bad"><b>등록되지 않은 QR이에요</b><div class="ri-sub">${esc(c.id)}</div></div><div class="scan-btns"><button class="btn lg primary" onclick="nextScan()">다시 스캔</button></div>`;
   else if (st === 'out') h = `<div class="scan-res">${assetHead(a)}<div class="scan-tags"><span class="warn">현장 종료: ${esc(a.out.type)} · ${esc(a.out.date)}</span></div></div>
       <div class="scan-btns"><button class="btn lg" onclick="const id='${a.id}';closeScanner(true);openAsset(id)">상세 보기</button><button class="btn lg primary" onclick="nextScan()">다음 스캔</button></div>`;
@@ -2447,7 +2449,7 @@ function showInstall() {
   box.innerHTML = h; box.classList.remove('hidden');
 }
 
-const BUILD = '2026-11-12d';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
+const BUILD = '2026-11-12e';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
 async function checkUpdate() {
   try {
     const t = await (await fetch(location.pathname + '?v=' + Date.now(), { cache: 'reload' })).text();
