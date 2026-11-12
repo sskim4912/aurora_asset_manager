@@ -1,6 +1,6 @@
 {
   "version": 3,
-  "updatedAt": "2026-11-12T00:32:42.431Z",
+  "updatedAt": "2026-11-12T00:32:46.181Z",
   "catalog": {},
   "assets": [
     {
@@ -1094,8 +1094,8 @@
       "locInit": "현장 사무실 / 본관",
       "manager": "관리팀장",
       "status": "상",
-      "lat": "",
-      "lng": "",
+      "lat": 36.996478,
+      "lng": 126.379123,
       "nextCheck": "",
       "rentalDue": "",
       "leaseVendor": "",
@@ -1103,8 +1103,13 @@
       "leaseTel": "",
       "note": "",
       "out": null,
-      "updatedAt": "2026-11-10T09:00:00+09:00",
-      "log": [],
+      "updatedAt": "2026-11-12T00:32:46.181Z",
+      "log": [
+        {
+          "at": "2026-11-12T00:32:46.181Z",
+          "t": "좌표 입력 (QR, 오차 약 13m)"
+        }
+      ],
       "thumb": "",
       "photo": null,
       "photos": []
