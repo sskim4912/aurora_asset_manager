@@ -1,6 +1,6 @@
 {
   "version": 4,
-  "updatedAt": "2026-11-12T04:44:05.128Z",
+  "updatedAt": "2026-11-12T04:44:19.534Z",
   "catalog": {},
   "assets": [
     {
@@ -2831,33 +2831,48 @@
     },
     {
       "id": "AURORA-089",
+      "category": "사무/가전/생활",
+      "item": "기타",
+      "model": "[렌탈]커피머신",
       "contract": "",
+      "acq": "임대/임차",
+      "qty": 1,
+      "unit": "EA",
+      "location": "현장 사무실 / 본관",
       "locInit": "현장 사무실 / 본관",
-      "out": null,
+      "manager": "관리팀장",
       "status": "상",
+      "lat": 36.996218,
+      "lng": 126.378702,
+      "nextCheck": "",
+      "rentalDue": "",
+      "leaseVendor": "보클라빈",
+      "leaseStart": "",
+      "leaseTel": "",
+      "note": "",
+      "out": null,
+      "updatedAt": "2026-11-12T04:44:19.534Z",
       "log": [
+        {
+          "at": "2026-11-12T04:44:19.534Z",
+          "t": "사진 등록 · AURORA-089_기타_20261112_134416.jpg"
+        },
         {
           "at": "2026-11-12T04:44:05.128Z",
           "t": "등록"
         }
       ],
-      "item": "기타",
-      "category": "사무/가전/생활",
-      "model": "[렌탈]커피머신",
-      "qty": 1,
-      "unit": "EA",
-      "location": "현장 사무실 / 본관",
-      "acq": "임대/임차",
-      "manager": "관리팀장",
-      "lat": 36.996218,
-      "lng": 126.378702,
-      "nextCheck": "",
-      "rentalDue": "",
-      "note": "",
-      "leaseVendor": "보클라빈",
-      "leaseStart": "",
-      "leaseTel": "",
-      "updatedAt": "2026-11-12T04:44:05.128Z"
+      "thumb": "data:image/jpeg;base64,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",
+      "photo": {
+        "path": "photos/AURORA-089/AURORA-089_기타_20261112_134416.jpg",
+        "at": "2026-11-12T04:44:16.720Z"
+      },
+      "photos": [
+        {
+          "path": "photos/AURORA-089/AURORA-089_기타_20261112_134416.jpg",
+          "at": "2026-11-12T04:44:16.720Z"
+        }
+      ]
     }
   ],
   "audit": null,
