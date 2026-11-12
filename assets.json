@@ -1,6 +1,6 @@
 {
   "version": 4,
-  "updatedAt": "2026-11-12T04:45:40.467Z",
+  "updatedAt": "2026-11-12T04:50:16.077Z",
   "catalog": {},
   "assets": [
     {
@@ -2918,6 +2918,36 @@
           "at": "2026-11-12T04:45:37.995Z"
         }
       ]
+    },
+    {
+      "id": "AURORA-091",
+      "contract": "",
+      "locInit": "현장 사무실 / 본관",
+      "out": null,
+      "status": "상",
+      "log": [
+        {
+          "at": "2026-11-12T04:50:16.076Z",
+          "t": "등록"
+        }
+      ],
+      "item": "TV",
+      "category": "사무/가전/생활",
+      "model": "LG LED TV",
+      "qty": 1,
+      "unit": "EA",
+      "location": "현장 사무실 / 본관",
+      "acq": "",
+      "manager": "관리팀장",
+      "lat": 36.996211,
+      "lng": 126.378695,
+      "nextCheck": "",
+      "rentalDue": "",
+      "note": "75UT8300ENA 안전팀 CMS CCTV",
+      "leaseVendor": "",
+      "leaseStart": "",
+      "leaseTel": "",
+      "updatedAt": "2026-11-12T04:50:16.076Z"
     }
   ],
   "audit": null,
