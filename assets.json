@@ -1,6 +1,6 @@
 {
   "version": 4,
-  "updatedAt": "2026-11-12T05:08:38.928Z",
+  "updatedAt": "2026-11-12T05:09:21.141Z",
   "catalog": {},
   "assets": [
     {
@@ -3119,33 +3119,40 @@
     },
     {
       "id": "AURORA-094",
+      "category": "사무/가전/생활",
+      "item": "기타",
+      "model": "캐논 C3930",
       "contract": "",
+      "acq": "임대/임차",
+      "qty": 1,
+      "unit": "EA",
+      "location": "현장 사무실 / 본관",
       "locInit": "현장 사무실 / 본관",
-      "out": null,
+      "manager": "관리팀장",
       "status": "상",
+      "lat": 36.996221,
+      "lng": 126.378715,
+      "nextCheck": "",
+      "rentalDue": "",
+      "leaseVendor": "세중S&C",
+      "leaseStart": "",
+      "leaseTel": "",
+      "note": "안전팀 구역",
+      "out": null,
+      "updatedAt": "2026-11-12T05:09:21.141Z",
       "log": [
+        {
+          "at": "2026-11-12T05:09:21.141Z",
+          "t": "수정: 취득 구분, 임대 업체"
+        },
         {
           "at": "2026-11-12T05:08:38.925Z",
           "t": "등록"
         }
       ],
-      "item": "기타",
-      "category": "사무/가전/생활",
-      "model": "캐논 C3930",
-      "qty": 1,
-      "unit": "EA",
-      "location": "현장 사무실 / 본관",
-      "acq": "",
-      "manager": "관리팀장",
-      "lat": 36.996221,
-      "lng": 126.378715,
-      "nextCheck": "",
-      "rentalDue": "",
-      "note": "안전팀 구역",
-      "leaseVendor": "",
-      "leaseStart": "",
-      "leaseTel": "",
-      "updatedAt": "2026-11-12T05:08:38.925Z"
+      "thumb": "",
+      "photo": null,
+      "photos": []
     }
   ],
   "audit": null,
