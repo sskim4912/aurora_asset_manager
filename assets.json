@@ -1,6 +1,6 @@
 {
   "version": 3,
-  "updatedAt": "2026-11-12T01:08:28.052Z",
+  "updatedAt": "2026-11-12T01:09:15.381Z",
   "catalog": {},
   "assets": [
     {
@@ -2658,6 +2658,36 @@
           "at": "2026-11-12T01:08:24.883Z"
         }
       ]
+    },
+    {
+      "id": "AURORA-086",
+      "contract": "",
+      "locInit": "현장 사무실 / 본관",
+      "out": null,
+      "status": "상",
+      "log": [
+        {
+          "at": "2026-11-12T01:09:15.381Z",
+          "t": "등록"
+        }
+      ],
+      "item": "기타",
+      "category": "사무/가전/생활",
+      "model": "4구 토스터기",
+      "qty": 1,
+      "unit": "EA",
+      "location": "현장 사무실 / 본관",
+      "acq": "계약외(온라인구매)",
+      "manager": "관리팀장",
+      "lat": 36.996219,
+      "lng": 126.37874,
+      "nextCheck": "",
+      "rentalDue": "",
+      "note": "",
+      "leaseVendor": "",
+      "leaseStart": "",
+      "leaseTel": "",
+      "updatedAt": "2026-11-12T01:09:15.381Z"
     }
   ],
   "audit": null,
