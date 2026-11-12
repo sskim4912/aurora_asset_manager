@@ -1,6 +1,6 @@
 {
   "version": 3,
-  "updatedAt": "2026-11-12T00:54:44.266Z",
+  "updatedAt": "2026-11-12T00:55:00.292Z",
   "catalog": {},
   "assets": [
     {
@@ -2437,33 +2437,48 @@
     },
     {
       "id": "AURORA-082",
+      "category": "사무/가전/생활",
+      "item": "냉장고",
+      "model": "쇼케이스 냉장고",
       "contract": "",
+      "acq": "",
+      "qty": 1,
+      "unit": "EA",
+      "location": "현장 사무실 / 본관",
       "locInit": "현장 사무실 / 본관",
-      "out": null,
+      "manager": "관리팀장",
       "status": "상",
+      "lat": 36.996483,
+      "lng": 126.379158,
+      "nextCheck": "",
+      "rentalDue": "",
+      "leaseVendor": "",
+      "leaseStart": "",
+      "leaseTel": "",
+      "note": "",
+      "out": null,
+      "updatedAt": "2026-11-12T00:55:00.292Z",
       "log": [
+        {
+          "at": "2026-11-12T00:55:00.292Z",
+          "t": "사진 등록 · AURORA-082_냉장고_20261112_095456.jpg"
+        },
         {
           "at": "2026-11-12T00:54:44.265Z",
           "t": "등록"
         }
       ],
-      "item": "냉장고",
-      "category": "사무/가전/생활",
-      "model": "쇼케이스 냉장고",
-      "qty": 1,
-      "unit": "EA",
-      "location": "현장 사무실 / 본관",
-      "acq": "",
-      "manager": "관리팀장",
-      "lat": 36.996483,
-      "lng": 126.379158,
-      "nextCheck": "",
-      "rentalDue": "",
-      "note": "",
-      "leaseVendor": "",
-      "leaseStart": "",
-      "leaseTel": "",
-      "updatedAt": "2026-11-12T00:54:44.265Z"
+      "thumb": "data:image/jpeg;base64,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",
+      "photo": {
+        "path": "photos/AURORA-082/AURORA-082_냉장고_20261112_095456.jpg",
+        "at": "2026-11-12T00:54:56.490Z"
+      },
+      "photos": [
+        {
+          "path": "photos/AURORA-082/AURORA-082_냉장고_20261112_095456.jpg",
+          "at": "2026-11-12T00:54:56.490Z"
+        }
+      ]
     }
   ],
   "audit": null,
