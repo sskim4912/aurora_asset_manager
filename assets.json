@@ -1,6 +1,6 @@
 {
   "version": 4,
-  "updatedAt": "2026-11-12T04:50:35.558Z",
+  "updatedAt": "2026-11-12T04:51:46.918Z",
   "catalog": {},
   "assets": [
     {
@@ -2963,6 +2963,36 @@
           "at": "2026-11-12T04:50:32.317Z"
         }
       ]
+    },
+    {
+      "id": "AURORA-092",
+      "contract": "",
+      "locInit": "현장 사무실 / 본관",
+      "out": null,
+      "status": "상",
+      "log": [
+        {
+          "at": "2026-11-12T04:51:46.918Z",
+          "t": "등록"
+        }
+      ],
+      "item": "TV",
+      "category": "사무/가전/생활",
+      "model": "LG LED TV",
+      "qty": 1,
+      "unit": "EA",
+      "location": "현장 사무실 / 본관",
+      "acq": "",
+      "manager": "관리팀장",
+      "lat": 36.99619,
+      "lng": 126.378653,
+      "nextCheck": "",
+      "rentalDue": "",
+      "note": "75UT8300ENA",
+      "leaseVendor": "",
+      "leaseStart": "",
+      "leaseTel": "",
+      "updatedAt": "2026-11-12T04:51:46.918Z"
     }
   ],
   "audit": null,
