@@ -1,6 +1,6 @@
 {
   "version": 4,
-  "updatedAt": "2026-11-12T05:17:42.069Z",
+  "updatedAt": "2026-11-12T05:24:01.056Z",
   "catalog": {},
   "assets": [
     {
@@ -3412,34 +3412,68 @@
     },
     {
       "id": "AURORA-098",
+      "category": "사무/가전/생활",
+      "item": "기타",
+      "model": "[렌탈]직수형 정수기",
       "contract": "",
+      "acq": "",
+      "qty": 1,
+      "unit": "EA",
+      "location": "현장 사무실 / 본관",
       "locInit": "현장 사무실 / 본관",
-      "out": null,
+      "manager": "관리팀장",
       "status": "상",
+      "lat": 36.996104,
+      "lng": 126.378651,
+      "nextCheck": "",
+      "rentalDue": "",
+      "leaseVendor": "",
+      "leaseStart": "",
+      "leaseTel": "",
+      "leaseContact": "",
+      "note": "감리실 구역",
+      "out": null,
+      "updatedAt": "2026-11-12T05:17:42.069Z",
       "log": [
         {
           "at": "2026-11-12T05:17:42.069Z",
           "t": "등록"
         }
       ],
+      "thumb": "",
+      "photo": null,
+      "photos": []
+    },
+    {
+      "id": "AURORA-099",
+      "contract": "",
+      "locInit": "현장 사무실 / 본관",
+      "out": null,
+      "status": "상",
+      "log": [
+        {
+          "at": "2026-11-12T05:24:01.056Z",
+          "t": "등록"
+        }
+      ],
       "item": "기타",
       "category": "사무/가전/생활",
-      "model": "[렌탈]직수형 정수기",
+      "model": "플로터",
       "qty": 1,
       "unit": "EA",
       "location": "현장 사무실 / 본관",
-      "acq": "",
+      "acq": "구자산",
       "manager": "관리팀장",
-      "lat": 36.996104,
-      "lng": 126.378651,
+      "lat": 36.996459,
+      "lng": 126.379083,
       "nextCheck": "",
       "rentalDue": "",
-      "note": "감리실 구역",
+      "note": "관리팀 구역",
       "leaseVendor": "",
       "leaseStart": "",
       "leaseTel": "",
       "leaseContact": "",
-      "updatedAt": "2026-11-12T05:17:42.069Z"
+      "updatedAt": "2026-11-12T05:24:01.056Z"
     }
   ],
   "audit": null,
