@@ -385,6 +385,7 @@ details[open].more summary::before{transform:rotate(90deg)}
 #kmap{width:100%;height:100%}
 .map-fail{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;color:var(--sub);gap:6px}
 .map-fail b{color:var(--text);font-size:15px}
+.mc-lease{margin-top:4px;line-height:1.6;color:#0a5eb0}
 .del-line{flex-basis:100%;text-align:center;margin-top:2px}.link-gray{border:0;background:none;color:#98a2b3;font-size:12px;text-decoration:underline;cursor:pointer;padding:2px 6px}.link-gray:hover{color:#b91c1c}
 .trash-link{display:inline-block;white-space:nowrap;padding:3px 9px;border-radius:7px;background:#dcfce7;color:#15803d;font-weight:700;font-size:12.5px;cursor:pointer}.trash-link:hover{background:#15803d;color:#fff}
 .trash-kind{font-size:11px;font-weight:700;padding:1px 7px;border-radius:6px;background:#eef2ff;color:#3730a3}.trash-kind.asset{background:#fee2e2;color:#b91c1c}
@@ -736,7 +737,7 @@ function normalizeDoc(d) {
       contract: a.contract || '', acq: a.acq || '', qty: Number.isInteger(+a.qty) && +a.qty > 0 ? +a.qty : 1, unit: UNITS.includes(a.unit) ? a.unit : 'EA',
       location: a.location || '', locInit: a.locInit || a.location || '', manager: a.manager || '',
       status: normStatus(a.status) || '상', lat: num(a.lat), lng: num(a.lng),
-      nextCheck: a.nextCheck || '', rentalDue: a.rentalDue || '', leaseVendor: a.leaseVendor || '', leaseStart: a.leaseStart || '', leaseTel: a.leaseTel || '',
+      nextCheck: a.nextCheck || '', rentalDue: a.rentalDue || '', leaseVendor: a.leaseVendor || '', leaseStart: a.leaseStart || '', leaseTel: a.leaseTel || '', leaseContact: a.leaseContact || '',
       note: a.note || '', out, updatedAt: a.updatedAt || '',
       log: Array.isArray(a.log) ? a.log.slice(0, LOG_MAX) : [], thumb: a.thumb || '',
       photo: a.photo && a.photo.path ? a.photo : (a.photoAt ? { path: `photos/${a.id}.jpg`, at: a.photoAt } : null),
@@ -1094,6 +1095,7 @@ function updateAssetList() {
   const box = $('asset-list'); if (!box) return;
   const leaseEmpty = !list.length && !UI.q && { lease: `<b>임대/임차 장비가 아직 없어요</b>비품을 눌러 [정보 수정] → 추가 정보 → 취득 구분에서 '임대/임차'를 고르면 여기에 모여요.`, leaseOut: '<b>반납한 임대/임차 장비가 없어요</b>' }[UI.filter];
   if (!list.length && !leaseEmpty) { box.innerHTML = `<div class="card empty"><b>해당하는 자산이 없어요</b>검색어나 필터를 바꿔 보세요</div>`; return; }
+  const LV = UI.filter === 'lease' || UI.filter === 'leaseOut';   // 임대/임차 보기: 표 칸이 임대용으로
   const sch = a => { const s = schedOf(a); return s ? `<span class="due ${s.lvl}">${s.t}</span>` : '<span class="muted">—</span>'; };
   const th = (k, l, w) => `<th ${w ? `style="width:${w}px"` : ''} class="sortable ${UI.sort.k === k ? 'on' : ''}" onclick="setSort('${k}')">${l}<span class="arrow">${UI.sort.k === k ? (UI.sort.d > 0 ? '▲' : '▼') : '↕'}</span></th>`;
   const allOn = list.length > 0 && list.every(a => UI.sel.has(a.id));
@@ -1101,11 +1103,16 @@ function updateAssetList() {
   box.innerHTML = (grp.length > 1 || UI.loc !== '전체' && grp.length ? `<div class="loc-groups"><span class="muted">위치별:</span>${grp.map(([l, n], i) => `<button class="chip ${UI.loc === l ? 'on' : ''}" onclick="toggleLocGrp(${i})">${esc(l)} <b>${n}</b></button>`).join('')}</div>` : '') + `
   <div class="tbl-wrap"><table class="tbl">
     <thead><tr><th class="ck"><input type="checkbox" ${allOn ? 'checked' : ''} onclick="selAll(this.checked)" aria-label="전체 선택"></th>
-      ${th('id', '관리번호', 118)}<th style="width:62px">사진</th>${th('name', '품목 · 모델')}${th('category', '분류', 120)}${th('location', '위치')}${th('qty', '수량', 70)}${th('status', '상태', 96)}${th('sched', '일정', 120)}${th('updated', '최종 변경', 96)}</tr></thead>
+      ${LV ? `${th('id', '관리번호', 118)}<th style="width:62px">사진</th>${th('name', '품목 · 모델')}<th>임대 업체</th><th>임대 기간</th><th style="width:90px">남은 기간</th><th>업체 담당자</th><th>업체 연락처</th>${th('status', '상태', 96)}</tr></thead>
+    <tbody>${list.map(a => `<tr class="${UI.sel.has(a.id) ? 'picked' : ''}" onclick="openAsset('${a.id}')">
+      <td class="ck" onclick="event.stopPropagation()"><input type="checkbox" ${UI.sel.has(a.id) ? 'checked' : ''} onclick="selOne('${a.id}',this.checked)"></td>
+      <td class="mono">${a.id}</td><td onclick="event.stopPropagation()">${photoCell(a)}</td><td class="nm">${esc(a.item)}<div class="ri-sub" style="font-weight:400">${esc(shortModel(a.model))}</div></td>
+      <td>${esc(a.leaseVendor || '—')}</td><td style="font-size:12.5px;white-space:nowrap">${esc(a.leaseStart || '?')} ~ ${esc(a.rentalDue || '?')}</td><td>${leaseLeft(a)}</td>
+      <td>${esc(a.leaseContact || '—')}</td><td onclick="event.stopPropagation()">${a.leaseTel ? `<a class="link" href="tel:${esc(a.leaseTel.replace(/[^0-9+]/g, ''))}">${esc(a.leaseTel)}</a>` : '—'}</td><td>${stBadge(a)}</td></tr>`).join('')}</tbody>` : `${th('id', '관리번호', 118)}<th style="width:62px">사진</th>${th('name', '품목 · 모델')}${th('category', '분류', 120)}${th('location', '위치')}${th('qty', '수량', 70)}${th('status', '상태', 96)}${th('sched', '일정', 120)}${th('updated', '최종 변경', 96)}</tr></thead>
     <tbody>${list.map(a => `<tr class="${UI.sel.has(a.id) ? 'picked' : ''}" onclick="openAsset('${a.id}')">
       <td class="ck" onclick="event.stopPropagation()"><input type="checkbox" ${UI.sel.has(a.id) ? 'checked' : ''} onclick="selOne('${a.id}',this.checked)"></td>
       <td class="mono">${a.id}</td><td onclick="event.stopPropagation()">${photoCell(a)}</td><td class="nm">${esc(a.item)}${isLease(a) ? ' <span class="tag-lease">임대</span>' : ''}<div class="ri-sub" style="font-weight:400">${esc(shortModel(a.model))}</div></td><td>${esc(a.category)}</td><td>${esc(a.location)}${hasCoord(a) ? '' : ' <span class="no-coord" title="좌표 없음">●</span>'}</td>
-      <td class="qty">${a.qty} ${a.unit}</td><td>${stBadge(a)}</td><td>${sch(a)}</td><td class="muted" style="font-size:12.5px">${relTime(a.updatedAt)}</td></tr>`).join('')}</tbody>
+      <td class="qty">${a.qty} ${a.unit}</td><td>${stBadge(a)}</td><td>${sch(a)}</td><td class="muted" style="font-size:12.5px">${relTime(a.updatedAt)}</td></tr>`).join('')}</tbody>`}
   </table></div>
   <div class="mlist">${list.map(a => { const s = schedOf(a); return `
     <div class="mcard has-thumb" onclick="openAsset('${a.id}')"><span class="mc-photo" onclick="event.stopPropagation()">${photoCell(a)}</span>
@@ -1113,13 +1120,16 @@ function updateAssetList() {
       <div class="mc-name">${esc(a.item)}${isLease(a) ? ' <span class="tag-lease">임대</span>' : ''} <span class="qty" style="font-size:13px;color:var(--sub)">${a.qty} ${a.unit}</span></div>
       ${shortModel(a.model) ? `<div class="mc-sub" style="margin-bottom:3px">${esc(shortModel(a.model))}</div>` : ''}
       <div class="mc-sub">${icon('pin', 14)}${esc(a.location)}${hasCoord(a) ? '' : ' <span class="no-coord">● 좌표 없음</span>'}</div>
-      ${s ? `<div class="mc-due"><span class="due ${s.lvl}">${s.t}</span></div>` : ''}
+      ${isLease(a) ? `<div class="mc-sub mc-lease">🏢 ${esc(a.leaseVendor || '업체 미입력')}${a.leaseContact ? ' · ' + esc(a.leaseContact) : ''}${a.leaseTel ? ` · <a class="link" href="tel:${esc(a.leaseTel.replace(/[^0-9+]/g, ''))}" onclick="event.stopPropagation()">${esc(a.leaseTel)}</a>` : ''}<br>📅 ${esc(a.leaseStart || '?')} ~ ${esc(a.rentalDue || '?')} ${leaseLeft(a)}</div>` : ''}
+      ${s && !(LV && isLease(a)) ? `<div class="mc-due"><span class="due ${s.lvl}">${s.t}</span></div>` : ''}
     </div>`; }).join('')}</div>`;
   if (leaseEmpty) { const tb = box.querySelector('tbody'), ml = box.querySelector('.mlist');
     if (tb) tb.innerHTML = `<tr><td colspan="10" class="empty-row">${leaseEmpty}</td></tr>`;
     if (ml) ml.innerHTML = `<div class="card empty">${leaseEmpty}</div>`; }
 }
 
+function leaseLeft(a) { if (a.out) return '<span class="muted">반납됨</span>'; const r = dday(a.rentalDue); if (r === null) return '<span class="muted">—</span>';
+  return `<span class="due ${r < 0 ? 'red' : r <= 14 ? 'amber' : 'gray'}">${ddText(r)}</span>`; }
 /* ── 체크해서 한꺼번에: 상태 바꾸기 · 라벨 인쇄 · 현장 종료 ── */
 function photoCell(a) {   // 목록의 사진 칸: 사진 있으면 작은 사진(누르면 크게), 없으면 📷(누르면 바로 촬영)
   const pn = photoList(a).length;
@@ -1414,7 +1424,7 @@ function detailHTML(a) {
       ${acq ? row('취득 구분', esc(acq)) : ''}
       ${a.contract && a.contract !== a.model && !/^\((계약외|계약|구자산)\)[^/]{0,8}$/.test(a.contract) ? row('품명/계약명', `<span class="full-model">${esc(a.contract)}</span>`) : ''}
       ${a.nextCheck ? dateRow('다음 점검', a.nextCheck, 7) : ''}
-      ${isLease(a) ? row('임대 업체', `${esc(a.leaseVendor || '—')}${a.leaseTel ? `<div><a class="link" href="tel:${esc(a.leaseTel.replace(/[^0-9+]/g, ''))}">${esc(a.leaseTel)}</a></div>` : ''}`) : ''}
+      ${isLease(a) ? row('임대 업체', `${esc(a.leaseVendor || '—')}${a.leaseContact ? ` · ${esc(a.leaseContact)}` : ''}${a.leaseTel ? `<div><a class="link" href="tel:${esc(a.leaseTel.replace(/[^0-9+]/g, ''))}">${esc(a.leaseTel)}</a></div>` : ''}`) : ''}
       ${isLease(a) && a.leaseStart ? row('임대 기간', `${esc(a.leaseStart)} ~ ${esc(a.rentalDue || '')}`) : ''}
       ${a.rentalDue ? dateRow('반납 예정', a.rentalDue, 14) : ''}
       ${a.manager ? row('관리자', esc(a.manager)) : ''}
@@ -1553,6 +1563,7 @@ function formHTML() {
         <div class="field"><div class="flabel">임대 기간 <span class="muted" style="font-weight:500">반납 14일 전부터 '할 일'에 떠요</span></div>
           <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:6px;align-items:center"><input class="inp" type="date" value="${esc(d.leaseStart || '')}" ${bind('leaseStart')}><span class="muted">~</span><input class="inp" type="date" value="${esc(d.rentalDue)}" ${bind('rentalDue')}></div></div>
         <div class="field" style="margin:0"><div class="flabel">업체 연락처 <span class="muted" style="font-weight:500">대표번호만 (공개됨 · 개인 휴대폰 X)</span></div><input class="inp" type="tel" value="${esc(d.leaseTel || '')}" ${bind('leaseTel')} placeholder="예: 1588-0000"></div>
+        <div class="field" style="margin:12px 0 0"><div class="flabel">업체 담당자 <span class="muted" style="font-weight:500">이름·직함까지만 (공개됨)</span></div><input class="inp" value="${esc(d.leaseContact || '')}" ${bind('leaseContact')} placeholder="예: 김○○ 과장"></div>
       </div>
       <div class="field"><div class="flabel">관리자</div><input class="inp" value="${esc(d.manager)}" ${bind('manager')} placeholder="예: 관리팀장 (개인 이름 대신 직책)"></div>
       <div class="field"><div class="flabel">비고</div><textarea class="inp" ${bind('note')} placeholder="자유 메모">${esc(d.note)}</textarea></div>
@@ -1564,7 +1575,7 @@ function formHTML() {
     <button class="btn primary" id="f-save" onclick="saveForm()">${isNew ? '등록하기' : '저장'}</button></div>`;
 }
 function formError(msg) { toast(msg, 'warn'); }
-const EDIT_KO = { item: '품목', model: '모델', qty: '수량', unit: '단위', location: '위치', acq: '취득 구분', manager: '관리자', nextCheck: '다음 점검', rentalDue: '반납 예정', leaseVendor: '임대 업체', leaseStart: '임대 시작', leaseTel: '업체 연락처', note: '비고' };
+const EDIT_KO = { item: '품목', model: '모델', qty: '수량', unit: '단위', location: '위치', acq: '취득 구분', manager: '관리자', nextCheck: '다음 점검', rentalDue: '반납 예정', leaseVendor: '임대 업체', leaseContact: '업체 담당자', leaseStart: '임대 시작', leaseTel: '업체 연락처', note: '비고' };
 async function saveForm() {
   const d = DRAWER.draft, id = DRAWER.id, isNew = !id;
   const qty = Number(d.qty);
@@ -1576,8 +1587,8 @@ async function saveForm() {
   if (String(d.lat).trim() && String(d.lng).trim()) { lat = +(+d.lat).toFixed(6); lng = +(+d.lng).toFixed(6); if (!validLat(lat) || !validLng(lng)) { lat = ''; lng = ''; } }
   const fields = { item: d.item, category: catOf(d.item), model: String(d.model).trim(), qty, unit: d.unit || 'EA', location: String(d.location).trim(),
     acq: d.acq || '', manager: String(d.manager || '').trim(), lat, lng, nextCheck: d.nextCheck || '', rentalDue: d.rentalDue || '', note: String(d.note || '').trim(),
-    leaseVendor: '', leaseStart: '', leaseTel: '' };
-  if (fields.acq === LEASE) Object.assign(fields, { leaseVendor: String(d.leaseVendor || '').trim(), leaseStart: d.leaseStart || '', leaseTel: String(d.leaseTel || '').trim() });
+    leaseVendor: '', leaseStart: '', leaseTel: '', leaseContact: '' };
+  if (fields.acq === LEASE) Object.assign(fields, { leaseVendor: String(d.leaseVendor || '').trim(), leaseStart: d.leaseStart || '', leaseTel: String(d.leaseTel || '').trim(), leaseContact: String(d.leaseContact || '').trim() });
   else fields.rentalDue = '';
   if (fields.leaseStart && fields.rentalDue && fields.leaseStart > fields.rentalDue) return formError('임대 기간: 반납일이 시작일보다 빨라요');
   $('f-save').disabled = true; $('f-save').textContent = '저장 중…';
@@ -2233,7 +2244,7 @@ function closeModal() { $('modal').classList.add('hidden'); $('modal-box').inner
 const XL_COLS = [
   ['관리번호(ID)', 'id'], ['보유부서', '_dept'], ['보유부서명', '_deptName'], ['대분류', 'category'], ['중분류', 'item'],
   ['품명/계약명', 'contract'], ['모델명/상세', 'model'], ['최초위치', 'locInit'], ['현재위치', 'location'], ['상태', 'status'], ['관리자', 'manager'],
-  ['수량', 'qty'], ['단위', 'unit'], ['위도', 'lat'], ['경도', 'lng'], ['좌표 기록', '_coordLog'], ['다음점검일', 'nextCheck'], ['임대업체', 'leaseVendor'], ['임대시작일', 'leaseStart'], ['반납예정일', 'rentalDue'], ['업체연락처', 'leaseTel'], ['비고', 'note'],
+  ['수량', 'qty'], ['단위', 'unit'], ['위도', 'lat'], ['경도', 'lng'], ['좌표 기록', '_coordLog'], ['다음점검일', 'nextCheck'], ['임대업체', 'leaseVendor'], ['임대시작일', 'leaseStart'], ['반납예정일', 'rentalDue'], ['업체연락처', 'leaseTel'], ['업체담당자', 'leaseContact'], ['비고', 'note'],
   ['현장종료구분', 'outType'], ['종료일', 'outDate'], ['받는곳', 'outTo'], ['반출증번호', 'outDoc']
 ];
 const XL_WIDTH = [13, 9, 18, 14, 14, 32, 34, 18, 18, 7, 10, 6, 6, 10, 11, 30, 12, 14, 12, 12, 14, 24, 14, 11, 14, 12];
@@ -2277,6 +2288,7 @@ function downloadTemplate() {
 }
 function exportExcel() {
   if (!needXLSX()) return;
+  if (UI.filter === 'lease' || UI.filter === 'leaseOut') return exportLease();
   const c = Store.cfg();
   const rows = DOC.assets.map(a => XL_COLS.map(([, k]) => ({
     _dept: c.deptCode || '', _deptName: c.deptName || 'Aurora Project(충남)',
@@ -2285,6 +2297,14 @@ function exportExcel() {
   }[k] ?? a[k] ?? '')));
   const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, xlSheet(rows), '자산대장');
   XLSX.writeFile(wb, `Aurora_자산대장_${todayStr()}.xlsx`);
+}
+function exportLease() {   // 임대/임차 건만, 필요한 칸만
+  const all = DOC.assets.filter(isLease), list = UI.filter === 'leaseOut' ? all.filter(a => a.out) : [...all.filter(a => !a.out), ...all.filter(a => a.out)];
+  const head = ['관리번호', '분류', '품목', '모델', '위치', '수량', '단위', '임대 업체', '임대 시작일', '반납 예정일', '남은 일수', '업체 담당자', '업체 연락처', '상태', '반납일'];
+  const rows = list.map(a => { const r = dday(a.rentalDue); return [a.id, a.category, a.item, a.model, a.location, a.qty, a.unit, a.leaseVendor, a.leaseStart, a.rentalDue, a.out ? '반납됨' : r === null ? '' : r, a.leaseContact, a.leaseTel, a.out ? a.out.type : a.status, a.out ? a.out.date : '']; });
+  const ws = XLSX.utils.aoa_to_sheet([head, ...rows]); ws['!cols'] = head.map((h, i) => ({ wch: [12, 12, 12, 26, 18, 6, 6, 14, 12, 12, 9, 14, 15, 10, 12][i] }));
+  const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, UI.filter === 'leaseOut' ? '임대반납' : '임대임차');
+  XLSX.writeFile(wb, `임대임차_${UI.filter === 'leaseOut' ? '반납_' : ''}목록_${todayStr().replace(/-/g, '')}.xlsx`);
 }
 const cellStr = v => v == null ? '' : String(v).trim();
 function cellDate(v) {
@@ -2310,7 +2330,7 @@ function buildPlan(rows) {
     const r = {}; Object.keys(raw).forEach(k => { const key = XL_ALIAS[String(k).replace(/\s/g, '')]; if (key && !key.startsWith('_')) r[key] = raw[k]; });
     if (!Object.values(r).some(v => cellStr(v))) return;
     const errs = [], notes = [], f = {}, id = cellStr(r.id).toUpperCase(); const cur = id ? byId.get(id) : null;
-    ['model', 'contract', 'location', 'locInit', 'manager', 'note', 'leaseVendor', 'leaseTel'].forEach(k => { const v = cellStr(r[k]); if (v) f[k] = v; });
+    ['model', 'contract', 'location', 'locInit', 'manager', 'note', 'leaseVendor', 'leaseTel', 'leaseContact'].forEach(k => { const v = cellStr(r[k]); if (v) f[k] = v; });
     if (!f.location && f.locInit && !cur) f.location = f.locInit;
     const acq = acqOf(f.contract); if (acq) f.acq = acq;
     // 품목·분류
@@ -2393,7 +2413,7 @@ async function applyPlan() {
         const id = p.id || nextId(doc);
         if (doc.assets.some(x => x.id === id)) { skipped++; return; }
         doc.assets.push({ id, category: '', item: '', model: '', contract: '', acq: '', qty: 1, unit: 'EA', location: '', locInit: p.f.locInit || p.f.location || '', manager: '',
-          status: '상', lat: '', lng: '', nextCheck: '', rentalDue: '', leaseVendor: '', leaseStart: '', leaseTel: '', note: '', out: null, ...p.f, log: [{ at: now, t: '엑셀로 등록' }], updatedAt: now }); added++;
+          status: '상', lat: '', lng: '', nextCheck: '', rentalDue: '', leaseVendor: '', leaseStart: '', leaseTel: '', leaseContact: '', note: '', out: null, ...p.f, log: [{ at: now, t: '엑셀로 등록' }], updatedAt: now }); added++;
       } else { const a = doc.assets.find(x => x.id === p.id); if (a) { p.changes.forEach(c => a[c.k] = p.f[c.k]); addLog(a, '엑셀 수정: ' + p.changes.map(c => FIELD_KO[c.k] || c.k).join(', '), now); a.updatedAt = now; updated++; } }
       if (p.f.location && !doc.locations.includes(p.f.location)) doc.locations.push(p.f.location);
     });
@@ -2540,7 +2560,7 @@ function showInstall() {
   box.innerHTML = h; box.classList.remove('hidden');
 }
 
-const BUILD = '2026-11-12n';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
+const BUILD = '2026-11-12o';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
 async function checkUpdate() {
   try {
     const t = await (await fetch(location.pathname + '?v=' + Date.now(), { cache: 'reload' })).text();
