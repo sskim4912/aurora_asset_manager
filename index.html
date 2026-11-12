@@ -2028,24 +2028,33 @@ function cleanSameDay(id) {
   if (!confirm(`같은 날 찍은 사진은 날짜별로 마지막 1장만 남기고\n${ex.length}장을 지울까요? 되돌릴 수 없어요.`)) return;
   delPhotos(id, ex);
 }
+let DEL_CHAIN = Promise.resolve();   // 지우기는 뒤에서 순서대로
 async function delPhotos(id, ps) {
   if (ps.some(p => UPQ.some(j => j.shot.path === p.path))) return toast('아직 저장 중인 사진이 있어요 · 저장이 끝난 뒤 지워 주세요', 'warn');
   if (!(await ensureToken())) return;
-  closeModal(); const done = [];
-  for (let i = 0; i < ps.length; i++) {
-    pill(`🗑 사진 지우는 중… ${i + 1}/${ps.length}`);
-    try { await Store.deleteFile(ps[i].path, `사진 삭제: ${fname(ps[i])}`); done.push(ps[i].path); } catch (e) { toast('일부 사진을 지우지 못했어요 · ' + e.message, 'err'); break; }
-  }
-  if (!done.length) return pill('');
-  const a = getAsset(id), rest = photoList(a).filter(x => !done.includes(x.path));
-  const isMain = a.photo && done.includes(a.photo.path);
-  const thumb = isMain && rest[0] ? await makeThumbFrom(photoUrl(a, rest[0])) : null;
-  if (isMain) delete PHOTO_LOCAL[id];
-  await saveChange(doc => { const x = doc.assets.find(y => y.id === id); if (!x) return false; const now = new Date().toISOString();
-    x.photos = (x.photos || []).filter(y => !done.includes(y.path));
-    if (x.photo && done.includes(x.photo.path)) { x.photo = x.photos[0] || null; x.thumb = thumb || ''; }
-    x.updatedAt = now; addLog(x, `사진 삭제 ${done.length}장 · ` + done.map(d => d.split('/').pop()).join(', '), now); return true; }, `사진 삭제: ${id} (${done.length}장)`, `사진 ${done.length}장을 지웠어요`);
-  pill(''); showPhoto(id);
+  const paths = ps.map(p => p.path);
+  // ① 화면은 바로 바꿈
+  const la = getAsset(id); la.photos = photoList(la).filter(x => !paths.includes(x.path));
+  const isMain = la.photo && paths.includes(la.photo.path);
+  if (isMain) { la.photo = la.photos[0] || null; la.thumb = ''; delete PHOTO_LOCAL[id]; }
+  render(); showPhoto(id); toast(`사진 ${paths.length}장을 지웠어요`);
+  // ② 실제 삭제·기록은 뒤에서
+  DEL_CHAIN = DEL_CHAIN.then(async () => {
+    const done = [];
+    for (let i = 0; i < paths.length; i++) {
+      pill(`🗑 정리 중… ${i + 1}/${paths.length}`);
+      try { await Store.deleteFile(paths[i], `사진 삭제: ${paths[i].split('/').pop()}`); done.push(paths[i]); } catch (e) { toast('일부 사진을 지우지 못했어요 · ' + e.message, 'err'); break; }
+    }
+    if (done.length) {
+      const a = getAsset(id), thumb = isMain && a && a.photo ? await makeThumbFrom(photoUrl(a, a.photo)) : null;
+      await saveChange(doc => { const x = doc.assets.find(y => y.id === id); if (!x) return false; const now = new Date().toISOString();
+        x.photos = (x.photos || []).filter(y => !done.includes(y.path));
+        if (x.photo && done.includes(x.photo.path)) { x.photo = x.photos[0] || null; x.thumb = thumb || ''; }
+        x.updatedAt = now; addLog(x, `사진 삭제 ${done.length}장 · ` + done.map(d => d.split('/').pop()).join(', '), now); return true; }, `사진 삭제: ${id} (${done.length}장)`, null);
+    }
+    if (done.length < paths.length) reloadData();
+    pill('');
+  });
 }
 /* 사진 크게 보기 (+ 이력) */
 function showPhoto(id, idx = 0) {
@@ -2550,7 +2559,7 @@ function showInstall() {
   box.innerHTML = h; box.classList.remove('hidden');
 }
 
-const BUILD = '2026-11-12g';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
+const BUILD = '2026-11-12h';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
 async function checkUpdate() {
   try {
     const t = await (await fetch(location.pathname + '?v=' + Date.now(), { cache: 'reload' })).text();
