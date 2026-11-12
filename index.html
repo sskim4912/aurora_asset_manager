@@ -2031,9 +2031,9 @@ async function delPhotos(id, ps) {
   // ② 기록은 뒤에서 (한 번 저장)
   const thumb = isMain && la.photo ? await makeThumbFrom(photoUrl(la, la.photo)) : null;
   await saveChange(doc => { const x = doc.assets.find(y => y.id === id); if (!x) return false; const now = new Date().toISOString();
-    const moved = (x.photos || []).filter(y => paths.includes(y.path)); if (!moved.length) return false;
-    const main = x.photo && paths.includes(x.photo.path);
-    doc.trash.unshift({ at: now, kind: 'photo', id, snap: snapOf(x), photos: moved, wasMain: !!main, thumb: main ? x.thumb : '' });
+    const moved = ps.map(y => ({ path: y.path, at: y.at }));
+    const main = isMain || (x.photo && paths.includes(x.photo.path));
+    doc.trash.unshift({ at: now, kind: 'photo', id, snap: snapOf(x), photos: moved, wasMain: !!main, thumb: main ? (oldThumb || x.thumb) : '' });
     x.photos = x.photos.filter(y => !paths.includes(y.path));
     if (main) { x.photo = x.photos[0] || null; x.thumb = thumb || ''; }
     x.updatedAt = now; addLog(x, `사진 ${moved.length}장 → 삭제 보관함 · ` + moved.map(m => fname(m)).join(', '), now); return true; }, `사진 → 삭제 보관함: ${id} (${paths.length}장)`, null);
@@ -2504,7 +2504,7 @@ function showInstall() {
   box.innerHTML = h; box.classList.remove('hidden');
 }
 
-const BUILD = '2026-11-12i';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
+const BUILD = '2026-11-12j';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
 async function checkUpdate() {
   try {
     const t = await (await fetch(location.pathname + '?v=' + Date.now(), { cache: 'reload' })).text();
