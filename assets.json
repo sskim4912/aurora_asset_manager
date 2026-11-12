@@ -1,6 +1,6 @@
 {
   "version": 4,
-  "updatedAt": "2026-11-12T04:45:08.182Z",
+  "updatedAt": "2026-11-12T04:45:40.467Z",
   "catalog": {},
   "assets": [
     {
@@ -2876,33 +2876,48 @@
     },
     {
       "id": "AURORA-090",
+      "category": "사무/가전/생활",
+      "item": "기타",
+      "model": "[렌탈]직수형정수기",
       "contract": "",
+      "acq": "임대/임차",
+      "qty": 1,
+      "unit": "EA",
+      "location": "현장 사무실 / 본관",
       "locInit": "현장 사무실 / 본관",
-      "out": null,
+      "manager": "관리팀장",
       "status": "상",
+      "lat": 36.996224,
+      "lng": 126.378724,
+      "nextCheck": "",
+      "rentalDue": "",
+      "leaseVendor": "진로석수",
+      "leaseStart": "",
+      "leaseTel": "",
+      "note": "",
+      "out": null,
+      "updatedAt": "2026-11-12T04:45:40.467Z",
       "log": [
+        {
+          "at": "2026-11-12T04:45:40.467Z",
+          "t": "사진 등록 · AURORA-090_기타_20261112_134537.jpg"
+        },
         {
           "at": "2026-11-12T04:45:08.182Z",
           "t": "등록"
         }
       ],
-      "item": "기타",
-      "category": "사무/가전/생활",
-      "model": "[렌탈]직수형정수기",
-      "qty": 1,
-      "unit": "EA",
-      "location": "현장 사무실 / 본관",
-      "acq": "임대/임차",
-      "manager": "관리팀장",
-      "lat": 36.996224,
-      "lng": 126.378724,
-      "nextCheck": "",
-      "rentalDue": "",
-      "note": "",
-      "leaseVendor": "진로석수",
-      "leaseStart": "",
-      "leaseTel": "",
-      "updatedAt": "2026-11-12T04:45:08.182Z"
+      "thumb": "data:image/jpeg;base64,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",
+      "photo": {
+        "path": "photos/AURORA-090/AURORA-090_기타_20261112_134537.jpg",
+        "at": "2026-11-12T04:45:37.995Z"
+      },
+      "photos": [
+        {
+          "path": "photos/AURORA-090/AURORA-090_기타_20261112_134537.jpg",
+          "at": "2026-11-12T04:45:37.995Z"
+        }
+      ]
     }
   ],
   "audit": null,
