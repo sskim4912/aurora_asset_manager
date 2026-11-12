@@ -1,6 +1,6 @@
 {
   "version": 3,
-  "updatedAt": "2026-11-12T00:52:18.349Z",
+  "updatedAt": "2026-11-12T00:52:41.383Z",
   "catalog": {},
   "assets": [
     {
@@ -2375,33 +2375,48 @@
     },
     {
       "id": "AURORA-081",
+      "category": "사무/가전/생활",
+      "item": "기타",
+      "model": "[렌탈]직수형정수기",
       "contract": "",
+      "acq": "임대/임차",
+      "qty": 1,
+      "unit": "EA",
+      "location": "현장 사무실 / 본관",
       "locInit": "현장 사무실 / 본관",
-      "out": null,
+      "manager": "관리팀장",
       "status": "상",
+      "lat": 36.996481,
+      "lng": 126.379172,
+      "nextCheck": "",
+      "rentalDue": "",
+      "leaseVendor": "진로석수",
+      "leaseStart": "",
+      "leaseTel": "",
+      "note": "",
+      "out": null,
+      "updatedAt": "2026-11-12T00:52:41.383Z",
       "log": [
+        {
+          "at": "2026-11-12T00:52:41.383Z",
+          "t": "사진 등록 · AURORA-081_기타_20261112_095237.jpg"
+        },
         {
           "at": "2026-11-12T00:52:18.349Z",
           "t": "등록"
         }
       ],
-      "item": "기타",
-      "category": "사무/가전/생활",
-      "model": "[렌탈]직수형정수기",
-      "qty": 1,
-      "unit": "EA",
-      "location": "현장 사무실 / 본관",
-      "acq": "임대/임차",
-      "manager": "관리팀장",
-      "lat": 36.996481,
-      "lng": 126.379172,
-      "nextCheck": "",
-      "rentalDue": "",
-      "note": "",
-      "leaseVendor": "진로석수",
-      "leaseStart": "",
-      "leaseTel": "",
-      "updatedAt": "2026-11-12T00:52:18.349Z"
+      "thumb": "data:image/jpeg;base64,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",
+      "photo": {
+        "path": "photos/AURORA-081/AURORA-081_기타_20261112_095237.jpg",
+        "at": "2026-11-12T00:52:37.646Z"
+      },
+      "photos": [
+        {
+          "path": "photos/AURORA-081/AURORA-081_기타_20261112_095237.jpg",
+          "at": "2026-11-12T00:52:37.646Z"
+        }
+      ]
     }
   ],
   "audit": null,
