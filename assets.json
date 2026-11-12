@@ -1,6 +1,6 @@
 {
   "version": 4,
-  "updatedAt": "2026-11-12T05:10:29.023Z",
+  "updatedAt": "2026-11-12T05:10:53.346Z",
   "catalog": {},
   "assets": [
     {
@@ -2765,12 +2765,16 @@
       "rentalDue": "",
       "leaseVendor": "(주)세중S&C",
       "leaseStart": "",
-      "leaseTel": "15771091",
+      "leaseTel": "1577-1091",
       "leaseContact": "",
-      "note": "관리팀위치",
+      "note": "관리팀 구역",
       "out": null,
-      "updatedAt": "2026-11-12T01:06:14.954Z",
+      "updatedAt": "2026-11-12T05:10:53.346Z",
       "log": [
+        {
+          "at": "2026-11-12T05:10:53.346Z",
+          "t": "수정: 업체 연락처, 비고"
+        },
         {
           "at": "2026-11-12T01:06:14.954Z",
           "t": "사진 등록 · AURORA-084_기타_20261112_100611.jpg"
