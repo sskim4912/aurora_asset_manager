@@ -1,6 +1,6 @@
 {
   "version": 4,
-  "updatedAt": "2026-11-12T05:05:03.093Z",
+  "updatedAt": "2026-11-12T05:05:16.089Z",
   "catalog": {},
   "assets": [
     {
@@ -3074,33 +3074,48 @@
     },
     {
       "id": "AURORA-093",
+      "category": "가설비품",
+      "item": "안전화건조기",
+      "model": "안전화건조기",
       "contract": "",
+      "acq": "",
+      "qty": 1,
+      "unit": "EA",
+      "location": "현장 사무실 / 본관",
       "locInit": "현장 사무실 / 본관",
-      "out": null,
+      "manager": "관리팀장",
       "status": "상",
+      "lat": 36.996241,
+      "lng": 126.378463,
+      "nextCheck": "",
+      "rentalDue": "",
+      "leaseVendor": "",
+      "leaseStart": "",
+      "leaseTel": "",
+      "note": "안전팀 구역",
+      "out": null,
+      "updatedAt": "2026-11-12T05:05:16.089Z",
       "log": [
+        {
+          "at": "2026-11-12T05:05:16.089Z",
+          "t": "사진 등록 · AURORA-093_안전화건조기_20261112_140512.jpg"
+        },
         {
           "at": "2026-11-12T05:05:03.092Z",
           "t": "등록"
         }
       ],
-      "item": "안전화건조기",
-      "category": "가설비품",
-      "model": "안전화건조기",
-      "qty": 1,
-      "unit": "EA",
-      "location": "현장 사무실 / 본관",
-      "acq": "",
-      "manager": "관리팀장",
-      "lat": 36.996241,
-      "lng": 126.378463,
-      "nextCheck": "",
-      "rentalDue": "",
-      "note": "안전팀 구역",
-      "leaseVendor": "",
-      "leaseStart": "",
-      "leaseTel": "",
-      "updatedAt": "2026-11-12T05:05:03.092Z"
+      "thumb": "data:image/jpeg;base64,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",
+      "photo": {
+        "path": "photos/AURORA-093/AURORA-093_안전화건조기_20261112_140512.jpg",
+        "at": "2026-11-12T05:05:12.584Z"
+      },
+      "photos": [
+        {
+          "path": "photos/AURORA-093/AURORA-093_안전화건조기_20261112_140512.jpg",
+          "at": "2026-11-12T05:05:12.584Z"
+        }
+      ]
     }
   ],
   "audit": null,
