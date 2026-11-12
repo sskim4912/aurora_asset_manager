@@ -2540,7 +2540,7 @@ function showInstall() {
   box.innerHTML = h; box.classList.remove('hidden');
 }
 
-const BUILD = '2026-11-12m';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
+const BUILD = '2026-11-12n';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
 async function checkUpdate() {
   try {
     const t = await (await fetch(location.pathname + '?v=' + Date.now(), { cache: 'reload' })).text();
@@ -2560,7 +2560,7 @@ let OPEN_SET = false;   // ?settings 주소로 열면 로그인 뒤 설정 바�
   if (isAuthed()) startApp(); else { $('gate').classList.remove('hidden'); setTimeout(() => $('pw').focus(), 50); }
 })();
 </script>
-<button id="to-top" class="to-top" title="맨 위로" aria-label="맨 위로" onclick="scrollTo({top:0,behavior:'smooth'})">↑</button>
+<button id="to-top" class="to-top" title="맨 위로" aria-label="맨 위로" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
 <script>addEventListener('scroll',()=>{const b=document.getElementById('to-top');if(b)b.classList.toggle('show',scrollY>600)},{passive:true});</script>
 </body>
 </html>
