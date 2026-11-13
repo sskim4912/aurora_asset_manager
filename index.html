@@ -431,6 +431,10 @@ body:has(.map-sheet) .fab,body:has(.move-bar) .fab{display:none!important}
 .coord-history{display:block!important}.coord-history small{display:block;font-size:11px;color:var(--sub);overflow-wrap:anywhere}.coord-history .link{display:block;margin-top:5px}
 @media(max-width:640px){.mapcard{max-width:240px;min-width:190px}.spot-list{max-height:180px}.mapcard.map-sheet{position:absolute;bottom:12px;left:8px;right:8px;max-width:none;min-width:0;transform:none;z-index:30;max-height:65%;overflow:auto}.mapcard.map-sheet::after{display:none}.map-name{max-width:175px;font-size:11px}}
 
+.map-location-tools{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:-2px 0 9px;font-size:12px;color:var(--sub)}
+.distance-badge{background:#fff;color:#075cb4;border:1px solid #b8cce7;border-radius:8px;padding:5px 9px;font-size:12px;font-weight:800;white-space:nowrap;box-shadow:0 2px 7px #0004;pointer-events:none;max-width:240px;white-space:normal;text-align:center}
+.asset-distance{font-size:12px;color:#075cb4;margin-top:9px;line-height:1.5}.my-position-dot{width:18px;height:18px;border-radius:50%;background:#1677ff;border:3px solid #fff;box-shadow:0 1px 5px #0004}
+
 /* 라벨 */
 .lab-layout{display:grid;grid-template-columns:330px 1fr;gap:16px;align-items:start}
 .lab-pick{padding:14px;position:sticky;top:20px}
@@ -872,7 +876,7 @@ function goHome() {   // GS 로고: 첫 화면으로
 function render() {
   if (!DOC) return;
   const v = currentView();
-  cancelMapMove(); closeMapInfo(); MAP = null;
+  stopMyPosition(); cancelMapMove(); closeMapInfo(); MAP = null;
   $('view').innerHTML = VIEWS[v].render();
   if (VIEWS[v].after) VIEWS[v].after();
 }
@@ -1168,7 +1172,7 @@ const LABEL_LEVEL = 3;              // 이 레벨 이하(확대)에서 이름표
 const SAME_SPOT = 3;                // m: 이 안쪽은 같은 자리로 묶음
 let MAP_LIST = [], MAP_PINS = [];
 // 핀 그리기: 매번 전부 지우고 다시 그림 (중복 없음). 멀리서는 화면상 44px 안의 것끼리 숫자로 묶음
-let MAP_SELECTED = null, MOVE = null, MOVE_STARTING = false;
+let MAP_SELECTED = null, MOVE = null, MOVE_STARTING = false, MAP_NAMES = null;
 function groupName(items) {
   if (items.length === 1) return shortNo(items[0].id) + ' ' + dispName(items[0]);
   const counts = new Map(); items.forEach(a => counts.set(a.item || '기타', (counts.get(a.item || '기타') || 0) + 1));
@@ -1196,6 +1200,7 @@ function mapPinActions(element, group) {
 }
 // 이름표만 화면에서 옮긴다. 실제 좌표는 원의 중심이며 연결선으로 구분한다.
 function placeMapNames(groups, map) {
+  if (MAP_NAMES) { MAP_NAMES.remove(); MAP_NAMES = null; }
   $('map-names')?.remove(); const host = $('kmap');
   if (!host || map !== MAP || MAPX.level(map) > LABEL_LEVEL + 1 || MOVE) return;
   const layer = document.createElement('div'); layer.id = 'map-names'; layer.className = 'map-label-layer'; host.append(layer);
@@ -1226,6 +1231,14 @@ function placeMapNames(groups, map) {
     line.setAttribute('x1', p.x); line.setAttribute('y1', p.y);
     line.setAttribute('x2', Math.max(chosen.x, Math.min(p.x, chosen.x + w))); line.setAttribute('y2', Math.max(chosen.y, Math.min(p.y, chosen.y + h)));
     line.setAttribute('stroke', '#fff'); line.setAttribute('stroke-width', '2'); line.style.filter = 'drop-shadow(0 1px 1px #000)'; svg.append(line);
+  }
+  if (anchors.length && MAPX.g()) {
+    // 지도 자체의 좌표 오버레이에 붙인다. 드래그 중에도 타일·핀과 같은 프레임으로 이동한다.
+    const anchor = anchors[0], origin = document.createElement('div');
+    origin.style.cssText = 'width:0;height:0;pointer-events:none';
+    layer.style.cssText = `inset:auto;left:${-anchor.p.x}px;top:${-anchor.p.y}px;width:${width}px;height:${height}px;overflow:visible`;
+    svg.style.overflow = 'visible'; origin.append(layer);
+    MAP_NAMES = MAPX.overlay(map, MAPX.ll(anchor.g.p.lat, anchor.g.p.lng), origin, 0, 4);
   }
 }
 function drawPins() {
@@ -1261,13 +1274,13 @@ async function initMainMap() {
   const all = filteredAssets(), list = all.filter(hasCoord);
   const cntEl = $('asset-count'); if (cntEl) cntEl.textContent = `${all.length}건 중 지도 표시 ${list.length}건${all.length > list.length ? ` · 좌표 없음 ${all.length - list.length}건` : ''}`;
   const box = $('asset-list'); if (!box) return;
-  box.innerHTML = `<div class="legend" style="margin-bottom:8px">${STATUSES.map(s => `<span class="${ST_KEY[s]}"><i></i>상태 ${s}</span>`).join('')}<span class="muted">· 원을 누르면 전체 목록 · 길게 누르기 / 오른쪽 클릭으로 위치 수정</span></div><div class="map-box"><div id="kmap"></div></div>`;
+  box.innerHTML = `<div class="legend" style="margin-bottom:8px">${STATUSES.map(s => `<span class="${ST_KEY[s]}"><i></i>상태 ${s}</span>`).join('')}<span class="muted">· 원을 누르면 전체 목록 · 길게 누르기 / 오른쪽 클릭으로 위치 수정</span></div><div class="map-location-tools"><button class="btn sm" id="show-my-position" onclick="showMyPosition()">내 위치</button><span id="my-position-status">현재 위치는 저장하지 않아요</span><button class="link" id="stop-my-position" onclick="stopMyPosition()" hidden>끄기</button></div><div class="map-box"><div id="kmap"></div></div>`;
   const el = $('kmap');
   if (!list.length) { el.parentElement.insertAdjacentHTML('beforeend', `<div class="map-fail">${icon('pin', 30)}<b>지도에 표시할 자산이 없어요</b>좌표가 등록된 자산만 지도에 나와요.<br>휴대폰으로 [QR 스캔]을 하면 위치가 들어가요.</div>`); }
   try { await MAPX.load(); } catch (e) { el.parentElement.insertAdjacentHTML('beforeend', mapFail()); return; }
   if (!document.body.contains(el)) return;
   MAP = MAPX.create(el, CONFIG.MAP_CENTER, 3);
-  MAP_INFO = null;
+  MAP_INFO = null; MAP_SELECTED = null;
   MAP_LIST = list;
   const ownMap = MAP;
   const labelToggle = () => { if (MAP !== ownMap || !document.body.contains(el)) return; drawPins(); };
@@ -1292,7 +1305,7 @@ function mapCard(html, pos) {
   if (matchMedia('(max-width:640px)').matches) {
     el.classList.add('map-sheet'); $('kmap').parentElement.append(el); MAP_INFO = { remove: () => el.remove() };
   } else MAP_INFO = MAPX.overlay(MAP, pos, el, 1, 10, true);
-  return el;
+  MAP_INFO.element = el; return el;
 }
 function mapSelect(id, level) {
   const a = getAsset(id); if (!MAP || !a || !hasCoord(a)) return;
@@ -1301,11 +1314,12 @@ function mapSelect(id, level) {
   mapCard(`<div class="mc-row">${a.thumb || a.photo?.path ? `<img src="${a.thumb || photoUrl(a)}" class="mc-img" alt="">` : ''}<div style="min-width:0;flex:1">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:6px"><span class="mono" style="color:var(--sub);font-size:12px">${a.id}</span>${stBadge(a)}</div>
       <b>${esc(dispName(a))}</b><div style="color:var(--sub)">${esc(a.location)}</div></div></div>
-    <button class="btn sm primary" onclick="openAsset('${a.id}')">상세 보기</button><button class="btn sm" onclick="beginMapMove('${a.id}')">위치 수정</button>`, pos);
+    <div id="asset-distance" class="asset-distance"></div><button class="btn sm primary" onclick="openAsset('${a.id}')">상세 보기</button><button class="btn sm" onclick="beginMapMove('${a.id}')">위치 수정</button>`, pos);
   if (level && MAPX.level(MAP) > level) MAPX.setLevel(MAP, level);
-  MAPX.panTo(MAP, pos);
+  focusDistanceSelection(MAP, a); drawMapDistance();
 }
 function mapSpot(g) {   // 같은 자리 여러 개 → 목록
+  MAP_SELECTED = null; clearMapDistance();
   const pos = MAPX.ll(g.p.lat, g.p.lng);
   mapCard(`<b style="margin:0 0 6px">가까운 자산 ${g.items.length}개</b><small>이동할 자산은 목록에서 한 개를 선택하세요</small><div class="spot-list">${g.items.map(a => `<button onclick="mapSelect('${a.id}')">${a.thumb || a.photo?.path ? `<img src="${a.thumb || photoUrl(a)}" alt="">` : '<span class="ph"></span>'}<span><b>${esc(a.id)}</b> ${esc(dispName(a))}<small>${esc(shortModel(a.model))}</small></span>${stBadge(a)}</button>`).join('')}</div>`, pos);
   MAPX.panTo(MAP, pos);
@@ -1315,6 +1329,108 @@ function showOnMap(id) {
   Object.assign(UI, { mode: 'map', q: '', cat: '전체', item: '전체', loc: '전체', filter: a && a.out ? (isGone(a) ? 'disposed' : 'out') : 'all' });
   go('assets');
 }
+
+// 내 위치는 현재 화면의 메모리에만 유지한다. 서버·브라우저 저장소에는 쓰지 않는다.
+let MY_POSITION = null, MY_WATCH = null, MY_POSITION_TIMER = null, MY_DOT = null, MY_ACCURACY = null;
+let DISTANCE_LINES = [], DISTANCE_BADGE = null, MY_LOCATION_RUN = 0;
+function formatMapDistance(meters) {
+  const rounded = Math.round(Math.max(0, meters));
+  return rounded < 1000 ? `${rounded} m` : `${(meters / 1000).toFixed(1)} km`;
+}
+function distanceMidpoint(a, b) {
+  const rad = Math.PI / 180, l1 = a.lat * rad, l2 = b.lat * rad, dl = (b.lng - a.lng) * rad;
+  const x = Math.cos(l2) * Math.cos(dl), y = Math.cos(l2) * Math.sin(dl);
+  return { lat: Math.atan2(Math.sin(l1) + Math.sin(l2), Math.hypot(Math.cos(l1) + x, y)) / rad, lng: ((a.lng + Math.atan2(y, Math.cos(l1) + x) / rad + 540) % 360) - 180 };
+}
+function clearMapDistance() {
+  DISTANCE_LINES.forEach(line => line.setMap(null)); DISTANCE_LINES = [];
+  if (DISTANCE_BADGE) DISTANCE_BADGE.remove(); DISTANCE_BADGE = null;
+}
+function focusDistanceSelection(map, asset) {
+  if (MY_POSITION && Date.now() - MY_POSITION.at <= 60000 && distM(MY_POSITION, asset) > 30) {
+    if (MAPX.g()) {
+      map.setOptions({ maxZoom: 20 });
+      const bounds = new google.maps.LatLngBounds(); [MY_POSITION, asset].forEach(p => bounds.extend({ lat: +p.lat, lng: +p.lng }));
+      const mobile = matchMedia('(max-width:640px)').matches, height = $('kmap')?.clientHeight || 500;
+      map.fitBounds(bounds, { top: mobile ? 50 : Math.min(280, height * .55), bottom: mobile ? Math.min(280, height * .55) : 55, left: 45, right: 45 });
+    } else MAPX.fit(map, [MY_POSITION, asset]);
+  } else MAPX.panTo(map, MAPX.ll(asset.lat, asset.lng));
+}
+function drawMapDistance() {
+  clearMapDistance();
+  const out = $('asset-distance') || MAP_INFO?.element?.querySelector('#asset-distance'), selected = getAsset(MAP_SELECTED);
+  if (!MAP || !selected || !hasCoord(selected) || MOVE) return;
+  if (!MY_POSITION) { if (out) out.textContent = '내 위치를 켜면 직선거리를 볼 수 있어요'; return; }
+  const stale = Date.now() - MY_POSITION.at > 60000;
+  if (stale) { if (out) out.textContent = '내 위치 갱신 대기 중 · 내 위치 버튼으로 다시 확인해 주세요'; return; }
+  const target = { lat: +selected.lat, lng: +selected.lng }, distance = distM(MY_POSITION, target);
+  const uncertain = MY_POSITION.acc >= distance;
+  const label = uncertain ? '가까운 위치 · 정확한 거리 확인 어려움' : `직선거리 약 ${formatMapDistance(distance)}`;
+  const accuracy = `내 위치 정확도 ±${formatMapDistance(MY_POSITION.acc)}${MY_POSITION.acc > 100 ? ' · 위치 오차가 커요' : ''}`;
+  if (out) out.textContent = `${label} · ${accuracy} · 도보 경로가 아닙니다`;
+  const path = [MAPX.ll(MY_POSITION.lat, MY_POSITION.lng), MAPX.ll(target.lat, target.lng)];
+  if (MAPX.g()) {
+    DISTANCE_LINES.push(new google.maps.Polyline({ map: MAP, path, geodesic: true, strokeColor: '#fff', strokeOpacity: .9, strokeWeight: 5, clickable: false, zIndex: 3 }));
+    DISTANCE_LINES.push(new google.maps.Polyline({ map: MAP, path, geodesic: true, strokeOpacity: 0, clickable: false, zIndex: 4, icons: [{ icon: { path: 'M 0,-1 0,1', strokeColor: '#1677ff', strokeOpacity: 1, strokeWeight: 3, scale: 2 }, offset: '0', repeat: '12px' }] }));
+  } else {
+    DISTANCE_LINES.push(new kakao.maps.Polyline({ map: MAP, path, strokeColor: '#fff', strokeWeight: 5, strokeOpacity: .9 }));
+    DISTANCE_LINES.push(new kakao.maps.Polyline({ map: MAP, path, strokeColor: '#1677ff', strokeWeight: 3, strokeStyle: 'dash', strokeOpacity: 1 }));
+  }
+  const badge = document.createElement('div'); badge.className = 'distance-badge'; badge.textContent = label; badge.title = accuracy + ' · 직선거리';
+  const middle = distanceMidpoint(MY_POSITION, target);
+  DISTANCE_BADGE = MAPX.overlay(MAP, MAPX.ll(middle.lat, middle.lng), badge, .5, 6);
+}
+function updateMyPosition(position, map) {
+  if (MAP !== map) return;
+  const c = position.coords;
+  if (![c.latitude, c.longitude, c.accuracy].every(Number.isFinite) || c.accuracy < 0) return;
+  MY_POSITION = { lat: c.latitude, lng: c.longitude, acc: c.accuracy, at: Number.isFinite(position.timestamp) ? position.timestamp : Date.now() };
+  const point = MAPX.ll(c.latitude, c.longitude);
+  if (MAPX.g()) {
+    if (!MY_DOT) MY_DOT = new google.maps.Marker({ map, position: point, clickable: false, zIndex: 100, title: '내 위치', icon: { path: google.maps.SymbolPath.CIRCLE, scale: 7, fillColor: '#1677ff', fillOpacity: 1, strokeColor: '#fff', strokeWeight: 3 } });
+    else MY_DOT.setPosition(point);
+    if (!MY_ACCURACY) MY_ACCURACY = new google.maps.Circle({ map, center: point, radius: c.accuracy, strokeColor: '#1677ff', strokeOpacity: .3, strokeWeight: 1, fillColor: '#1677ff', fillOpacity: .12, clickable: false });
+    else { MY_ACCURACY.setCenter(point); MY_ACCURACY.setRadius(c.accuracy); }
+  } else {
+    if (!MY_DOT) { const dot = document.createElement('div'); dot.className = 'my-position-dot'; MY_DOT = MAPX.overlay(map, point, dot, .5, 8); } else MY_DOT.move(point);
+    if (!MY_ACCURACY) MY_ACCURACY = new kakao.maps.Circle({ map, center: point, radius: c.accuracy, strokeColor: '#1677ff', strokeOpacity: .3, fillColor: '#1677ff', fillOpacity: .12 });
+    else { MY_ACCURACY.setPosition(point); MY_ACCURACY.setRadius(c.accuracy); }
+  }
+  const hint = $('my-position-status'); if (hint) hint.textContent = `내 위치 정확도 ±${formatMapDistance(c.accuracy)}`;
+  const stop = $('stop-my-position'); if (stop) stop.hidden = false;
+  const button = $('show-my-position'); if (button) { button.disabled = false; button.textContent = '내 위치로'; }
+  drawMapDistance();
+}
+function stopMyPosition() {
+  MY_LOCATION_RUN++;
+  if (MY_WATCH !== null) navigator.geolocation?.clearWatch(MY_WATCH);
+  clearInterval(MY_POSITION_TIMER); MY_POSITION_TIMER = null; MY_WATCH = null; MY_POSITION = null;
+  if (MY_DOT) { if (MY_DOT.remove) MY_DOT.remove(); else MY_DOT.setMap(null); } MY_DOT = null;
+  if (MY_ACCURACY) MY_ACCURACY.setMap(null); MY_ACCURACY = null; clearMapDistance();
+  if ($('my-position-status')) $('my-position-status').textContent = '현재 위치는 저장하지 않아요';
+  if ($('show-my-position')) { $('show-my-position').disabled = false; $('show-my-position').textContent = '내 위치'; }
+  if ($('stop-my-position')) $('stop-my-position').hidden = true;
+  if ($('asset-distance')) $('asset-distance').textContent = '내 위치를 켜면 직선거리를 볼 수 있어요';
+}
+function showMyPosition() {
+  if (!MAP) return;
+  if (MY_POSITION && Date.now() - MY_POSITION.at <= 60000) { MAPX.panTo(MAP, MAPX.ll(MY_POSITION.lat, MY_POSITION.lng)); return; }
+  if (!navigator.geolocation) return toast('이 브라우저는 현재 위치를 지원하지 않아요', 'warn');
+  stopMyPosition(); const map = MAP, run = MY_LOCATION_RUN;
+  $('show-my-position').disabled = true; $('my-position-status').textContent = '내 위치 확인 중…';
+  let first = true;
+  MY_WATCH = navigator.geolocation.watchPosition(position => {
+    if (MAP !== map || run !== MY_LOCATION_RUN) return;
+    updateMyPosition(position, map);
+    if (first) { first = false; const selected = getAsset(MAP_SELECTED); if (selected && hasCoord(selected)) focusDistanceSelection(map, selected); else if (MY_POSITION) MAPX.panTo(map, MAPX.ll(MY_POSITION.lat, MY_POSITION.lng)); }
+  }, error => {
+    if (MAP !== map || run !== MY_LOCATION_RUN) return;
+    stopMyPosition(); const message = error.code === 1 ? '위치 권한이 거부됐어요 · 브라우저 설정에서 허용해 주세요' : error.code === 3 ? '현재 위치 확인 시간이 초과됐어요 · 다시 시도해 주세요' : '현재 위치를 확인할 수 없어요 · GPS와 위치 설정을 확인해 주세요';
+    if ($('my-position-status')) $('my-position-status').textContent = message; toast(message, 'warn');
+  }, { enableHighAccuracy: true, maximumAge: 10000, timeout: 20000 });
+  MY_POSITION_TIMER = setInterval(drawMapDistance, 10000);
+}
+document.addEventListener('visibilitychange', () => { if (document.hidden) stopMyPosition(); });
 
 // 위치 이동은 선택한 한 자산만 변경한다. 좌표 및 마지막 좌표 기록이 달라지면 저장/복구를 중단한다.
 function coordinateStamp(a) {
@@ -1372,7 +1488,7 @@ function cancelMapMove() {
   if (!MOVE) return;
   MOVE.listeners.forEach(l => { if (MAPX.g()) l.remove(); else kakao.maps.event.removeListener(l.map, l.type, l.fn); });
   MOVE.marker.setMap(null); MOVE.bar.remove(); MOVE = null;
-  if (MAP) drawPins();
+  if (MAP) { drawPins(); drawMapDistance(); }
 }
 function setMapDestination(point) {
   if (!MOVE || MOVE.busy || !point) return;
@@ -1383,7 +1499,7 @@ function setMapDestination(point) {
 }
 async function beginMapMove(id) {
   const map = MAP; if (!map || MOVE || MOVE_STARTING) return;
-  MOVE_STARTING = true; closeMapInfo(); document.querySelectorAll('.undo-toast').forEach(el => el.remove());
+  MOVE_STARTING = true; clearMapDistance(); closeMapInfo(); document.querySelectorAll('.undo-toast').forEach(el => el.remove());
   let a;
   try { const latest = await Store.load(); a = latest.assets.find(x => x.id === id); DOC = latest; }
   catch (error) { toast(error.message, 'err'); return; }
@@ -2685,7 +2801,7 @@ function showInstall() {
   box.innerHTML = h; box.classList.remove('hidden');
 }
 
-const BUILD = '2026-11-14h';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
+const BUILD = '2026-11-14j';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
 async function checkUpdate() {
   try {
     const t = await (await fetch(location.pathname + '?v=' + Date.now(), { cache: 'reload' })).text();
