@@ -565,7 +565,7 @@ const CONFIG = {
   // 바꾸는 법: 앱을 연 브라우저 개발자도구 콘솔에서  await sha256('새비밀번호')  실행 → 나온 값을 아래에 붙여넣기
   PW_HASH: '8d129f703b9851ce74cbb41cb84db46fcb6098bea25563526bb700d4a03f8812',
   AUTH_DAYS: 30,
-  GOOGLE_MAPS_KEY: '',   // ★ 구글 지도 브라우저용 API 키 (비어 있으면 카카오 지도로 표시). 키는 'sskim4912.github.io' 주소에서만 쓰도록 제한해 둘 것
+  GOOGLE_MAPS_KEY: 'AIzaSyAEl_wxJ0uUTDHQo_Z0N8lR46kS2HzzBPs',   // ★ 구글 지도 브라우저용 API 키 (비어 있으면 카카오 지도로 표시). 키는 Workers 사이트 주소에서만 쓰도록 제한해 둘 것
   KAKAO_KEY: '77c97bf1b0283e37f4ca3c548d45e5e6',
   MAP_CENTER: [36.9965, 126.3789],   // 현장 컨테이너 (2026-11-11 실측)
   // 데이터 저장 위치 (앱의 '설정'에서도 바꿀 수 있어요)
@@ -2627,7 +2627,7 @@ function showInstall() {
   box.innerHTML = h; box.classList.remove('hidden');
 }
 
-const BUILD = '2026-11-14a';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
+const BUILD = '2026-11-14b';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
 async function checkUpdate() {
   try {
     const t = await (await fetch(location.pathname + '?v=' + Date.now(), { cache: 'reload' })).text();
