@@ -429,7 +429,6 @@ details[open].more summary::before{transform:rotate(90deg)}
 .move-bar{position:absolute;left:8px;right:8px;bottom:12px;z-index:20;background:#fff;border:2px solid #0a5eb0;border-radius:12px;box-shadow:0 3px 16px #0005;padding:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13px}
 .move-bar .move-description{flex:1;min-width:160px}.move-bar small{display:block;color:#526276}.move-bar button{min-height:40px}
 .toast.undo-toast{pointer-events:auto;display:flex;gap:12px;align-items:center;max-width:95vw}.undo-toast button{background:#fff;color:#0a5eb0;border:0;border-radius:6px;padding:7px 10px;font-weight:700;white-space:nowrap}
-body:has(.map-sheet) .fab,body:has(.move-bar) .fab{display:none!important}
 .coord-history{display:block!important}.coord-history small{display:block;font-size:11px;color:var(--sub);overflow-wrap:anywhere}.coord-history .link{display:block;margin-top:5px}
 @media(max-width:640px){.mapcard{max-width:240px;min-width:190px}.spot-list{max-height:180px}.mapcard.map-sheet{position:absolute;bottom:12px;left:8px;right:8px;max-width:none;min-width:0;transform:none;z-index:30;max-height:65%;overflow:auto}.mapcard.map-sheet::after{display:none}.map-name{max-width:175px;font-size:11px}}
 
@@ -521,6 +520,26 @@ body:has(.map-sheet) .fab,body:has(.move-bar) .fab{display:none!important}
   .sheet:last-child{break-after:auto;page-break-after:auto}
   *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 }
+
+/* 일관된 상단 작업 메뉴 · 모바일은 가로 스크롤 없이 화면 너비에 맞춘다. */
+.hdr{width:100%;min-width:0}.hdr-scan{background:#166534;border-color:#166534;color:#fff;min-height:40px;font-weight:750;white-space:nowrap}.hdr-scan:hover,.hdr-scan:focus-visible{background:#14532d;border-color:#14532d;color:#fff}.header-more{flex:none}.header-more>button{width:36px;height:40px;font-size:24px}.header-more .dd-menu{max-width:calc(100vw - 24px);z-index:60}.search-row,.quick-filters{display:contents}.filter-fields{display:grid;gap:14px}.filter-fields label{display:flex;flex-direction:column;gap:6px}
+@media(max-width:899px){
+  .hdr{padding-left:12px;padding-right:12px;gap:7px}.hdr-logo{padding-right:0;flex:none}.hdr-title{flex:0 1 auto;min-width:0;margin:0}.hdr-title b{font-size:13px}.hdr .sp{min-width:0}.hdr .sync{flex:none;padding:4px;width:20px}.hdr-scan{padding:7px 10px;font-size:13px}.hdr-scan svg{width:17px;height:17px}
+  main{padding:12px 12px calc(24px + env(safe-area-inset-bottom));width:100%;max-width:100%}
+  .stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:10px}
+  .stat{display:grid;grid-template-columns:minmax(0,1fr) auto;align-content:start;align-items:center;gap:2px 6px;min-width:0;padding:9px 10px;border-radius:12px}
+  .stat .lbl{grid-column:1;grid-row:1;font-size:12px;min-width:0}.stat .num{grid-column:2;grid-row:1;font-size:25px;line-height:1.2;margin:0}.stat .num small{font-size:11px;margin-left:2px}
+  .stat-sub{grid-column:1/-1;font-size:10.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:0;line-height:1.5}.stat-sub.empty{display:none}
+  .stat-badge{grid-column:1/-1;min-height:0;margin-top:2px;padding-top:2px;display:block}.stat-badge>span{max-width:100%;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .lease-link,.trash-link,.coord-link{font-size:10.5px;padding:3px 5px;white-space:nowrap}.stat .card-link{font-size:11px}
+  .audit-card{grid-template-columns:minmax(0,1fr) auto auto;column-gap:8px;row-gap:2px}.audit-card .lbl{grid-column:1;grid-row:1}.audit-card .num{grid-column:2;grid-row:1;font-size:20px}.audit-card .stat-sub:nth-child(3){grid-column:1;grid-row:2}.audit-card .stat-sub:nth-child(4){grid-column:2;grid-row:2}.audit-card .stat-badge{grid-column:3;grid-row:1/3;margin:0;padding:0}.audit-card .progress{min-width:35px;margin:0}.audit-card .card-link.strong{padding:2px 4px}
+  .toolbar{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:10px;min-width:0}.search-row{display:flex;gap:8px;grid-column:1/-1;min-width:0}.toolbar .search{flex:1;min-width:0;max-width:none;width:0}.search input{font-size:14px;padding:9px 0;width:0}.filter-toggle{flex:none;padding:8px 10px;font-size:12px}
+  .quick-filters{display:grid;grid-column:1/-1;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;min-width:0}.quick-filters .sel{width:100%;min-width:0;max-width:100%;font-size:12px;padding:8px}.quick-filters .sel:nth-child(3){grid-column:1/-1}
+  .toolbar .paper-seg{grid-column:1;display:flex;min-width:0;width:100%;height:40px}.toolbar .paper-seg button{flex:1;min-width:0;padding:7px 5px;font-size:12px}.toolbar>.btn.primary{grid-column:2;min-width:0;white-space:nowrap;font-size:12px;padding:8px;height:40px}
+  .list-head{margin-bottom:8px;font-size:12px}.mlist{min-width:0;width:100%}.to-top{bottom:calc(20px + env(safe-area-inset-bottom))}
+}
+@media(max-width:359px){.hdr-title{display:none}.hdr{gap:6px}.audit-card{column-gap:4px}.audit-card .coord-link{font-size:10px}.hdr-scan{padding:7px 9px}}
+
 </style>
 </head>
 <body>
@@ -545,16 +564,19 @@ body:has(.map-sheet) .fab,body:has(.move-bar) .fab{display:none!important}
 <div id="app" class="hidden">
   <header class="hdr">
     <a class="hdr-logo" href="#assets" onclick="goHome();return false" title="첫 화면으로"><img class="gs-logo" data-logo alt="GS건설"></a>
-    <div class="hdr-title"><b>Aurora Asset Manager</b><small>충남 현장 v2.4</small></div>
-    <button id="hdr-install" class="btn hdr-install hidden" type="button" onclick="installApp()">📲 홈 화면 추가</button>
+    <div class="hdr-title"><b><span class="desktop-only">Aurora Asset Manager</span><span class="mobile-only">비품관리</span></b><small>충남 현장 v2.4</small></div>
     <span class="sp"></span>
     <button class="sync" onclick="reloadData()" title="눌러서 새로고침"><span class="dot" data-sync-dot></span><span data-sync-text class="sync-text">불러오는 중…</span></button>
     <button class="btn hdr-scan" onclick="openScanner()" aria-label="QR 스캔 열기" title="QR 스캔 · 스캔 후 사진·위치 저장"><span data-ic="qr"></span><span>QR 스캔</span></button>
-    <button class="icon-btn" onclick="openSettings()" aria-label="설정" title="설정"><span data-ic="settings"></span></button>
-    <button class="icon-btn" onclick="logout()" aria-label="로그아웃" title="로그아웃"><span data-ic="logout"></span></button>
+    <div class="dd header-more"><button class="icon-btn" onclick="toggleDD(this)" aria-label="더보기" title="더보기" aria-expanded="false">⋯</button>
+      <div class="dd-menu" id="header-more-menu">
+        <button id="hdr-install" class="hidden" type="button" onclick="closeHeaderMenu();installApp()">📲 홈 화면 추가</button>
+        <button onclick="closeHeaderMenu();openSettings()">설정</button>
+        <button onclick="closeHeaderMenu();logout()">로그아웃</button>
+      </div>
+    </div>
   </header>
   <main id="view"></main>
-  <button class="fab mobile-only" onclick="openScanner()" aria-label="QR 스캔"><span data-ic="qr"></span><span class="entry-label">QR 스캔<small>스캔 후 사진·위치 저장</small></span></button>
 </div>
 
 <!-- QR 스캐너 (휴대폰) -->
@@ -901,7 +923,7 @@ function todos() {
 }
 
 /* ── 요약 카드 (누르면 아래 목록이 걸러져요) ── */
-const cardBody = (label, num, l1, l2, badge) => `<div class="lbl">${label}</div><div class="num">${num}</div><div class="stat-sub">${l1 || '&nbsp;'}</div><div class="stat-sub">${l2 || '&nbsp;'}</div><div class="stat-badge">${badge || ''}</div>`;
+const cardBody = (label, num, l1, l2, badge) => `<div class="lbl">${label}</div><div class="num">${num}</div><div class="stat-sub${!l1 ? ' empty' : ''}">${l1 || '&nbsp;'}</div><div class="stat-sub${!l2 ? ' empty' : ''}">${l2 || '&nbsp;'}</div><div class="stat-badge">${badge || ''}</div>`;
 function cardsHTML() {
   const act = activeAssets(); const cnt = s => act.filter(a => a.status === s).length;
   const td = todos().length, ym = todayStr().slice(0, 7);
@@ -957,18 +979,33 @@ function renderAssets() {
   return `
   ${cardsHTML()}
   <div class="toolbar">
-    <label class="search">${icon('search', 16)}<input id="q" placeholder="품목, 모델, 위치, 관리번호 검색" value="${esc(UI.q)}" oninput="UI.q=this.value;refreshList()"></label>
-    ${sel('cat', '분류 전체', CATEGORIES)}${items.length ? sel('item', '품목 전체', items) : ''}${sel('loc', '위치 전체', DOC.locations)}
-    <select class="sel mobile-only" onchange="setSort(this.value)">${SORTS.map(([k, l]) => `<option value="${k}" ${UI.sort.k === k ? 'selected' : ''}>정렬: ${l}</option>`).join('')}</select>
+    <div class="search-row"><label class="search">${icon('search', 16)}<input id="q" placeholder="품목·위치·관리번호 검색" aria-label="자산 검색" value="${esc(UI.q)}" oninput="UI.q=this.value;refreshList()"></label><button class="btn mobile-only filter-toggle" onclick="openAssetFilters()" aria-label="필터 및 정렬">${icon('settings',16)} 필터</button></div>
+    <div class="quick-filters">${sel('cat', '분류 전체', CATEGORIES)}${items.length ? sel('item', '품목 전체', items) : ''}${sel('loc', '위치 전체', DOC.locations)}</div>
     <span class="sp"></span>
     <div class="paper-seg">${[['list', '목록'], ['map', '지도']].map(([k, l]) => `<button class="${UI.mode === k ? 'on' : ''}" onclick="UI.mode='${k}';render()">${icon(k === 'map' ? 'map' : 'list', 15)} ${l}</button>`).join('')}</div>
     <div class="dd desktop-only"><button class="btn" onclick="toggleDD(this)">${icon('file', 16)} 엑셀 ${icon('down', 14)}</button>
       <div class="dd-menu"><button onclick="downloadTemplate()">${icon('file', 16)} 엑셀 양식 받기</button><button onclick="$('xl-file').click()">${icon('upload', 16)} 엑셀 올리기</button><button onclick="exportExcel()">${icon('download', 16)} 내보내기 (전체)</button></div></div>
-    <button class="btn primary" onclick="openForm()" aria-label="신규 비품 등록" title="기본 정보 입력 · QR 생성">${icon('plus', 16)}<span class="entry-label">신규 비품 등록<small>기본 정보 입력 · QR 생성</small></span></button>
+    <button class="btn primary" onclick="openForm()" aria-label="신규 비품 등록" title="기본 정보 입력 · QR 생성">${icon('plus', 16)}<span>신규 비품 등록</span></button>
   </div>
   <div class="list-head"><span id="asset-count"></span>${fk ? `<span class="chip on" onclick="setFilter('all')">${fk} ✕</span>` : ''}</div>
   <div id="sel-bar"></div>
   <div id="asset-list"></div>`;
+}
+function closeHeaderMenu() { $('header-more-menu').classList.remove('open'); document.querySelector('.header-more>button')?.setAttribute('aria-expanded', 'false'); }
+function openAssetFilters() {
+  const options = (values, selected) => values.map(([v, text]) => `<option value="${esc(v)}" ${v === selected ? 'selected' : ''}>${esc(text)}</option>`).join('');
+  openModal(`<div class="m-head"><h2>필터·정렬</h2><button class="icon-btn" onclick="closeModal()" aria-label="닫기">×</button></div><div class="m-body filter-fields">
+    <label>분류<select class="inp" id="filter-category">${options([['전체','분류 전체'], ...CATEGORIES.map(x=>[x,x])], UI.cat)}</select></label>
+    <label>위치<select class="inp" id="filter-location">${options([['전체','위치 전체'], ...DOC.locations.map(x=>[x,x])], UI.loc)}</select></label>
+    <label>정렬<select class="inp" id="filter-sort">${options(SORTS, UI.sort.k)}</select></label>
+    <label>순서<select class="inp" id="filter-direction"><option value="1" ${UI.sort.d===1?'selected':''}>오름차순</option><option value="-1" ${UI.sort.d===-1?'selected':''}>내림차순</option></select></label>
+    </div><div class="m-foot"><button class="btn" onclick="closeModal()">취소</button><span class="sp"></span><button class="btn primary" onclick="applyAssetFilters()">적용</button></div>`);
+}
+function applyAssetFilters() {
+  const category = $('filter-category').value;
+  if (UI.cat !== category) UI.item = '전체'; UI.cat = category; UI.loc = $('filter-location').value;
+  UI.sort = { k: $('filter-sort').value, d: Number($('filter-direction').value) };
+  lsSet('aam_sort', UI.sort); UI.sel.clear(); closeModal(); render();
 }
 function afterAssets() { if (UI.mode === 'map') initMainMap(); else updateAssetList(); }
 function refreshList() { UI.sel.clear(); afterAssets(); }
@@ -2804,7 +2841,7 @@ function showInstall() {
   box.innerHTML = h; box.classList.remove('hidden');
 }
 
-const BUILD = '2026-11-14l';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
+const BUILD = '2026-11-14m';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
 async function checkUpdate() {
   try {
     const t = await (await fetch(location.pathname + '?v=' + Date.now(), { cache: 'reload' })).text();
