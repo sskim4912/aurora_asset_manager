@@ -1831,9 +1831,8 @@ function openForm(id) {
   const a = id ? getAsset(id) : null;
   const lastLoc = (lsGet('aam_recent_loc') || [])[0] || '';
   DRAWER = { mode: 'form', id: id || null, draft: a ? { ...a } : { item: '', model: '', qty: 1, unit: 'EA', location: lastLoc, status: '상', acq: '', manager: '관리팀장', lat: '', lng: '', nextCheck: '', rentalDue: '', note: '' } };
-  if(!id){DRAWER.registrationId=crypto.randomUUID();DRAWER.uploads=new Map();}
+  if(!id){DRAWER.registrationId=crypto.randomUUID();DRAWER.uploads=new Map();DRAWER.gpsStopped=true;DRAWER.gpsMessage='사진 촬영·선택을 누르면 GPS도 확인합니다';}
   renderDrawer();
-  if(!id){beginNewAssetGPS(DRAWER);chooseNewAssetPhoto(DRAWER);}
 }
 function closeDrawer() { if(DRAWER?.saving){toast('등록을 저장 중입니다. 잠시 기다려 주세요');return;}stopNewAssetGPS(DRAWER); DRAWER = null; $('drawer').classList.add('hidden'); }
 function renderDrawer() {
@@ -2991,7 +2990,7 @@ function showInstall() {
   box.innerHTML = h; box.classList.remove('hidden');
 }
 
-const BUILD = '2026-11-14o';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
+const BUILD = '2026-11-14p';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
 async function checkUpdate() {
   try {
     const t = await (await fetch(location.pathname + '?v=' + Date.now(), { cache: 'reload' })).text();
