@@ -24,6 +24,7 @@
 | `manifest.json`, `icon-192.png`, `icon-512.png` | 휴대폰 홈 화면 앱 설정·아이콘(GS건설 로고, 흰 바탕) | 2026-11-12 추가 |
 | `key.json` | 공유 토큰(관리자 비밀번호로 잠금, AES-GCM·PBKDF2). 앱 설정 '모든 직원 휴대폰에 자동 적용'이 만듦. 로그인 시 자동 적용 | 직접 수정 금지. 비밀번호는 사용자 결정으로 230880 유지(6자리라 잠금이 약함 — 사용자에게 알림) |
 | `wrangler.jsonc`, `.assetsignore` | Cloudflare Workers 배포 설정 (2026-11-14). 화면 파일(index.html·manifest·아이콘)만 올리고 데이터·사진·key.json·CLAUDE.md는 제외 | 데이터·사진은 앱이 GitHub API·raw에서 직접 읽고 씀 |
+| `.github/workflows/cloudflare.yml` | 화면 파일이 바뀔 때만 Cloudflare Workers에 자동 배포 (2026-11-14, 사용자 요청). 비밀값 `CLOUDFLARE_API_TOKEN`·`CLOUDFLARE_ACCOUNT_ID`는 GitHub 저장소 Secrets에 관리자가 직접 넣음 | 이 환경에서는 Cloudflare API·GitHub Actions API에 접근 불가 → 배포 결과는 브라우저로 확인 |
 | `CLAUDE.md` | 이 작업 규칙 | |
 | `README.md` | 저장소 소개 | |
 
