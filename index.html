@@ -44,6 +44,7 @@ button{font:inherit;cursor:pointer;color:inherit}
 input,select,textarea{font:inherit;color:inherit}
 .hidden{display:none!important}
 .upq-pill{position:fixed;left:50%;transform:translateX(-50%);top:calc(10px + env(safe-area-inset-top));z-index:9999;background:#1e3a8a;color:#fff;padding:7px 14px;border-radius:999px;font-size:13px;font-weight:600;box-shadow:0 4px 14px rgba(0,0,0,.25);white-space:nowrap}.upq-pill.bad{background:#b91c1c}.upq-pill button{margin-left:8px;background:#fff;color:#b91c1c;border:0;border-radius:999px;padding:3px 10px;font-weight:700}
+.hdr-scan{flex:none;padding:6px 8px;gap:4px;font-size:12px}.hdr-scan svg{width:17px;height:17px}.map-card-close{display:block;margin:0 0 5px auto;border:0;background:#f1f5f9;color:#475569;border-radius:5px;padding:4px 7px;font-size:12px;cursor:pointer}
 .hdr-install{padding:6px 11px;font-size:12.5px;background:#eef2ff;border-color:#c7d2fe;color:#312e81;flex:none}@media(max-width:400px){.hdr-install{padding:6px 8px;font-size:12px}}
 .ins-steps{margin:4px 0 0;padding-left:20px;line-height:1.9;font-size:15px}.ins-arrow{text-align:center;font-size:34px;animation:insb 1s infinite}@keyframes insb{50%{transform:translateY(8px)}}
 .install-box{margin-top:16px;padding:12px;border-radius:12px;background:#eef2ff;color:#312e81;font-size:13.5px;line-height:1.55;text-align:center}.install-box .btn{width:100%;margin-top:8px}
@@ -547,6 +548,7 @@ body:has(.map-sheet) .fab,body:has(.move-bar) .fab{display:none!important}
     <button id="hdr-install" class="btn hdr-install hidden" type="button" onclick="installApp()">📲 홈 화면 추가</button>
     <span class="sp"></span>
     <button class="sync" onclick="reloadData()" title="눌러서 새로고침"><span class="dot" data-sync-dot></span><span data-sync-text class="sync-text">불러오는 중…</span></button>
+    <button class="btn hdr-scan" onclick="openScanner()" aria-label="QR 스캔 열기" title="QR 스캔"><span data-ic="qr"></span><span>QR</span></button>
     <button class="icon-btn" onclick="openSettings()" aria-label="설정" title="설정"><span data-ic="settings"></span></button>
     <button class="icon-btn" onclick="logout()" aria-label="로그아웃" title="로그아웃"><span data-ic="logout"></span></button>
   </header>
@@ -1299,7 +1301,7 @@ async function initMainMap() {
 function closeMapInfo() { if (MAP_INFO) { MAP_INFO.remove(); MAP_INFO = null; } }
 function mapCard(html, pos) {
   closeMapInfo();
-  const el = document.createElement('div'); el.className = 'mapcard'; el.innerHTML = html;
+  const el = document.createElement('div'); el.className = 'mapcard'; el.innerHTML = '<button type="button" class="map-card-close" aria-label="지도 정보 닫기" onclick="closeMapInfo()">닫기 ×</button>' + html;
   ['click', 'mousedown'].forEach(t => el.addEventListener(t, e => e.stopPropagation()));
   el.addEventListener('touchstart', e => e.stopPropagation(), { passive: true });
   if (matchMedia('(max-width:640px)').matches) {
@@ -2801,7 +2803,7 @@ function showInstall() {
   box.innerHTML = h; box.classList.remove('hidden');
 }
 
-const BUILD = '2026-11-14j';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
+const BUILD = '2026-11-14k';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
 async function checkUpdate() {
   try {
     const t = await (await fetch(location.pathname + '?v=' + Date.now(), { cache: 'reload' })).text();
