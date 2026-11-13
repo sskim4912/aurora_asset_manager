@@ -1190,7 +1190,7 @@ function loadGoogle() {
     window.__gmReady = () => { clearTimeout(to); mkHtmlOv(); res(); };
     window.gm_authFailure = () => toast('구글 지도 키가 맞지 않거나, 이 주소에서 쓸 수 없게 막혀 있어요', 'err');
     const s = document.createElement('script');
-    s.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(CONFIG.GOOGLE_MAPS_KEY)}&v=weekly&language=ko&region=KR&loading=async&callback=__gmReady`;
+    s.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(CONFIG.GOOGLE_MAPS_KEY)}&v=weekly&language=ko&region=US&loading=async&callback=__gmReady`;
     s.async = true; s.onerror = () => { clearTimeout(to); rej(new Error('load')); };
     document.head.appendChild(s);
   });
@@ -2627,7 +2627,7 @@ function showInstall() {
   box.innerHTML = h; box.classList.remove('hidden');
 }
 
-const BUILD = '2026-11-14d';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
+const BUILD = '2026-11-14e';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
 async function checkUpdate() {
   try {
     const t = await (await fetch(location.pathname + '?v=' + Date.now(), { cache: 'reload' })).text();
