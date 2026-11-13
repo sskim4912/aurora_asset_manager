@@ -1,0 +1,6 @@
+// Cloudflare Workers 배포 설정 (화면 파일만 올림 · 데이터·사진은 GitHub에서 직접 읽고 씀)
+{
+  "name": "aurora-asset-manager",
+  "compatibility_date": "2026-11-01",
+  "assets": { "directory": "./" }
+}

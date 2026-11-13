@@ -7,6 +7,7 @@
 ## 1. 저장소
 - 비품관리의 모든 코드와 데이터는 **`sskim4912/aurora_asset_manager`** 에만 저장·수정한다.
 - 업로드(push)는 **main 브랜치**에 한다. GitHub Pages가 main에서 바로 사이트를 만든다.
+  - ★ 배포 이전 진행 중 (사용자 결정 B, 2026-11-14): Cloudflare Workers(무료, 저장소 연결 자동 배포)로 사이트 전체 이전. 옛 GitHub Pages 주소는 끄지 않고 index.html 맨 위 스크립트(`NEW`)로 새 주소에 자동 이동 → 이미 붙인 QR 라벨 그대로 사용. 새 주소가 정해지면 `NEW`에 넣고, 카카오(·구글) 키에 새 도메인 등록 안내. 새 라벨 QR은 접속한 주소 기준(`qrBase`)이라 자동으로 새 주소. 'GitHub만' 원칙의 예외: Cloudflare(배포만).
   - 사이트 주소: https://sskim4912.github.io/aurora_asset_manager/
 - 올리기 전에 매번 확인한다.
   1. 대상 저장소가 `sskim4912/aurora_asset_manager` 인지 (`git remote -v`)
@@ -22,6 +23,7 @@
 | `photos/관리번호/관리번호_품목_년월일_시분초.jpg` | 자산 사진 (앱이 올림, 날짜 도장 포함, 덮어쓰지 않고 쌓임, 앱에서 지워도 파일은 남음 → 삭제 보관함) | 직접 수정하지 않는다. **공개 저장소라 누구나 볼 수 있음** |
 | `manifest.json`, `icon-192.png`, `icon-512.png` | 휴대폰 홈 화면 앱 설정·아이콘(GS건설 로고, 흰 바탕) | 2026-11-12 추가 |
 | `key.json` | 공유 토큰(관리자 비밀번호로 잠금, AES-GCM·PBKDF2). 앱 설정 '모든 직원 휴대폰에 자동 적용'이 만듦. 로그인 시 자동 적용 | 직접 수정 금지. 비밀번호는 사용자 결정으로 230880 유지(6자리라 잠금이 약함 — 사용자에게 알림) |
+| `wrangler.jsonc`, `.assetsignore` | Cloudflare Workers 배포 설정 (2026-11-14). 화면 파일(index.html·manifest·아이콘)만 올리고 데이터·사진·key.json·CLAUDE.md는 제외 | 데이터·사진은 앱이 GitHub API·raw에서 직접 읽고 씀 |
 | `CLAUDE.md` | 이 작업 규칙 | |
 | `README.md` | 저장소 소개 | |
 

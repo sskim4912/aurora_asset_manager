@@ -2,6 +2,8 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
+<script>/* 옛 주소(GitHub Pages)로 들어오면 새 주소(Cloudflare)로 자동 이동 — QR 라벨·홈 화면 앱 그대로 사용. 새 주소가 정해지면 NEW에 넣음 */
+(function () { var NEW = ''; if (NEW && location.hostname === 'sskim4912.github.io') location.replace(NEW + location.search + location.hash); })();</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#312e81">
 <link rel="manifest" href="manifest.json">
@@ -2625,7 +2627,7 @@ function showInstall() {
   box.innerHTML = h; box.classList.remove('hidden');
 }
 
-const BUILD = '2026-11-13a';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
+const BUILD = '2026-11-14a';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
 async function checkUpdate() {
   try {
     const t = await (await fetch(location.pathname + '?v=' + Date.now(), { cache: 'reload' })).text();

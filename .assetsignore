@@ -1,0 +1,10 @@
+# Cloudflare에 올리지 않는 파일 (데이터·사진은 GitHub에서 직접 읽음)
+.git
+.assetsignore
+wrangler.jsonc
+CLAUDE.md
+README.md
+assets.json
+key.json
+photos
+.wrangler
