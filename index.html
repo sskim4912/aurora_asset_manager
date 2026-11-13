@@ -540,6 +540,21 @@ details[open].more summary::before{transform:rotate(90deg)}
 }
 @media(max-width:359px){.hdr-title{display:none}.hdr{gap:6px}.audit-card{column-gap:4px}.audit-card .coord-link{font-size:10px}.hdr-scan{padding:7px 9px}}
 
+
+/* 주요 작업은 한곳에 같은 크기로: QR은 녹색, 신규 등록은 파란색. */
+.asset-actions{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:10px;margin-bottom:10px;min-width:0}
+.primary-actions{grid-column:1;display:grid;grid-template-columns:repeat(2,180px);gap:10px;min-width:0}
+.primary-actions>.btn{width:100%;height:48px;min-width:0;padding:8px 12px;font-size:14px;white-space:nowrap;justify-content:center}
+.scan-action{background:#166534;border-color:#166534;color:#fff;font-weight:750}.scan-action:hover,.scan-action:focus-visible{background:#14532d;border-color:#14532d;color:#fff}
+.secondary-actions{grid-column:3;display:flex;align-items:center;gap:8px;min-width:0}.asset-actions>.list-head{grid-column:1/-1;margin:0;min-width:0}
+@media(max-width:899px){
+  .asset-actions{grid-template-columns:minmax(0,1fr) auto;gap:8px;margin-bottom:8px}
+  .primary-actions{grid-column:1/-1;grid-row:1;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .primary-actions>.btn{height:48px;font-size:13px;padding:8px 6px;gap:6px}
+  .secondary-actions{grid-column:1;grid-row:2}.secondary-actions .paper-seg{display:flex;height:38px}.secondary-actions .paper-seg button{font-size:12px;min-width:68px;padding:7px 9px}
+  .asset-actions>.list-head{grid-column:2;grid-row:2;justify-self:end;max-width:100%;font-size:11px;flex-wrap:wrap;justify-content:flex-end}
+}
+
 </style>
 </head>
 <body>
@@ -567,7 +582,6 @@ details[open].more summary::before{transform:rotate(90deg)}
     <div class="hdr-title"><b><span class="desktop-only">Aurora Asset Manager</span><span class="mobile-only">비품관리</span></b><small>충남 현장 v2.4</small></div>
     <span class="sp"></span>
     <button class="sync" onclick="reloadData()" title="눌러서 새로고침"><span class="dot" data-sync-dot></span><span data-sync-text class="sync-text">불러오는 중…</span></button>
-    <button class="btn hdr-scan" onclick="openScanner()" aria-label="QR 스캔 열기" title="QR 스캔 · 스캔 후 사진·위치 저장"><span data-ic="qr"></span><span>QR 스캔</span></button>
     <div class="dd header-more"><button class="icon-btn" onclick="toggleDD(this)" aria-label="더보기" title="더보기" aria-expanded="false">⋯</button>
       <div class="dd-menu" id="header-more-menu">
         <button id="hdr-install" class="hidden" type="button" onclick="closeHeaderMenu();installApp()">📲 홈 화면 추가</button>
@@ -981,13 +995,19 @@ function renderAssets() {
   <div class="toolbar">
     <div class="search-row"><label class="search">${icon('search', 16)}<input id="q" placeholder="품목·위치·관리번호 검색" aria-label="자산 검색" value="${esc(UI.q)}" oninput="UI.q=this.value;refreshList()"></label><button class="btn mobile-only filter-toggle" onclick="openAssetFilters()" aria-label="필터 및 정렬">${icon('settings',16)} 필터</button></div>
     <div class="quick-filters">${sel('cat', '분류 전체', CATEGORIES)}${items.length ? sel('item', '품목 전체', items) : ''}${sel('loc', '위치 전체', DOC.locations)}</div>
-    <span class="sp"></span>
-    <div class="paper-seg">${[['list', '목록'], ['map', '지도']].map(([k, l]) => `<button class="${UI.mode === k ? 'on' : ''}" onclick="UI.mode='${k}';render()">${icon(k === 'map' ? 'map' : 'list', 15)} ${l}</button>`).join('')}</div>
-    <div class="dd desktop-only"><button class="btn" onclick="toggleDD(this)">${icon('file', 16)} 엑셀 ${icon('down', 14)}</button>
-      <div class="dd-menu"><button onclick="downloadTemplate()">${icon('file', 16)} 엑셀 양식 받기</button><button onclick="$('xl-file').click()">${icon('upload', 16)} 엑셀 올리기</button><button onclick="exportExcel()">${icon('download', 16)} 내보내기 (전체)</button></div></div>
-    <button class="btn primary" onclick="openForm()" aria-label="신규 비품 등록" title="기본 정보 입력 · QR 생성">${icon('plus', 16)}<span>신규 비품 등록</span></button>
   </div>
-  <div class="list-head"><span id="asset-count"></span>${fk ? `<span class="chip on" onclick="setFilter('all')">${fk} ✕</span>` : ''}</div>
+  <div class="asset-actions">
+    <div class="primary-actions">
+      <button class="btn scan-action" onclick="openScanner()" aria-label="QR 스캔 열기" title="스캔 후 사진·위치 저장">${icon('qr',18)}<span>QR 스캔</span></button>
+      <button class="btn primary" onclick="openForm()" aria-label="신규 비품 등록" title="기본 정보 입력 · QR 생성">${icon('plus',18)}<span>신규 비품 등록</span></button>
+    </div>
+    <div class="secondary-actions">
+      <div class="paper-seg">${[['list', '목록'], ['map', '지도']].map(([k, l]) => `<button class="${UI.mode === k ? 'on' : ''}" onclick="UI.mode='${k}';render()">${icon(k === 'map' ? 'map' : 'list', 15)} ${l}</button>`).join('')}</div>
+      <div class="dd desktop-only"><button class="btn" onclick="toggleDD(this)">${icon('file', 16)} 엑셀 ${icon('down', 14)}</button>
+        <div class="dd-menu"><button onclick="downloadTemplate()">${icon('file', 16)} 엑셀 양식 받기</button><button onclick="$('xl-file').click()">${icon('upload', 16)} 엑셀 올리기</button><button onclick="exportExcel()">${icon('download', 16)} 내보내기 (전체)</button></div></div>
+    </div>
+    <div class="list-head"><span id="asset-count"></span>${fk ? `<span class="chip on" onclick="setFilter('all')">${fk} ✕</span>` : ''}</div>
+  </div>
   <div id="sel-bar"></div>
   <div id="asset-list"></div>`;
 }
@@ -2841,7 +2861,7 @@ function showInstall() {
   box.innerHTML = h; box.classList.remove('hidden');
 }
 
-const BUILD = '2026-11-14m';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
+const BUILD = '2026-11-14n';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
 async function checkUpdate() {
   try {
     const t = await (await fetch(location.pathname + '?v=' + Date.now(), { cache: 'reload' })).text();
