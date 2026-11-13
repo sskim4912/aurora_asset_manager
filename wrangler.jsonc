@@ -1,6 +1,7 @@
-// Cloudflare Workers 배포 설정 (화면 파일만 올림 · 데이터·사진은 GitHub에서 직접 읽고 씀)
+// 화면과 서버 진입점 배포 · 자산 데이터·사진은 저장소 전환 전까지 GitHub 유지
 {
   "name": "aurora-asset-manager",
+  "main": "worker.js",
   "compatibility_date": "2026-11-01",
-  "assets": { "directory": "./" }
+  "assets": { "directory": "./", "binding": "ASSETS" }
 }

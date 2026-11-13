@@ -2,6 +2,7 @@
 .git
 .assetsignore
 wrangler.jsonc
+worker.js
 CLAUDE.md
 README.md
 assets.json
