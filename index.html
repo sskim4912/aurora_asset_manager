@@ -221,7 +221,7 @@ h1{font-size:25px;margin:0;letter-spacing:-.025em}
 .dl-pill{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom));z-index:9999;background:#111827;color:#fff;padding:8px 16px;border-radius:999px;font-size:13px;font-weight:600}
 .thumb-btn{position:relative;border:0;background:none;padding:0;border-radius:8px;cursor:pointer;display:block}
 .thumb-btn.add{width:40px;height:40px;border:1.5px dashed var(--line2);color:var(--muted);display:grid;place-items:center;background:#fafbfc}
-.thumb-btn.add:hover{border-color:var(--acc);color:var(--acc)}
+.thumb-btn.add span{font-size:8px;line-height:1;white-space:nowrap}.thumb-btn.add{gap:2px;align-content:center}.photo-pending{font-size:12px;color:#9a6700;background:#fff8e6;padding:9px 10px;border-radius:8px;margin:0 0 10px}.thumb-btn.add:hover{border-color:var(--acc);color:var(--acc)}
 .mc-photo{position:absolute;right:14px;bottom:14px}
 .mc-photo .thumb,.mc-photo .thumb-btn.add{width:52px;height:52px}
 .big-photo{width:100%;max-height:62vh;object-fit:contain;border-radius:12px;background:#111;display:block}
@@ -560,9 +560,9 @@ details[open].more summary::before{transform:rotate(90deg)}
 .secondary-actions .paper-seg button.on{background:#0a5eb0;color:#fff;box-shadow:0 1px 3px #084b8d33}
 .map-summary{display:flex;align-items:center;gap:8px 14px;flex-wrap:wrap;margin:2px 0 8px;font-size:13px;line-height:1.5;color:#526276}.map-summary b{color:#163b62}.map-summary small{font-size:12px;color:#7b8798}
 .map-legend{display:flex;flex-wrap:wrap;gap:8px 12px;margin-bottom:10px;font-size:12px}.map-navigation{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:8px}.map-navigation .btn{height:36px;min-width:36px;padding:6px 10px;font-size:12px}.map-location-tools{margin:0 0 10px;min-width:0}.map-location-tools span{flex:1;min-width:120px;overflow-wrap:anywhere}
-.map-pin-root{display:block;width:20px;height:20px}.map-pin-root>.cluster{position:absolute;width:32px;height:32px;left:-6px;top:-6px;font-size:12px;border-width:2px}.map-pin-root .pin{border-width:2px;box-shadow:0 1px 4px #0005}
-.map-name.native-name{max-width:156px;padding:3px 7px;font-size:11px;font-weight:650;line-height:20px;border-radius:6px;box-shadow:0 1px 4px #0003;transition:opacity .12s ease;background:#ffffffed}
-.map-name.native-name.selected{background:#e8f1ff;border:1px solid #1976d2;color:#084b8d;font-weight:800}.short-leader{position:absolute;left:10px;top:10px;width:1px;height:1px;overflow:visible;pointer-events:none;transition:opacity .12s ease}.short-leader line{stroke:#fff;stroke-width:1.5;filter:drop-shadow(0 1px 1px #26364999)}
+.map-pin-root{display:block;width:20px;height:20px}.map-pin-root>.cluster{position:absolute;width:32px;height:32px;left:-6px;top:-6px;font-size:12px;border-width:2px}.map-pin-root .pin{width:14px;height:14px;margin:3px;border-width:2px;box-shadow:0 0 0 3px #ffffff30,0 2px 5px #0005}
+.map-name.native-name{transform:none;max-width:168px;padding:5px 9px;font-size:11px;font-weight:650;line-height:18px;border:1px solid #e2e8f0;border-radius:9px;box-shadow:0 2px 8px #142b4530;transition:opacity .12s ease;background:#fff;text-align:left}.map-name .map-no{color:#64748b;font-size:10px;margin-right:5px;font-variant-numeric:tabular-nums}.map-name.selected .map-no{color:#1976d2}
+.map-name.native-name.selected{background:#e8f1ff;border:1px solid #1976d2;color:#084b8d;font-weight:800}.short-leader{position:absolute;left:10px;top:10px;width:1px;height:1px;overflow:visible;pointer-events:none;transition:opacity .12s ease}.short-leader line{stroke:#fff;stroke-width:2;stroke-linecap:round;filter:drop-shadow(0 1px 1px #26364999)}
 .label-hidden,.map-zooming .native-name,.map-zooming .short-leader{opacity:0!important;pointer-events:none!important}.pin-dimmed>.pin,.pin-dimmed>.cluster{opacity:.65}.pin-dimmed>.native-name,.pin-dimmed>.short-leader{opacity:.55}
 @media(max-width:899px){.map-summary{width:100%;font-size:12px;gap:5px 12px;margin:0 0 8px}.map-summary small{font-size:11px}.map-navigation{gap:6px}.map-navigation .btn{font-size:11px;padding:6px 8px}.map-box{height:58dvh;min-height:360px;max-height:680px}.asset-actions>.list-head{white-space:normal}.map-location-tools{font-size:11px}}
 
@@ -1107,7 +1107,7 @@ function updateAssetList() {
       <td>${esc(a.leaseContact || '—')}</td><td onclick="event.stopPropagation()">${a.leaseTel ? `<a class="link" href="tel:${esc(a.leaseTel.replace(/[^0-9+]/g, ''))}">${esc(a.leaseTel)}</a>` : '—'}</td><td>${stBadge(a)}</td></tr>`).join('')}</tbody>` : `${th('id', '관리번호', 118)}<th style="width:62px">사진</th>${th('name', '품목 · 모델')}${th('category', '분류', 120)}${th('location', '위치')}${th('qty', '수량', 70)}${th('status', '상태', 96)}${th('sched', '일정', 120)}${th('updated', '최종 변경', 96)}</tr></thead>
     <tbody>${list.map(a => `<tr class="${UI.sel.has(a.id) ? 'picked' : ''}" onclick="openAsset('${a.id}')">
       <td class="ck" onclick="event.stopPropagation()"><input type="checkbox" ${UI.sel.has(a.id) ? 'checked' : ''} onclick="selOne('${a.id}',this.checked)"></td>
-      <td class="mono">${a.id}</td><td onclick="event.stopPropagation()">${photoCell(a)}</td><td class="nm">${esc(a.item)}${isLease(a) ? ' <span class="tag-lease">임대</span>' : ''}<div class="ri-sub" style="font-weight:400">${esc(shortModel(a.model))}</div></td><td>${esc(a.category)}</td><td>${esc(a.location)}${hasCoord(a) ? '' : ' <span class="no-coord" title="좌표 없음">●</span>'}</td>
+      <td class="mono">${a.id}</td><td onclick="event.stopPropagation()">${photoCell(a)}</td><td class="nm">${esc(a.item)}${isLease(a) ? ' <span class="tag-lease">임대</span>' : ''}<div class="ri-sub" style="font-weight:400">${esc(shortModel(a.model))}</div></td><td>${esc(a.category)}</td><td>${esc(a.location||'위치 미등록')}${hasCoord(a) ? '' : ' <span class="no-coord" title="좌표 없음">●</span>'}</td>
       <td class="qty">${a.qty} ${a.unit}</td><td>${stBadge(a)}</td><td>${sch(a)}</td><td class="muted" style="font-size:12.5px">${relTime(a.updatedAt)}</td></tr>`).join('')}</tbody>`}
   </table></div>
   <div class="mlist">${list.map(a => { const s = schedOf(a); return `
@@ -1115,7 +1115,7 @@ function updateAssetList() {
       <div class="mc-top"><span class="mono sub" style="margin:0">${a.id} · ${esc(a.category)}</span>${stBadge(a)}</div>
       <div class="mc-name">${esc(a.item)}${isLease(a) ? ' <span class="tag-lease">임대</span>' : ''} <span class="qty" style="font-size:13px;color:var(--sub)">${a.qty} ${a.unit}</span></div>
       ${shortModel(a.model) ? `<div class="mc-sub" style="margin-bottom:3px">${esc(shortModel(a.model))}</div>` : ''}
-      <div class="mc-sub">${icon('pin', 14)}${esc(a.location)}${hasCoord(a) ? '' : ' <span class="no-coord">● 좌표 없음</span>'}</div>
+      <div class="mc-sub">${icon('pin', 14)}${esc(a.location||'위치 미등록')}${hasCoord(a) ? '' : ' <span class="no-coord">● 좌표 없음</span>'}</div>
       ${isLease(a) ? `<div class="mc-sub mc-lease">🏢 ${esc(a.leaseVendor || '업체 미입력')}${a.leaseContact ? ' · ' + esc(a.leaseContact) : ''}${a.leaseTel ? ` · <a class="link" href="tel:${esc(a.leaseTel.replace(/[^0-9+]/g, ''))}" onclick="event.stopPropagation()">${esc(a.leaseTel)}</a>` : ''}<br>📅 ${esc(a.leaseStart || '?')} ~ ${esc(a.rentalDue || '?')} ${leaseLeft(a)}</div>` : ''}
       ${s && !(LV && isLease(a)) ? `<div class="mc-due"><span class="due ${s.lvl}">${s.t}</span></div>` : ''}
     </div>`; }).join('')}</div>`;
@@ -1130,7 +1130,7 @@ function leaseLeft(a) { if (a.out) return '<span class="muted">반납됨</span>'
 function photoCell(a) {   // 목록의 사진 칸: 사진 있으면 작은 사진(누르면 크게), 없으면 📷(누르면 바로 촬영)
   const pn = photoList(a).length;
   if (a.thumb || PHOTO_LOCAL[a.id]) return `<button class="thumb-btn" onclick="showPhoto('${a.id}')" title="사진 크게 보기 (${pn}장)"><img class="thumb" src="${a.thumb || PHOTO_LOCAL[a.id]}" alt="">${pn > 1 ? `<span class="pcount">${pn}</span>` : ''}</button>`;
-  return a.out ? '<span class="thumb empty"></span>' : `<button class="thumb-btn add" onclick="photoInput('${a.id}')" title="사진 넣기">${icon('camera', 18)}</button>`;
+  return a.out ? '<span class="thumb empty"></span>' : `<button class="thumb-btn add" onclick="photoInput('${a.id}')" title="사진 미등록 · 사진과 GPS 위치 등록" aria-label="${esc(a.id)} 사진 등록">${icon('camera', 18)}<span>사진 등록</span></button>`;
 }
 function selOne(id, on) { on ? UI.sel.add(id) : UI.sel.delete(id); updateAssetList(); }
 function selAll(on) { filteredAssets().forEach(a => on ? UI.sel.add(a.id) : UI.sel.delete(a.id)); updateAssetList(); }
@@ -1307,13 +1307,13 @@ function arrangeNearLabels(entries, map) {
   const overlaps = (a,b) => a.x < b.x+b.w+5 && a.x+a.w+5 > b.x && a.y < b.y+b.h+5 && a.y+a.h+5 > b.y;
   for (const {entry,point:p} of anchors) {
     const label = entry.label;
-    if (MOVE || (MAPX.level(map)>LABEL_LEVEL+1 && !entry.selected) || p.x<0 || p.y<0 || p.x>width || p.y>height) { label.classList.add('label-hidden'); entry.leader.classList.add('label-hidden'); continue; }
+    if (MOVE || (entry.g.items.length>1 && !entry.selected) || (MAPX.level(map)>LABEL_LEVEL+1 && !entry.selected) || p.x<0 || p.y<0 || p.x>width || p.y>height) { label.classList.add('label-hidden'); entry.leader.classList.add('label-hidden'); continue; }
     label.classList.remove('label-hidden');
     let w=label.offsetWidth,h=label.offsetHeight;
     if(!w||!h){const measure=label.cloneNode(true);measure.style.visibility='hidden';measure.style.left='0';measure.style.top='0';host.append(measure);w=measure.offsetWidth;h=measure.offsetHeight;measure.remove();}
     const fresh = [{dx:18,dy:-h/2},{dx:-w-18,dy:-h/2},{dx:-w/2,dy:-h-18},{dx:-w/2,dy:18}];
-    // 결정한 배치를 이동 중에 뒤집지 않는다. 화면 가장자리에서는 숨기고 같은 배치로 돌아온다.
-    const choices = entry.offset ? [entry.offset] : fresh;
+    // 기존 배치를 우선 유지하고, 가장자리·겹침이 생기면 가까운 다른 방향을 찾는다.
+    const choices = entry.offset ? [entry.offset,...fresh] : fresh;
     let chosen;
     for (const o of choices) {
       const box = {x:p.x+o.dx,y:p.y+o.dy,w,h};
@@ -1326,6 +1326,7 @@ function arrangeNearLabels(entries, map) {
     entry.offset={dx:chosen.dx,dy:chosen.dy}; placed.push(chosen.box);
     label.style.left=(chosen.dx+10)+'px'; label.style.top=(chosen.dy+10)+'px';
     const x=Math.max(chosen.dx,Math.min(0,chosen.dx+w)), y=Math.max(chosen.dy,Math.min(0,chosen.dy+h));
+    const length=Math.hypot(x,y)||1;entry.line.setAttribute('x1',x/length*8);entry.line.setAttribute('y1',y/length*8);
     entry.line.setAttribute('x2',x); entry.line.setAttribute('y2',y); entry.leader.classList.remove('label-hidden');
   }
 }
@@ -1348,8 +1349,8 @@ function drawPins() {
     }
     const text=compactMapName(g.items), wasSelected=entry.selected;
     entry.g.items=g.items;entry.g.p=g.p;entry.selected=g.items.some(a=>a.id===MAP_SELECTED);
-    if (entry.label.textContent!==text || wasSelected!==entry.selected) entry.offset=null;
-    entry.label.textContent=text;entry.label.title=g.items.map(a=>`${a.id} ${dispName(a)}`).join('\n');
+    if (entry.text!==text || wasSelected!==entry.selected) entry.offset=null;entry.text=text;
+    entry.label.innerHTML=g.items.length===1?`<span class="map-no">${esc(shortNo(g.items[0].id))}</span>${esc(text.slice(shortNo(g.items[0].id).length).trim())}`:esc(text);entry.label.title=g.items.map(a=>`${a.id} ${dispName(a)}`).join('\n');
     const worst=g.items.some(a=>a.status==='하')?'bad':g.items.some(a=>a.status==='중')?'mid':g.items[0].out?'off':'ok';
     entry.button.className=(g.items.length>1?'cluster':'pin '+worst)+(entry.selected?' selected':'');
     entry.button.textContent=g.items.length>1?String(g.items.length):'';entry.button.setAttribute('aria-label',groupName(g.items));
@@ -1772,7 +1773,7 @@ function stopNewAssetGPS(session) {
 }
 function updateNewAssetPreview(session) {
   if(DRAWER!==session)return;
-  const photo=$('new-asset-photo');if(photo){photo.innerHTML='';if(session.preview){const image=document.createElement('img');image.src=session.preview;image.alt='등록할 비품 사진';photo.append(image);}}
+  const photo=$('new-asset-photo');if(photo){photo.innerHTML=session.preview?'':'<p class="photo-pending">사진 미등록 · 나중에 촬영할 수 있어요</p>';if(session.preview){const image=document.createElement('img');image.src=session.preview;image.alt='등록할 비품 사진';photo.append(image);}}
   const status=$('new-asset-gps');if(status)status.textContent=session.gpsMessage||'GPS 확인 중…';
   const state=document.querySelector('#panel .coord-state');
   if(state&&hasCoord(session.draft)){state.classList.add('on');state.textContent=`좌표 준비됨 (${Number(session.draft.lat).toFixed(6)}, ${Number(session.draft.lng).toFixed(6)})`;}else if(state){state.classList.remove('on');state.textContent='좌표 확인 필요 · 지도에서 직접 지정할 수도 있어요';}
@@ -1794,7 +1795,7 @@ function beginNewAssetGPS(session) {
 function chooseNewAssetPhoto(session=DRAWER) {
   if(!session||session.id||session.saving)return;
   const previous={lat:session.draft.lat,lng:session.draft.lng,message:session.gpsMessage};session.capturePending=true;
-  if(session.image||session.gpsStopped){session.draft.lat='';session.draft.lng='';session.gpsAccuracy=null;beginNewAssetGPS(session);}
+  if(!hasCoord(session.draft)&&(session.gpsStopped||session.gpsWatch==null)){session.gpsAccuracy=null;beginNewAssetGPS(session);}
   const input=document.createElement('input');input.type='file';input.accept='image/*';input.setAttribute('capture','environment');input.id='new-asset-photo-input';input.hidden=true;document.body.append(input);
   input.oncancel=()=>{input.remove();session.capturePending=false;stopNewAssetGPS(session);if(DRAWER===session){session.draft.lat=previous.lat;session.draft.lng=previous.lng;session.gpsMessage=previous.message||'사진을 촬영하면 GPS도 확인합니다';updateNewAssetPreview(session);}};
   input.onchange=async()=>{
@@ -1805,16 +1806,16 @@ function chooseNewAssetPhoto(session=DRAWER) {
   };input.click();
 }
 async function saveNewAssetWithPhoto(session,fields) {
-  if(!session.image){formError('사진을 먼저 촬영하거나 선택해 주세요');return;}
-  session.saving=true;stopNewAssetGPS(session);$('f-save').disabled=true;$('f-save').textContent='사진·비품 저장 중…';
+  session.saving=true;stopNewAssetGPS(session);$('f-save').disabled=true;$('f-save').textContent='비품 등록 중…';
   try{
     const {doc,result:id}=await Store.commit(next=>{
       const existing=next.assets.find(a=>a.registrationId===session.registrationId);if(existing)return existing.id;
       const id=nextId(next),now=new Date().toISOString();
-      if(!next.locations.includes(fields.location))next.locations.push(fields.location);
+      if(fields.location&&!next.locations.includes(fields.location))next.locations.push(fields.location);
       const asset={id,registrationId:session.registrationId,contract:'',locInit:fields.location,out:null,status:'상',log:[],...fields,updatedAt:now};addLog(asset,'신규 비품 등록',now);next.assets.push(asset);return id;
     },async(next,id)=>{
       const asset=next.assets.find(a=>a.id===id);if(asset.photo)return;
+      if(!session.image){addLog(asset,'사진 미등록 · 현장에서 촬영 예정');addLog(asset,hasCoord(asset)?'좌표 입력 (신규 등록 · 위치 지정)':'좌표 확인 필요 (신규 등록)');return;}
       let shot=session.uploads?.get(id);
       if(!shot){shot=makePhoto(session.image,asset,session.capturedAt);shot.path=shot.path.replace(/\.jpg$/,`_${session.registrationId.slice(0,8)}.jpg`);await Store.putFile(shot.path,shot.full.split(',')[1]);session.uploads??=new Map();session.uploads.set(id,shot);}
       asset.thumb=shot.thumb;asset.photo={path:shot.path,at:shot.at};asset.photos=[asset.photo];
@@ -1822,8 +1823,8 @@ async function saveNewAssetWithPhoto(session,fields) {
       if(hasCoord(asset))addLog(asset,`좌표 입력 (신규 등록 · ${session.gpsMethod||'위치 지정'}${session.gpsAccuracy!=null?', GPS 오차 약 '+session.gpsAccuracy+'m':''})`,shot.at);
       else addLog(asset,'좌표 확인 필요 (신규 등록)',shot.at);
     });
-    session.saving=false;DOC=doc;rememberLoc(fields.location);setSync('ok');render();openAsset(id);toast(`${id} 등록 완료 · 사진${hasCoord(getAsset(id))?'·위치':''} 저장 · QR 생성`);
-  }catch(error){session.saving=false;if($('f-save')){$('f-save').disabled=false;$('f-save').textContent='사진·좌표와 함께 등록';}formError('저장하지 못했어요 · '+error.message+' · 사진은 유지됩니다');}
+    session.saving=false;DOC=doc;rememberLoc(fields.location);setSync('ok');render();openAsset(id);toast(session.image?`${id} 등록 완료 · 사진${hasCoord(getAsset(id))?'·위치':''} 저장 · QR 생성`:`${id} 등록 완료 · 사진 미등록 · 현장에서 사진과 위치를 추가해 주세요`,session.image?'ok':'warn');
+  }catch(error){session.saving=false;if($('f-save')){$('f-save').disabled=false;$('f-save').textContent='등록하기';}formError('저장하지 못했어요 · '+error.message+(session.image?' · 사진은 유지됩니다':''));}
 }
 
 function openForm(id) {
@@ -1859,7 +1860,7 @@ function detailHTML(a) {
     <div class="seg" style="margin-bottom:8px">${STATUSES.map(s => `<button class="${ST_KEY[s]} ${a.status === s ? 'on' : ''}" onclick="setStatus('${a.id}','${s}')" title="${ST_DESC[s]}">${s}</button>`).join('')}</div>
     <p class="hint" style="margin:0 0 18px">${ST_DESC[a.status]}</p>`}
     <dl class="info">
-      ${row('위치', `${esc(a.location)}${hasCoord(a) ? `<button class="link" onclick="showOnMap('${a.id}')">지도에서 보기</button>` : '<span class="muted" style="font-size:12.5px">좌표 없음</span>'}`)}
+      ${row('위치', `${esc(a.location||'위치 미등록')}${hasCoord(a) ? `<button class="link" onclick="showOnMap('${a.id}')">지도에서 보기</button>` : '<span class="muted" style="font-size:12.5px">좌표 없음</span>'}`)}
       ${hasCoord(a) ? row('GPS 좌표', `<span class="mono" style="font-size:12.5px">${(+a.lat).toFixed(6)}, ${(+a.lng).toFixed(6)}</span>${(c => c ? `<div class="muted" style="font-size:12px">${fmtAt(c.at)} 기록${c.how ? ' · ' + esc(c.how) : ''}</div>` : '')(coordLog(a))}`) : ''}
       ${row('수량', `<span class="qty">${a.qty} ${a.unit}</span>`)}
       ${a.model && a.model.replace(/^\s*\((계약외|계약|구자산)\)\s*/, '') !== sm ? row('모델·상세', `<span class="full-model">${esc(a.model)}</span>`) : ''}
@@ -1987,7 +1988,7 @@ function formHTML() {
   <div class="p-head"><div><div class="mono" style="color:var(--sub);font-size:13px">${isNew ? '관리번호는 자동으로 붙어요 · 상태는 상으로 시작' : DRAWER.id}</div><h2>${isNew ? '신규 비품 등록' : '정보 수정'}</h2></div>
     <button class="icon-btn" onclick="${isNew ? 'closeDrawer()' : `openAsset('${DRAWER.id}')`}" aria-label="닫기">${icon('x', 20)}</button></div>
   <div class="p-body">
-    ${isNew ? `<div class="new-asset-capture"><div id="new-asset-photo">${DRAWER.preview?`<img src="${DRAWER.preview}" alt="등록할 비품 사진">`:''}</div><button type="button" class="btn" onclick="chooseNewAssetPhoto()">사진 ${DRAWER.image?'다시 촬영':'촬영·선택'}</button><p class="hint" id="new-asset-gps">${esc(DRAWER.gpsMessage||'GPS 자동 확인 중')}</p><p class="hint">사진·좌표는 등록할 때 함께 저장하고 QR이 생성됩니다.</p></div>` : ''}
+    ${isNew ? `<div class="new-asset-capture"><div id="new-asset-photo">${DRAWER.preview?`<img src="${DRAWER.preview}" alt="등록할 비품 사진">`:'<p class="photo-pending">사진 미등록 · 나중에 촬영할 수 있어요</p>'}</div><button type="button" class="btn" onclick="chooseNewAssetPhoto()">사진 ${DRAWER.image?'다시 촬영':'촬영·선택'}</button><p class="hint" id="new-asset-gps">${esc(DRAWER.gpsMessage||'사진 촬영·선택을 누르면 GPS도 확인합니다')}</p><p class="hint">사진·위치 없이 먼저 등록할 수 있어요. 현장에서 사진을 촬영하면 비어 있는 GPS 위치도 함께 확인합니다.</p></div>` : ''}
 
     <div class="field"><div class="flabel">품목<em>*</em> <span class="muted" style="font-weight:500" id="f-cat">${d.item ? '· ' + esc(catOf(d.item)) : ''}</span></div>
       <select class="inp" onchange="DRAWER.draft.item=this.value;$('f-cat').textContent=this.value?'· '+catOf(this.value):''">${itemOptions(d.item)}</select>
@@ -1995,7 +1996,7 @@ function formHTML() {
     <div class="field"><div class="flabel">모델·상세 <span class="muted" style="font-weight:500">('기타'는 필수)</span></div><input class="inp" value="${esc(d.model)}" ${bind('model')} placeholder="예: 캐리어 40평형"></div>
     <div class="field"><div class="flabel">수량<em>*</em></div>
       <div class="coord-row"><input class="inp" type="number" min="1" step="1" inputmode="numeric" value="${esc(d.qty)}" ${bind('qty')}><div class="seg" style="margin:0">${segBtns('unit', UNITS)}</div></div></div>
-    <div class="field"><div class="flabel">위치<em>*</em></div><select class="inp" onchange="pickLoc(this)">${locOptions(d.location)}</select></div>
+    <div class="field"><div class="flabel">위치 <span class="muted">(나중에 등록 가능)</span></div><select class="inp" onchange="pickLoc(this)">${locOptions(d.location)}</select></div>
     <div class="field"><div class="flabel">지도 위치 <span class="muted" style="font-weight:500">(선택)</span></div>
       <div class="coord-state ${has ? 'on' : ''}">${has ? `${icon('check', 16)} 좌표 등록됨 <span class="muted">(${(+d.lat).toFixed(5)}, ${(+d.lng).toFixed(5)})</span><span class="sp"></span><button type="button" class="link" onclick="DRAWER.draft.lat='';DRAWER.draft.lng='';renderDrawer()">지우기</button>` : '좌표 없음 — 아래 버튼으로 넣어요'}</div>
       <div class="coord-btns"><button type="button" class="btn" onclick="useMyLocation()">${icon('crosshair', 16)} 지금 내 위치</button><button type="button" class="btn" onclick="openPicker()">${icon('pin', 16)} 지도에서 찍기</button></div></div>
@@ -2016,14 +2017,14 @@ function formHTML() {
   </div>
   <div class="p-foot">
     <button class="btn" onclick="${isNew ? 'closeDrawer()' : `openAsset('${DRAWER.id}')`}">취소</button>
-    <button class="btn primary" id="f-save" onclick="saveForm()">${isNew ? '사진·좌표와 함께 등록' : '저장'}</button></div>`;
+    <button class="btn primary" id="f-save" onclick="saveForm()">${isNew ? '등록하기' : '저장'}</button></div>`;
 }
 function formError(msg) { toast(msg, 'warn'); }
 const EDIT_KO = { item: '품목', model: '모델', qty: '수량', unit: '단위', location: '위치', acq: '취득 구분', manager: '관리자', nextCheck: '다음 점검', rentalDue: '반납 예정', leaseVendor: '임대 업체', leaseContact: '업체 담당자', leaseStart: '임대 시작', leaseTel: '업체 연락처', note: '비고' };
 async function saveForm() {
   const d = DRAWER.draft, id = DRAWER.id, isNew = !id;
   const qty = Number(d.qty);
-  const miss = [!d.item && '품목', !String(d.location).trim() && '위치'].filter(Boolean);
+  const miss = [!d.item && '품목'].filter(Boolean);
   if (miss.length) return formError(miss.join(', ') + '을(를) 입력해 주세요');
   if (!Number.isInteger(qty) || qty < 1) return formError('수량은 1 이상의 정수로 넣어 주세요');
   if (d.item === '기타' && !String(d.model).trim()) return formError("품목이 '기타'면 모델·상세에 무엇인지 적어 주세요");
@@ -2039,7 +2040,7 @@ async function saveForm() {
   $('f-save').disabled = true; $('f-save').textContent = '저장 중…';
   const res = await saveChange(doc => {
     const now = new Date().toISOString();
-    if (!doc.locations.includes(fields.location)) doc.locations.push(fields.location);
+    if (fields.location && !doc.locations.includes(fields.location)) doc.locations.push(fields.location);
     if (isNew) { const nid = nextId(doc); const x = { id: nid, contract: '', locInit: fields.location, out: null, status: '상', log: [], ...fields, updatedAt: now }; addLog(x, '등록', now); doc.assets.push(x); return nid; }
     const a = doc.assets.find(x => x.id === id); if (!a) throw new Error('자산을 찾을 수 없어요');
     const ch = Object.keys(EDIT_KO).filter(k => String(a[k] ?? '') !== String(fields[k] ?? '')).map(k => k === 'location' || k === 'qty' ? `${EDIT_KO[k]} ${a[k] || '-'} → ${fields[k]}` : EDIT_KO[k]);
@@ -2376,13 +2377,13 @@ function makePhoto(src, a, capturedAt) {
 /* 사진 저장: 파일 올리기 → 데이터에 기록 (confirm이면 실사 확인 + 미발견 해제) */
 async function savePhoto(id, shot, opt = {}) {
   if (!(await ensureToken())) { toast('저장 연결이 안 돼 사진을 올리지 못했어요', 'warn'); return null; }
-  PHOTO_LOCAL[id] = shot.full;
   try { await Store.putFile(shot.path, shot.full.split(',')[1], `사진: ${shot.path.split('/').pop()}`); }
   catch (e) { toast('사진을 올리지 못했어요 · ' + e.message, 'err'); return null; }
   const res = await saveChange(doc => {
     const x = doc.assets.find(y => y.id === id); if (!x) return null; const now = new Date().toISOString(); const r = { audit: false, found: false, done: false };
     x.photo = { path: shot.path, at: shot.at }; x.photos = [{ path: shot.path, at: shot.at }, ...(x.photos || []).filter(p => p.path !== shot.path)].slice(0, PHOTO_KEEP);
     x.thumb = shot.thumb; x.updatedAt = now; addLog(x, '사진 등록 · ' + shot.path.split('/').pop(), now);
+    if(!hasCoord(x)&&opt.coords&&validLat(opt.coords.latitude)&&validLng(opt.coords.longitude)&&Number.isFinite(opt.coords.accuracy)&&opt.coords.accuracy<=50){x.lat=+opt.coords.latitude.toFixed(6);x.lng=+opt.coords.longitude.toFixed(6);addLog(x,`좌표 입력 (사진 촬영 · 자동 GPS · 오차 약 ${Math.round(opt.coords.accuracy)}m)`,now);}
     if (opt.confirm && !x.out) {
       if (doc.audit && !doc.audit.checked[id]) { doc.audit.checked[id] = now; addLog(x, '실사 확인 (QR + 사진)', now); r.audit = true;
         if (doc.assets.filter(y => !y.out).every(y => doc.audit.checked[y.id])) { closeAuditDoc(doc, now); r.done = true; } }
@@ -2391,6 +2392,7 @@ async function savePhoto(id, shot, opt = {}) {
     }
     return r;
   }, `사진 정보: ${id}${opt.confirm ? ' · 실사 확인' : ''}`, null);
+  if(res)PHOTO_LOCAL[id]=shot.full;
   if (res && res.done) toast('🎉 모든 자산을 확인해서 실사가 완료됐어요');
   return res;
 }
@@ -2404,17 +2406,21 @@ function photoUrl(a, p) {
 /* 목록·상세에서 사진 넣기 (카메라 또는 사진첩). QR로 열린 상세면 실사 확인도 함께 */
 function photoInput(id, confirm) {
   const inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'image/*'; inp.setAttribute('capture', 'environment');
-  inp.onchange = () => pickPhoto(id, inp, confirm); inp.click();
+  let position=Promise.resolve(null);
+  if(!hasCoord(getAsset(id)||{})&&navigator.geolocation)position=new Promise(resolve=>navigator.geolocation.getCurrentPosition(p=>resolve(p.coords.accuracy<=50?p.coords:null),()=>resolve(null),{enableHighAccuracy:true,maximumAge:0,timeout:15000}));
+  inp.onchange = () => pickPhoto(id, inp, confirm, position); inp.click();
 }
-async function pickPhoto(id, input, confirm) {
+async function pickPhoto(id, input, confirm, position=Promise.resolve(null)) {
   const f = input.files[0]; if (!f) return;
   const a = getAsset(id);
+  if(!a)return;
   const img = new Image(); img.src = URL.createObjectURL(f);
-  try { await img.decode(); } catch (e) { return toast('사진을 읽지 못했어요', 'err'); }
+  try { await img.decode(); } catch (e) { URL.revokeObjectURL(img.src);return toast('사진을 읽지 못했어요', 'err'); }
   const shot = makePhoto(img, a); URL.revokeObjectURL(img.src);
   toast('사진 올리는 중…');
-  const r = await savePhoto(id, shot, { confirm: !!confirm });
-  if (r) { toast(r.audit ? '사진 저장 · 실사 확인 ✓' : '사진을 저장했어요'); if (DRAWER && DRAWER.id === id) renderDrawer(); else render(); }
+  const coords=await position;
+  const r = await savePhoto(id, shot, { confirm: !!confirm, coords });
+  if (r) { toast(r.audit ? '사진 저장 · 실사 확인 ✓' : hasCoord(getAsset(id))?'사진·위치를 저장했어요':'사진 저장 · 위치 미등록: GPS를 확인하거나 지도에서 지정해 주세요',hasCoord(getAsset(id))?'ok':'warn'); if (DRAWER && DRAWER.id === id) renderDrawer(); else render(); }
 }
 /* 사진: 장수·삭제·내려받기 (zip은 외부 도구 없이 '묶기만') */
 const photoList = a => a.photos && a.photos.length ? a.photos : (a.photo ? [a.photo] : []);
@@ -2990,7 +2996,7 @@ function showInstall() {
   box.innerHTML = h; box.classList.remove('hidden');
 }
 
-const BUILD = '2026-11-14p';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
+const BUILD = '2026-11-14q';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
 async function checkUpdate() {
   try {
     const t = await (await fetch(location.pathname + '?v=' + Date.now(), { cache: 'reload' })).text();
