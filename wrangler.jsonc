@@ -1,4 +1,4 @@
-// 화면과 서버 진입점 배포 · 자산 데이터·사진은 저장소 전환 전까지 GitHub 유지
+// 화면과 GCP 저장 API 배포 · 서비스 계정은 Worker Secret으로만 관리
 {
   "name": "aurora-asset-manager",
   "main": "worker.js",

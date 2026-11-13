@@ -1,5 +1,8 @@
 # 작업 규칙 — Aurora Asset Manager (비품관리 전용)
 
+> **저장소 전환 (2026-11-14):** 화면은 Cloudflare Workers, 자산 데이터·사진은 GCP 프로젝트 `api-for-anythingllm-1`의 비공개 버킷 `aurora_asset_manager`를 사용한다. 아래의 GitHub 데이터 저장·공유 토큰 관련 설명은 이전 방식이다. `assets.json`, `photos/`, `key.json`의 GitHub 원본은 마이그레이션 보관본이므로 직접 수정·삭제하거나 GCP 위에 다시 덮어쓰지 않는다.
+> 서버 코드는 `worker.js`, 화면 코드는 `index.html`. 서비스 계정 JSON은 Worker Secret `GCP_SERVICE_ACCOUNT_JSON`에만 보관하며 저장소·브라우저·로그에 넣지 않는다. GCP 저장은 세대 번호 조건부 쓰기와 `backups/assets-세대번호.json` 원본 백업을 사용한다. 사진은 덮어쓰거나 삭제하지 않는다. 버킷에 대한 서비스 계정 권한은 Storage Object User. 직원은 기존 비밀번호로 서버 세션에 로그인하며 GitHub 토큰은 사용하지 않는다.
+
 > **이 규칙은 비품관리(Aurora Asset Manager) 전용이다.**
 > 다른 프로젝트(영수증, 식사, 허가, 포털 등)의 파일과 코드는 **이 저장소에 저장하지 않는다.**
 > 다른 프로젝트 작업은 각자의 저장소에서 한다.

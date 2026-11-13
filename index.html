@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <script>/* 옛 주소(GitHub Pages)로 들어오면 새 주소(Cloudflare)로 자동 이동 — QR 라벨·홈 화면 앱 그대로 사용. 새 주소가 정해지면 NEW에 넣음 */
-(function () { var NEW = ''; if (NEW && location.hostname === 'sskim4912.github.io') location.replace(NEW + location.search + location.hash); })();</script>
+(function () { var NEW = 'https://aurora-asset-manager.sskim4912.workers.dev/'; if (NEW && location.hostname === 'sskim4912.github.io') location.replace(NEW + location.search + location.hash); })();</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#312e81">
 <link rel="manifest" href="manifest.json">
@@ -20,10 +20,10 @@
   Aurora Asset Manager (개발 단계)
   ─────────────────────────────────
   · 이 파일 하나에 화면과 기능이 모두 들어 있어요.
-  · 자산 데이터는 같은 GitHub 저장소의 assets.json 파일에 저장돼요. (앱에서 처음 저장할 때 자동 생성)
+  · 자산 데이터·사진은 Worker 서버를 통해 GCP 비공개 버킷에 저장돼요.
   · 코드 구성
       [1] 기본 설정 (CONFIG)      ← 비밀번호, 카카오 키, 저장소 이름 등 바꿀 값은 여기
-      [2] 데이터 저장소 (Store)   ← 12월 Firebase 이전 때 이 구역만 바꾸면 됨
+      [2] 데이터 저장소 (Store)   ← GCP 저장 API 연결
       [3] 로그인
       [4] 화면: 현황 / 자산 / 지도 / 라벨
       [5] 자산 상세·등록 패널
@@ -568,9 +568,7 @@ const CONFIG = {
   GOOGLE_MAPS_KEY: 'AIzaSyBTCCN1dnP7TVAcppodcWfDV3myzoZc8lA',   // ★ 구글 지도 브라우저용 API 키 (비어 있으면 카카오 지도로 표시). 키는 Workers 사이트 주소에서만 쓰도록 제한해 둘 것
   KAKAO_KEY: '77c97bf1b0283e37f4ca3c548d45e5e6',
   MAP_CENTER: [36.9965, 126.3789],   // 현장 컨테이너 (2026-11-11 실측)
-  // 데이터 저장 위치 (앱의 '설정'에서도 바꿀 수 있어요)
-  GITHUB: { owner: 'sskim4912', repo: 'aurora_asset_manager', branch: 'main', path: 'assets.json' },
-  QR_BASE_DEFAULT: 'https://sskim4912.github.io/aurora_asset_manager/'
+  QR_BASE_DEFAULT: 'https://aurora-asset-manager.sskim4912.workers.dev/'
 };
 // 상태: 현장에 있는 자산의 컨디션 (상·중·하). '하'는 현황의 할 일에 자동으로 떠요.
 const STATUSES = ['상', '중', '하'];
@@ -661,65 +659,32 @@ async function sha256(s) {
   const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
   return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join('');
 }
-/* 공유 토큰: 관리자 비밀번호로 잠가 key.json에 보관 → 직원은 비밀번호만 넣으면 자동 적용 */
-let PW_PLAIN = '';
-const b2a = u => btoa(String.fromCharCode(...new Uint8Array(u))), a2b = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
-async function pwKey(pw, salt) {
-  const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(pw), 'PBKDF2', false, ['deriveKey']);
-  return crypto.subtle.deriveKey({ name: 'PBKDF2', salt, iterations: 600000, hash: 'SHA-256' }, base, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
+/* 서버 세션: 서비스 계정과 GitHub 토큰은 브라우저로 전달하지 않는다. */
+async function apiRequest(path, options = {}) {
+  const response = await fetch(path, { credentials: 'same-origin', cache: 'no-store', ...options });
+  if (!response.ok) {
+    const detail = await response.json().catch(() => ({}));
+    const error = new Error(detail.error || `저장소 연결 오류 (${response.status})`); error.status = response.status;
+    if (response.status === 401) {
+      $('gate').classList.remove('hidden'); $('app').classList.add('hidden');
+      $('gate-err').textContent = '저장을 계속하려면 다시 로그인해 주세요';
+    }
+    throw error;
+  }
+  return response;
 }
-async function lockToken(token, pw) {
-  const salt = crypto.getRandomValues(new Uint8Array(16)), iv = crypto.getRandomValues(new Uint8Array(12));
-  const data = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, await pwKey(pw, salt), new TextEncoder().encode(token));
-  return { v: 1, salt: b2a(salt), iv: b2a(iv), data: b2a(data) };
-}
-async function fetchSharedToken(pw) {   // 실패하면 '' (조용히)
-  try {
-    const c = Store.cfg(); const r = await fetch(`https://raw.githubusercontent.com/${c.owner}/${c.repo}/${c.branch}/key.json?_=${Date.now()}`, { cache: 'no-store' });
-    if (!r.ok) return ''; const k = await r.json();
-    const out = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: a2b(k.iv) }, await pwKey(pw, a2b(k.salt)), a2b(k.data));
-    return new TextDecoder().decode(out);
-  } catch (e) { return ''; }
-}
-/* 토큰 없으면 공유 토큰을 비밀번호로 풀어 자동 적용 (처음 한 번) */
 async function ensureToken() {
-  if (Store.mode() === 'github') return true;
-  const pw = PW_PLAIN || prompt('사진·저장을 위해 비밀번호를 한 번만 더 넣어 주세요') || '';
-  if (!pw) return false;
-  if ((await sha256(pw)) !== CONFIG.PW_HASH) { toast('비밀번호가 맞지 않아요', 'err'); return false; }
-  PW_PLAIN = pw; const t = await fetchSharedToken(pw);
-  if (!t) { toast('공유 토큰을 불러오지 못했어요 · 관리자에게 설정 → 자동 적용을 요청하세요', 'err'); return false; }
-  Store.saveCfg({ ...Store.cfg(), token: t }); toast('저장 연결 완료 ✅'); return true;
-}
-async function shareToken() {
-  const t = $('s-token').value.trim(); const out = $('s-test');
-  if (!t) { out.style.color = 'var(--red)'; out.textContent = '먼저 위 칸에 토큰을 넣어 주세요'; return; }
-  let pw = PW_PLAIN; if (!pw) pw = prompt('관리자 비밀번호를 한 번 더 넣어 주세요') || '';
-  if ((await sha256(pw)) !== CONFIG.PW_HASH) { out.style.color = 'var(--red)'; out.textContent = '비밀번호가 맞지 않아요'; return; }
-  PW_PLAIN = pw; Store.saveCfg({ ...Store.cfg(), token: t });
-  out.style.color = 'var(--sub)'; out.textContent = '등록 중…';
-  try { await Store.putFile('key.json', b64encode(JSON.stringify(await lockToken(t, pw))), '토큰 공유 등록(잠금)'); out.style.color = 'var(--ok)'; out.textContent = '✅ 등록 완료 · 이제 직원은 비밀번호만 넣으면 사진·저장이 돼요 (반영까지 최대 5분)'; }
-  catch (e) { out.style.color = 'var(--red)'; out.textContent = '등록 실패 · ' + e.message; }
-}
-function b64encode(str) {
-  const bytes = new TextEncoder().encode(str); let bin = '';
-  for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
-  return btoa(bin);
-}
-function b64decode(b64) {
-  const bin = atob(b64.replace(/\s/g, '')); const bytes = new Uint8Array(bin.length);
-  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-  return new TextDecoder().decode(bytes);
+  try { await apiRequest('/api/session'); return true; }
+  catch (error) { toast(error.message, 'err'); return false; }
 }
 function lsGet(k) { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } }
 function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
 
 /* ═══════════════════════════════════════════
-   [2] 데이터 저장소 — GitHub assets.json
+   [2] 데이터 저장소 — GCP 비공개 버킷 assets.json
    · load()   : 데이터 불러오기
    · commit() : 최신 데이터를 다시 읽어 변경을 적용한 뒤 저장 (여러 기기가 동시에 저장해도 덮어쓰지 않음)
-   · 토큰이 없으면 '로컬 모드' — 이 기기 브라우저에만 저장
-   ※ 12월 Firebase 이전 시 이 객체의 load / commit 만 Firestore 용으로 바꾸면 됩니다.
+   · 서버 로그인 세션으로 인증하고, GCS 세대 번호로 동시 수정 충돌을 확인한다.
    ═══════════════════════════════════════════ */
 // 예전 상태값(정상/사용중/점검필요/폐기)도 자동으로 새 구조로 바꿔요
 const OLD_STATUS = { '정상': '상', '양호': '상', '사용중': '상', '보통': '중', '점검필요': '하', '불량': '하' };
@@ -755,89 +720,31 @@ function normalizeDoc(d) {
   return doc;
 }
 const Store = {
-  cfg() { return { ...CONFIG.GITHUB, token: '', qrBase: '', ...(lsGet('aam_settings') || {}) }; },
+  cfg() { const { token, owner, repo, branch, path, ...prefs } = lsGet('aam_settings') || {}; return { qrBase: '', ...prefs }; },
   saveCfg(c) { lsSet('aam_settings', c); },
-  mode() { return this.cfg().token ? 'github' : 'local'; },
-  url(c = this.cfg()) { return `https://api.github.com/repos/${encodeURIComponent(c.owner)}/${encodeURIComponent(c.repo)}/contents/${c.path.split('/').map(encodeURIComponent).join('/')}`; },
-  headers(json, c = this.cfg()) {
-    const h = { Accept: 'application/vnd.github+json' };
-    if (c.token) h.Authorization = 'Bearer ' + c.token;
-    if (json) h['Content-Type'] = 'application/json';
-    return h;
-  },
+  mode() { return 'gcs'; },
   async readRemote() {
-    const c = this.cfg();
-    const get = cc => fetch(this.url(cc) + '?ref=' + encodeURIComponent(cc.branch) + '&_=' + Date.now(), { headers: this.headers(false, cc), cache: 'no-store' });
-    let r = await get(c);
-    this.tokenBad = false;
-    if (r.status === 401 && c.token) {   // 토큰이 틀려도 공개 저장소는 읽을 수 있게 (저장만 막힘)
-      this.tokenBad = true;
-      r = await get({ ...c, token: '' });
-    }
-    if (r.status === 404) return { doc: null, sha: null };
-    if (!r.ok) throw new Error(ghErr(r.status));
-    const j = await r.json(); const raw = JSON.parse(b64decode(j.content));
-    if ((raw.version || 1) > DATA_VERSION) throw new Error('앱이 새 버전으로 바뀌었어요 · 페이지를 새로고침(Ctrl+F5)해 주세요');
-    return { doc: normalizeDoc(raw), sha: j.sha };
+    const r = await apiRequest('/api/data'); const raw = await r.json();
+    if ((raw.version || 1) > DATA_VERSION) throw new Error('앱이 새 버전으로 바뀌었어요 · 페이지를 새로고침해 주세요');
+    return { doc: normalizeDoc(raw), sha: r.headers.get('X-Generation') };
   },
-  async load() {
-    if (this.mode() === 'local') {
-      const local = lsGet('aam_local'); if (local) return normalizeDoc(local);
-      try { const { doc } = await this.readRemote(); if (doc) return doc; } catch (e) {}
-      return normalizeDoc(lsGet('aam_cache') || seedDoc());
-    }
-    const { doc } = await this.readRemote();
-    return doc || normalizeDoc(lsGet('aam_local') || lsGet('aam_cache') || seedDoc());
+  async load() { return (await this.readRemote()).doc; },
+  async putFile(path, b64) {
+    const body = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+    await apiRequest('/api/files/' + path.split('/').map(encodeURIComponent).join('/'), { method: 'PUT', headers: { 'Content-Type': 'application/octet-stream' }, body });
+    return true;
   },
-  async putFile(path, b64, message) {   // 사진 등 파일 올리기 (같은 이름이면 교체)
-    const c = this.cfg();
-    const url = `https://api.github.com/repos/${encodeURIComponent(c.owner)}/${encodeURIComponent(c.repo)}/contents/${path.split('/').map(encodeURIComponent).join('/')}`;
-    for (let attempt = 0; attempt < 2; attempt++) {
-      let sha = null;   // 사진은 이름이 매번 새로워서 첫 시도는 확인 없이 바로 올림 (빠름)
-      if (attempt > 0) { const g = await fetch(url + '?ref=' + encodeURIComponent(c.branch) + '&_=' + Date.now(), { headers: this.headers(false, c), cache: 'no-store' }); sha = g.ok ? (await g.json()).sha : null; }
-      const body = { message: message + ' (Aurora 앱)', content: b64, branch: c.branch }; if (sha) body.sha = sha;
-      const r = await fetch(url, { method: 'PUT', headers: this.headers(true, c), body: JSON.stringify(body) });
-      if (r.ok) return true;
-      if ((r.status === 409 || r.status === 422) && attempt === 0) continue;
-      throw new Error(ghErr(r.status));
-    }
-  },
-  async commit(mutator, message) {
-    if (this.mode() === 'local') {
-      const next = structuredClone(DOC); const result = mutator(next);
-      next.updatedAt = new Date().toISOString(); lsSet('aam_local', next);
-      return { doc: next, result };
-    }
-    const c = this.cfg();
+  async commit(mutator) {
     for (let attempt = 0; attempt < 3; attempt++) {
-      const { doc, sha } = await this.readRemote();
-      const next = structuredClone(doc || normalizeDoc(lsGet('aam_local') || DOC || seedDoc()));
-      const result = mutator(next);
-      next.updatedAt = new Date().toISOString();
-      const body = { message: message + ' (Aurora 앱)', content: b64encode(JSON.stringify(next, null, 2) + '\n'), branch: c.branch };
-      if (sha) body.sha = sha;
-      const r = await fetch(this.url(c), { method: 'PUT', headers: this.headers(true, c), body: JSON.stringify(body) });
-      if (r.ok) { localStorage.removeItem('aam_local'); lsSet('aam_cache', next); return { doc: next, result }; }
-      if ((r.status === 409 || r.status === 422) && attempt < 2) continue;
-      throw new Error(ghErr(r.status));
+      const { doc, sha } = await this.readRemote(); const next = structuredClone(doc);
+      const result = mutator(next); next.updatedAt = new Date().toISOString();
+      try {
+        await apiRequest('/api/data', { method: 'PUT', headers: { 'Content-Type': 'application/json', 'X-Generation': sha }, body: JSON.stringify(next, null, 2) + '\n' });
+        lsSet('aam_gcs_cache', next); return { doc: next, result };
+      } catch (error) { if (error.status !== 409 || attempt === 2) throw error; }
     }
   }
 };
-Object.assign(Store, {
-  repoApi(c = this.cfg()) { return `https://api.github.com/repos/${encodeURIComponent(c.owner)}/${encodeURIComponent(c.repo)}`; },
-  async readAt(sha) {   // 그 시점의 데이터
-    const c = this.cfg();
-    const r = await fetch(this.url(c) + '?ref=' + sha, { headers: this.headers(false, c), cache: 'no-store' });
-    if (!r.ok) throw new Error(ghErr(r.status));
-    const j = await r.json();
-    const text = j.content ? b64decode(j.content) : await (await fetch(j.download_url, { cache: 'no-store' })).text();
-    return normalizeDoc(JSON.parse(text));
-  }
-});
-function ghErr(s) {
-  return s === 401 ? '토큰이 올바르지 않아요 (401)' : s === 403 ? '권한이 없거나 요청 한도를 넘었어요 (403)'
-    : s === 404 ? '저장소를 찾을 수 없어요 (404)' : `GitHub 오류 (${s})`;
-}
 function nextId(doc) {
   const max = [...doc.assets, ...(doc.trash || []).filter(t => t.kind === 'asset').map(t => ({ id: t.id }))].reduce((m, a) => { const id = String(a.id); if (!id.startsWith(ID_PREFIX)) return m; const n = parseInt(id.slice(ID_PREFIX.length), 10); return Number.isFinite(n) && n > m ? n : m; }, 0);
   return ID_PREFIX + String(max + 1).padStart(3, '0');
@@ -882,7 +789,7 @@ function acqOf(contract) {
 }
 
 function setSync(state, msg = '') {
-  const t = { ok: 'GitHub 저장됨 · ' + new Date().toTimeString().slice(0, 5), local: '로컬 모드 · 이 기기에만 저장', saving: '저장 중…', loading: '불러오는 중…', err: '연결 오류 · 눌러서 다시 시도', ro: '토큰 오류 · 보기만 가능' }[state];
+  const t = { ok: '클라우드 저장됨 · ' + new Date().toTimeString().slice(0, 5), local: '로컬 모드 · 이 기기에만 저장', saving: '저장 중…', loading: '불러오는 중…', err: '연결 오류 · 눌러서 다시 시도', ro: '토큰 오류 · 보기만 가능' }[state];
   document.querySelectorAll('[data-sync-dot]').forEach(d => d.className = 'dot ' + (state === 'ro' ? 'err' : state));
   document.querySelectorAll('[data-sync-text]').forEach(d => d.textContent = t);
   document.querySelectorAll('.sync').forEach(b => b.title = msg || t);
@@ -891,13 +798,11 @@ async function reloadData() {
   setSync('loading');
   try {
     DOC = await Store.load();
-    if (Store.mode() !== 'github') setSync('local');
-    else if (Store.tokenBad) { setSync('ro', '토큰이 올바르지 않아요'); toast('토큰이 올바르지 않아 지금은 보기만 돼요 · 설정에서 새 토큰을 넣어 주세요', 'warn'); }
-    else { lsSet('aam_cache', DOC); setSync('ok'); }
+    lsSet('aam_gcs_cache', DOC); setSync('ok');
   }
-  catch (e) { DOC = DOC || normalizeDoc(lsGet('aam_cache') || seedDoc()); setSync('err', e.message); toast('데이터를 불러오지 못했어요 · ' + e.message, 'err'); }
+  catch (e) { DOC = DOC || normalizeDoc(lsGet('aam_gcs_cache') || seedDoc()); setSync('err', e.message); toast('데이터를 불러오지 못했어요 · ' + e.message, 'err'); }
   render(); if (DRAWER) renderDrawer();
-  if (Store.mode() === 'github' && !Store.tokenBad) autoStartAudit();
+  if (!$('app').classList.contains('hidden') && DOC) autoStartAudit();
   if (PENDING_ID) {
     const id = PENDING_ID; PENDING_ID = null;
     if (getAsset(id)) { openAsset(id); qrOpened(id); }
@@ -909,7 +814,7 @@ async function saveChange(mutator, message, okMsg) {
   setSync('saving');
   try {
     const { doc, result } = await Store.commit(mutator, message);
-    DOC = doc; setSync(Store.mode() === 'github' ? 'ok' : 'local');
+    DOC = doc; setSync(Store.mode() === 'gcs' ? 'ok' : 'local');
     render(); if (okMsg) toast(okMsg);
     return result ?? true;
   } catch (e) {
@@ -920,26 +825,24 @@ async function saveChange(mutator, message, okMsg) {
 /* ═══════════════════════════════════════════
    [3] 로그인
    ═══════════════════════════════════════════ */
-function isAuthed() {
-  const a = lsGet('aam_auth') || JSON.parse(sessionStorage.getItem('aam_auth') || 'null');
-  return !!(a && a.h === CONFIG.PW_HASH && a.exp > Date.now());
+async function isAuthed() {
+  try { const r = await fetch('/api/session', { credentials: 'same-origin', cache: 'no-store' }); return r.ok; } catch { return false; }
 }
 async function login(e) {
-  e.preventDefault();
-  const err = $('gate-err'); let h;
-  try { h = await sha256($('pw').value); } catch (x) { err.textContent = '이 브라우저에서는 로그인할 수 없어요 (https 주소로 열어주세요)'; return; }
-  if (h !== CONFIG.PW_HASH) {
-    err.textContent = '비밀번호가 맞지 않아요';
-    const c = document.querySelector('.gate-card'); c.classList.remove('shake'); void c.offsetWidth; c.classList.add('shake');
-    $('pw').select(); return;
-  }
-  PW_PLAIN = $('pw').value;
-  if (!Store.cfg().token) { const t = await fetchSharedToken(PW_PLAIN); if (t) Store.saveCfg({ ...Store.cfg(), token: t }); }
-  const rec = JSON.stringify({ h, exp: Date.now() + CONFIG.AUTH_DAYS * 864e5 });
-  if ($('remember').checked) localStorage.setItem('aam_auth', rec); else sessionStorage.setItem('aam_auth', rec);
-  startApp();
+  e.preventDefault(); const err = $('gate-err'); err.textContent = '';
+  const submit = $('pw').form?.querySelector('[type="submit"]'); if (submit) submit.disabled = true;
+  try {
+    await apiRequest('/api/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password: $('pw').value, remember: $('remember').checked }) });
+    // 구형 GitHub 인증·캐시는 원본을 덮어쓰지 않도록 새 저장소와 분리한다.
+    localStorage.removeItem('aam_auth'); sessionStorage.removeItem('aam_auth');
+    Store.saveCfg(Store.cfg()); $('pw').value = ''; startApp();
+  } catch (error) { err.textContent = error.message; $('pw').select(); }
+  finally { if (submit) submit.disabled = false; }
 }
-function logout() { localStorage.removeItem('aam_auth'); sessionStorage.removeItem('aam_auth'); location.href = location.pathname; }
+async function logout() {
+  try { await apiRequest('/api/logout', { method: 'POST' }); location.href = location.pathname; }
+  catch (error) { toast(error.message, 'err'); }
+}
 
 /* ═══════════════════════════════════════════
    [4] 화면 — 자산(한 페이지: 요약 카드 · 목록/지도) / 라벨 인쇄
@@ -1831,10 +1734,10 @@ function nextScan() { if (!SCAN) return; if (SCAN.cur && SCAN.cur.photoDone) SCA
 /* ── ① QR 인식 ── */
 async function onScan(id) {
   if (navigator.vibrate) navigator.vibrate(80);
-  if (!getAsset(id) && Store.mode() === 'github') { try { DOC = await Store.load(); } catch (e) {} }   // 다른 기기에서 새로 등록한 자산
+  if (!getAsset(id) && Store.mode() === 'gcs') { try { DOC = await Store.load(); } catch (e) {} }   // 다른 기기에서 새로 등록한 자산
   if (!SCAN) return;
   const a = getAsset(id);
-  if (a && Store.mode() === 'github') Store.load().then(d => { DOC = d; if (SCAN && SCAN.cur && SCAN.cur.id === id) { const b = getAsset(id); if (b && b.out && SCAN.step === 'located') SCAN.step = 'out'; if (SCAN.step !== 'photo') scanUI(); } }).catch(() => {});   // 다른 기기 변경(실사 시작 등)은 뒤에서 반영
+  if (a && Store.mode() === 'gcs') Store.load().then(d => { DOC = d; if (SCAN && SCAN.cur && SCAN.cur.id === id) { const b = getAsset(id); if (b && b.out && SCAN.step === 'located') SCAN.step = 'out'; if (SCAN.step !== 'photo') scanUI(); } }).catch(() => {});   // 다른 기기 변경(실사 시작 등)은 뒤에서 반영
   if (!a) { SCAN.step = trashedAsset(id) ? 'trashed' : 'unknown'; SCAN.cur = { id }; return scanUI(); }
   SCAN.cur = { id, loc: 'wait', acc: null, photoDone: false, scannedAt: Date.now() };
   SCAN.step = a.out ? 'out' : 'located';
@@ -2018,8 +1921,7 @@ function photoUrl(a, p) {
   if (!p && PHOTO_LOCAL[a.id]) return PHOTO_LOCAL[a.id];
   if (p && PHOTO_LOCAL[a.id] && p === a.photo) return PHOTO_LOCAL[a.id];
   if (!p) return '';
-  const c = Store.cfg();
-  return `https://raw.githubusercontent.com/${c.owner}/${c.repo}/${c.branch}/${p.path.split('/').map(encodeURIComponent).join('/')}`;
+  return '/api/files/' + p.path.split('/').map(encodeURIComponent).join('/');
 }
 /* 목록·상세에서 사진 넣기 (카메라 또는 사진첩). QR로 열린 상세면 실사 확인도 함께 */
 function photoInput(id, confirm) {
@@ -2222,8 +2124,8 @@ function scanUI() {
       <div class="scan-tags" id="loc-tag" style="justify-content:center"></div>
       <div class="shutter-row"><button class="btn" onclick="SCAN.step='located';$('scanner').classList.remove('photo-mode');scanUI();refreshLocTag()">뒤로</button><button class="shutter" onclick="takePhoto()" aria-label="촬영"></button><span style="width:64px"></span></div>${note}`;
   else if (st === 'uploading') h = `<div class="scan-res ok" style="display:flex;gap:12px;align-items:center"><img src="${c.shot.full}" class="shot-mini"><div><b>사진 저장하는 중…</b><div class="ri-sub">${esc(c.shot.path.split('/').pop())}</div></div></div>`;
-  else if (st === 'upload-fail') h = `<div class="scan-res bad" style="display:flex;gap:12px;align-items:center"><img src="${c.shot.full}" class="shot-mini"><div><b>사진을 올리지 못했어요</b><div class="ri-sub">${Store.mode() !== 'github' ? '이 휴대폰(앱)에 <b>GitHub 토큰</b>이 없어요 · 아래 버튼으로 토큰을 넣어 주세요' : '사진은 그대로 있어요 · 신호가 좋은 곳에서 다시 올려 주세요'}</div></div></div>
-      ${Store.mode() !== 'github' ? '<button class="btn lg primary" style="width:100%;margin-bottom:8px" onclick="closeScanner(true);openSettings()">🔑 설정에서 토큰 넣기</button>' : ''}
+  else if (st === 'upload-fail') h = `<div class="scan-res bad" style="display:flex;gap:12px;align-items:center"><img src="${c.shot.full}" class="shot-mini"><div><b>사진을 올리지 못했어요</b><div class="ri-sub">${Store.mode() !== 'gcs' ? '저장을 계속하려면 다시 로그인해 주세요' : '사진은 그대로 있어요 · 신호가 좋은 곳에서 다시 올려 주세요'}</div></div></div>
+      ${Store.mode() !== 'gcs' ? '<button class="btn lg primary" style="width:100%;margin-bottom:8px" onclick="closeScanner(true);openSettings()">🔑 다시 로그인</button>' : ''}
       <div class="scan-btns"><button class="btn lg" onclick="photoMode()">다시 찍기</button><button class="btn lg primary" onclick="uploadShot()">다시 올리기</button></div>`;
   else if (st === 'done') {
     const r = c.result || {};
@@ -2500,12 +2402,8 @@ function openSettings() {
     <div class="m-head"><h2>설정</h2><button class="icon-btn" onclick="closeModal()">${icon('x', 20)}</button></div>
     <div class="m-body">
       <div class="set-block">
-        <h3>GitHub 토큰</h3>
-        <p class="hint" style="margin:2px 0 10px">현재: <b>${Store.mode() === 'github' ? 'GitHub에 저장 중 — 모든 기기가 같은 데이터를 봐요' : '로컬 모드 — 이 기기에만 저장돼요'}</b></p>
-        <input class="inp" id="s-token" type="password" value="${esc(c.token)}" placeholder="github_pat_…" autocomplete="off">
-        <p class="hint">토큰은 이 기기 브라우저에 저장돼요. <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">토큰 새로 만들기 ↗</a></p>
-        <button class="btn primary" type="button" style="width:100%;margin-top:8px" onclick="shareToken()">👥 모든 직원 휴대폰에 자동 적용</button>
-        <p class="hint">누르면 토큰을 비밀번호로 잠가 저장해요. 직원은 비밀번호만 넣으면 돼요.</p>
+        <h3>클라우드 저장소</h3>
+        <p class="hint">모든 기기가 같은 자산·사진을 사용해요. 로그인하면 자동으로 연결됩니다.</p>
         <div id="s-test" class="test-res"></div>
       </div>
       <div class="set-block">
@@ -2522,12 +2420,6 @@ function openSettings() {
         <button class="btn" style="margin-top:8px;width:100%" onclick="addLoc()">${icon('plus', 16)} 위치 추가</button>
       </div>
       <details class="set-block adv"><summary>고급 설정 (평소에는 바꾸지 마세요)</summary>
-        <div class="set-grid" style="margin-top:10px">
-          <label>저장소 주인<input class="inp" id="s-owner" value="${esc(c.owner)}"></label>
-          <label>저장소 이름<input class="inp" id="s-repo" value="${esc(c.repo)}"></label>
-          <label>브랜치<input class="inp" id="s-branch" value="${esc(c.branch)}"></label>
-          <label>데이터 파일<input class="inp" id="s-path" value="${esc(c.path)}"></label>
-        </div>
         <label class="set-one">라벨 QR 주소<input class="inp" id="s-qr" value="${esc(c.qrBase)}" placeholder="${esc(CONFIG.QR_BASE_DEFAULT)}"></label>
         <div class="set-grid" style="margin-top:10px">
           <label>보유부서 코드 (내보내기용)<input class="inp" id="s-dept" value="${esc(c.deptCode || '')}" placeholder="비워도 돼요"></label>
@@ -2558,18 +2450,12 @@ async function removeLoc(i) {
   if (await saveChange(doc => { doc.locations = doc.locations.filter(x => x !== l); return true; }, `위치 삭제: ${l}`, '위치를 지웠어요')) openSettings();
 }
 function readSettingsForm() {
-  return { owner: $('s-owner').value.trim(), repo: $('s-repo').value.trim(), branch: $('s-branch').value.trim() || 'main', path: $('s-path').value.trim() || 'assets.json', token: $('s-token').value.trim(), qrBase: $('s-qr').value.trim(), deptCode: $('s-dept').value.trim(), deptName: $('s-dept-name').value.trim() };
+  return { qrBase: $('s-qr').value.trim(), deptCode: $('s-dept').value.trim(), deptName: $('s-dept-name').value.trim() };
 }
 async function testConn() {
-  const c = readSettingsForm(), out = $('s-test');
-  out.style.color = 'var(--sub)'; out.textContent = '확인 중…';
-  try {
-    const r = await fetch(`https://api.github.com/repos/${encodeURIComponent(c.owner)}/${encodeURIComponent(c.repo)}`, { headers: Store.headers(false, c), cache: 'no-store' });
-    if (!r.ok) throw new Error(ghErr(r.status));
-    const f = await fetch(Store.url(c) + '?ref=' + encodeURIComponent(c.branch), { headers: Store.headers(false, c), cache: 'no-store' });
-    out.style.color = 'var(--ok)';
-    out.textContent = '✓ 저장소에 연결됐어요 · ' + (f.ok ? `${c.path} 파일이 있어요` : `${c.path} 파일은 첫 저장 때 만들어져요`) + (c.token ? '' : ' (토큰이 없어 읽기만 가능)');
-  } catch (e) { out.style.color = 'var(--red)'; out.textContent = '✕ ' + e.message; }
+  const out = $('s-test'); out.style.color = 'var(--sub)'; out.textContent = '확인 중…';
+  try { await apiRequest('/api/status'); out.style.color = 'var(--ok)'; out.textContent = '✓ 클라우드 저장소에 연결됐어요'; }
+  catch (error) { out.style.color = 'var(--red)'; out.textContent = error.message; }
 }
 async function addItem() {
   const it = $('s-item').value.trim(), k = $('s-item-cat').value;
@@ -2579,16 +2465,15 @@ async function addItem() {
   if (res) openSettings();
 }
 function saveSettings() {
-  const c = readSettingsForm(); const before = Store.mode();
+  const c = readSettingsForm();
   Store.saveCfg(c); Object.keys(QR_CACHE).forEach(k => delete QR_CACHE[k]);
   closeModal(); toast('설정을 저장했어요');
-  if (before === 'local' && c.token && lsGet('aam_local')) toast('이 기기에서 만든 데이터는 다음 저장 때 GitHub에 올라가요 (GitHub에 데이터가 없을 때만)', 'warn');
   reloadData();
 }
 function startApp() {
   $('gate').classList.add('hidden'); $('app').classList.remove('hidden');
   document.querySelectorAll('[data-ic]').forEach(el => el.outerHTML = icon(el.dataset.ic));
-  DOC = normalizeDoc((Store.mode() === 'local' ? lsGet('aam_local') : null) || lsGet('aam_cache') || seedDoc());
+  DOC = normalizeDoc(lsGet('aam_gcs_cache') || seedDoc());
   render(); reloadData();
   if (OPEN_SET) { OPEN_SET = false; setTimeout(openSettings, 400); }
 }
@@ -2627,7 +2512,7 @@ function showInstall() {
   box.innerHTML = h; box.classList.remove('hidden');
 }
 
-const BUILD = '2026-11-14e';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
+const BUILD = '2026-11-14f';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
 async function checkUpdate() {
   try {
     const t = await (await fetch(location.pathname + '?v=' + Date.now(), { cache: 'reload' })).text();
@@ -2637,14 +2522,14 @@ async function checkUpdate() {
 }
 document.addEventListener('visibilitychange', () => { if (!document.hidden) checkUpdate(); });
 let OPEN_SET = false;   // ?settings 주소로 열면 로그인 뒤 설정 바로 열기
-(function init() {
+(async function init() {
   checkUpdate();
   showInstall();
   if (/KAKAOTALK/i.test(navigator.userAgent) && !sessionStorage.getItem('aam_ext')) { sessionStorage.setItem('aam_ext', '1'); setTimeout(openExternal, 300); }
   const p = new URLSearchParams(location.search);
   if (p.has('settings')) { OPEN_SET = true; history.replaceState(null, '', location.pathname); }
   if (p.get('id')) { PENDING_ID = p.get('id').toUpperCase(); history.replaceState(null, '', location.pathname + '#assets'); }
-  if (isAuthed()) startApp(); else { $('gate').classList.remove('hidden'); setTimeout(() => $('pw').focus(), 50); }
+  if (await isAuthed()) startApp(); else { $('gate').classList.remove('hidden'); setTimeout(() => $('pw').focus(), 50); }
 })();
 </script>
 <button id="to-top" class="to-top" title="맨 위로" aria-label="맨 위로" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
