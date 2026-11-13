@@ -1213,8 +1213,8 @@ const MAPX = {
   ll(lat, lng) { return this.g() ? new google.maps.LatLng(+lat, +lng) : new kakao.maps.LatLng(+lat, +lng); },
   create(el, c, lv) {
     if (this.g()) {
-      const m = new google.maps.Map(el, { center: { lat: +c[0], lng: +c[1] }, zoom: 21 - lv, mapTypeId: 'hybrid', gestureHandling: 'greedy', clickableIcons: false,
-        mapTypeControl: true, mapTypeControlOptions: { position: google.maps.ControlPosition.TOP_LEFT, style: google.maps.MapTypeControlStyle.HORIZONTAL_BAR, mapTypeIds: ['hybrid', 'roadmap'] },
+      const m = new google.maps.Map(el, { center: { lat: +c[0], lng: +c[1] }, zoom: 21 - lv, mapTypeId: 'satellite', gestureHandling: 'greedy', clickableIcons: false,
+        mapTypeControl: true, mapTypeControlOptions: { position: google.maps.ControlPosition.TOP_LEFT, style: google.maps.MapTypeControlStyle.HORIZONTAL_BAR, mapTypeIds: ['satellite', 'roadmap'] },
         streetViewControl: false, fullscreenControl: false, rotateControl: false, zoomControl: true });
       const h = new google.maps.OverlayView(); h.onAdd = () => {}; h.draw = () => {}; h.onRemove = () => {}; h.setMap(m); m.__proj = h;   // 화면 좌표 계산용
       return m;
@@ -2627,7 +2627,7 @@ function showInstall() {
   box.innerHTML = h; box.classList.remove('hidden');
 }
 
-const BUILD = '2026-11-14c';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
+const BUILD = '2026-11-14d';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
 async function checkUpdate() {
   try {
     const t = await (await fetch(location.pathname + '?v=' + Date.now(), { cache: 'reload' })).text();
