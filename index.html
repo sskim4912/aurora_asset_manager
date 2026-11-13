@@ -419,6 +419,18 @@ details[open].more summary::before{transform:rotate(90deg)}
 .mapcard b{display:block;font-size:14px;margin:4px 0 2px;white-space:normal}
 .mapcard .btn{margin-top:10px;width:100%}
 
+
+.map-label-layer{position:absolute;inset:0;z-index:4;pointer-events:none;overflow:hidden}
+.map-label-layer svg{position:absolute;inset:0;width:100%;height:100%;overflow:hidden}
+.map-name{position:absolute;pointer-events:auto;background:#fff;color:#16283e;border:1px solid #cbd5e1;border-radius:7px;padding:4px 7px;font-size:12px;line-height:20px;font-weight:700;white-space:nowrap;max-width:210px;overflow:hidden;text-overflow:ellipsis;box-shadow:0 2px 5px #0003;cursor:pointer}
+.map-name.selected{border:2px solid #0a5eb0;background:#e8f1fb}.pin.selected{outline:3px solid #38bdf8;outline-offset:3px}
+.move-bar{position:absolute;left:8px;right:8px;bottom:12px;z-index:20;background:#fff;border:2px solid #0a5eb0;border-radius:12px;box-shadow:0 3px 16px #0005;padding:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13px}
+.move-bar .move-description{flex:1;min-width:160px}.move-bar small{display:block;color:#526276}.move-bar button{min-height:40px}
+.toast.undo-toast{pointer-events:auto;display:flex;gap:12px;align-items:center;max-width:95vw}.undo-toast button{background:#fff;color:#0a5eb0;border:0;border-radius:6px;padding:7px 10px;font-weight:700;white-space:nowrap}
+body:has(.map-sheet) .fab,body:has(.move-bar) .fab{display:none!important}
+.coord-history{display:block!important}.coord-history small{display:block;font-size:11px;color:var(--sub);overflow-wrap:anywhere}.coord-history .link{display:block;margin-top:5px}
+@media(max-width:640px){.mapcard{max-width:240px;min-width:190px}.spot-list{max-height:180px}.mapcard.map-sheet{position:absolute;bottom:12px;left:8px;right:8px;max-width:none;min-width:0;transform:none;z-index:30;max-height:65%;overflow:auto}.mapcard.map-sheet::after{display:none}.map-name{max-width:175px;font-size:11px}}
+
 /* 라벨 */
 .lab-layout{display:grid;grid-template-columns:330px 1fr;gap:16px;align-items:start}
 .lab-pick{padding:14px;position:sticky;top:20px}
@@ -596,7 +608,7 @@ const BASE_CATALOG = {
 
 const LOG_MAX = 15;     // 자산별 변경 이력 보관 개수 (B5)
 function addLog(x, t, at) { x.log = [{ at: at || new Date().toISOString(), t }, ...(x.log || [])].slice(0, LOG_MAX); }
-const DATA_VERSION = 4;   // 데이터 구조 버전: 더 새 버전 데이터를 만나면 저장을 막아 덮어쓰기 사고를 방지
+const DATA_VERSION = 5;   // 데이터 구조 버전: 더 새 버전 데이터를 만나면 저장을 막아 덮어쓰기 사고를 방지
 function seedDoc() { return { version: 3, updatedAt: '', catalog: {}, assets: [] }; }
 
 /* ═══════════════════════════════════════════
@@ -691,7 +703,7 @@ const OLD_STATUS = { '정상': '상', '양호': '상', '사용중': '상', '보�
 function normStatus(v) { v = String(v || '').trim(); return STATUSES.includes(v) ? v : (OLD_STATUS[v] || ''); }
 function normalizeDoc(d) {
   const doc = d && Array.isArray(d.assets) ? d : seedDoc();
-  doc.version = 4;
+  doc.version = DATA_VERSION;
   doc.catalog = doc.catalog && typeof doc.catalog === 'object' ? doc.catalog : {};
   doc.audit = doc.audit && doc.audit.checked ? doc.audit : null;          // 진행 중인 실사 {startedAt, checked:{id: 시각}}
   doc.auditLog = Array.isArray(doc.auditLog) ? doc.auditLog : [];          // 지난 실사 기록
@@ -860,7 +872,7 @@ function goHome() {   // GS 로고: 첫 화면으로
 function render() {
   if (!DOC) return;
   const v = currentView();
-  closeMapInfo(); MAP = null;
+  cancelMapMove(); closeMapInfo(); MAP = null;
   $('view').innerHTML = VIEWS[v].render();
   if (VIEWS[v].after) VIEWS[v].after();
 }
@@ -1156,33 +1168,87 @@ const LABEL_LEVEL = 3;              // 이 레벨 이하(확대)에서 이름표
 const SAME_SPOT = 3;                // m: 이 안쪽은 같은 자리로 묶음
 let MAP_LIST = [], MAP_PINS = [];
 // 핀 그리기: 매번 전부 지우고 다시 그림 (중복 없음). 멀리서는 화면상 44px 안의 것끼리 숫자로 묶음
+let MAP_SELECTED = null, MOVE = null, MOVE_STARTING = false;
+function groupName(items) {
+  if (items.length === 1) return shortNo(items[0].id) + ' ' + dispName(items[0]);
+  const counts = new Map(); items.forEach(a => counts.set(a.item || '기타', (counts.get(a.item || '기타') || 0) + 1));
+  return [...counts].map(([name, count]) => name + ' ' + count).join(' · ');
+}
+function mapPinActions(element, group) {
+  let timer, start, held = false;
+  const edit = () => {
+    if (MOVE) return;
+    if (group.items.length > 1) { mapSpot(group); toast('목록에서 이동할 자산 한 개를 선택해 주세요'); }
+    else { mapSelect(group.items[0].id); toast('위치 수정을 누르면 핀을 옮길 수 있어요'); }
+  };
+  element.addEventListener('contextmenu', e => { e.preventDefault(); e.stopPropagation(); edit(); });
+  element.addEventListener('pointerdown', e => {
+    held = false; start = { x: e.clientX, y: e.clientY };
+    if (e.pointerType === 'touch') timer = setTimeout(() => { held = true; edit(); }, 1000);
+  });
+  const stop = () => clearTimeout(timer);
+  element.addEventListener('pointermove', e => { if (start && Math.hypot(e.clientX - start.x, e.clientY - start.y) > 8) stop(); });
+  ['pointerup', 'pointercancel', 'pointerleave'].forEach(t => element.addEventListener(t, stop));
+  element.addEventListener('click', e => {
+    e.stopPropagation(); stop(); if (held || MOVE) return;
+    group.items.length > 1 ? mapSpot(group) : mapSelect(group.items[0].id);
+  });
+}
+// 이름표만 화면에서 옮긴다. 실제 좌표는 원의 중심이며 연결선으로 구분한다.
+function placeMapNames(groups, map) {
+  $('map-names')?.remove(); const host = $('kmap');
+  if (!host || map !== MAP || MAPX.level(map) > LABEL_LEVEL + 1 || MOVE) return;
+  const layer = document.createElement('div'); layer.id = 'map-names'; layer.className = 'map-label-layer'; host.append(layer);
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); layer.append(svg);
+  const width = host.clientWidth, height = host.clientHeight, boxes = [];
+  const anchors = groups.map(g => ({ g, p: MAPX.px(map, g.p) })).filter(x => x.p && x.p.x > 0 && x.p.y > 0 && x.p.x < width && x.p.y < height);
+  anchors.sort((a, b) => a.p.y - b.p.y || a.p.x - b.p.x);
+  const overlaps = (a, b) => a.x < b.x + b.w + 5 && a.x + a.w + 5 > b.x && a.y < b.y + b.h + 5 && a.y + a.h + 5 > b.y;
+  for (const { g, p } of anchors) {
+    const label = document.createElement('button'); label.className = 'map-name' + (g.items.some(a => a.id === MAP_SELECTED) ? ' selected' : '');
+    label.textContent = groupName(g.items); label.title = label.textContent + ' · 눌러서 자산 확인'; layer.append(label);
+    const w = Math.min(label.offsetWidth, width - 20), h = label.offsetHeight; label.style.maxWidth = w + 'px'; let chosen;
+    for (let radius = 0; radius < height && !chosen; radius += 36) {
+      for (const dy of radius ? [-radius, radius] : [0]) {
+        for (const dx of [20, -w - 20, -w / 2, 70, -w - 70]) {
+          const box = { x: p.x + dx, y: p.y + dy - h / 2, w, h };
+          if (box.x < 8 || box.y < 52 || box.x + w > width - 8 || box.y + h > height - 42) continue;
+          if (boxes.some(b => overlaps(box, b))) continue;
+          if (anchors.some(a => overlaps(box, { x: a.p.x - 10, y: a.p.y - 10, w: 20, h: 20 }))) continue;
+          chosen = box; break;
+        }
+        if (chosen) break;
+      }
+    }
+    if (!chosen) { label.remove(); continue; } // 공간이 없으면 원을 눌러 전체 목록을 연다.
+    boxes.push(chosen); label.style.left = chosen.x + 'px'; label.style.top = chosen.y + 'px'; mapPinActions(label, g);
+    const line = document.createElementNS(svg.namespaceURI, 'line');
+    line.setAttribute('x1', p.x); line.setAttribute('y1', p.y);
+    line.setAttribute('x2', Math.max(chosen.x, Math.min(p.x, chosen.x + w))); line.setAttribute('y2', Math.max(chosen.y, Math.min(p.y, chosen.y + h)));
+    line.setAttribute('stroke', '#fff'); line.setAttribute('stroke-width', '2'); line.style.filter = 'drop-shadow(0 1px 1px #000)'; svg.append(line);
+  }
+}
 function drawPins() {
   MAP_PINS.forEach(o => o.remove()); MAP_PINS = [];
   if (!MAP) return;
-  const far = MAPX.level(MAP) > LABEL_LEVEL + 1;
+  const map = MAP, far = MAPX.level(map) > LABEL_LEVEL + 1;
   let groups = spotGroups(MAP_LIST);
-  if (far && MAPX.px(MAP, MAP_LIST[0] || { lat: 0, lng: 0 })) {
+  if (far && MAPX.px(map, MAP_LIST[0] || { lat: 0, lng: 0 })) {
     const big = [];
     groups.forEach(g => {
-      const pt = MAPX.px(MAP, g.p);
+      const pt = MAPX.px(map, g.p); if (!pt) return;
       const hit = big.find(c => Math.hypot(c.x - pt.x, c.y - pt.y) < 44);
       if (hit) hit.items.push(...g.items); else big.push({ x: pt.x, y: pt.y, p: g.p, items: [...g.items] });
-    });
-    groups = big;
+    }); groups = big;
   }
   groups.forEach(g => {
     const a = g.items[0], n = g.items.length, pos = MAPX.ll(g.p.lat, g.p.lng);
     const wrap = document.createElement('div'); wrap.className = 'pin-wrap';
-    if (far && n > 1) {          // 묶음 동그라미 → 누르면 확대
-      wrap.innerHTML = `<button class="cluster">${n}</button>`;
-      wrap.addEventListener('click', ev => { ev.stopPropagation(); MAPX.setLevel(MAP, Math.max(LABEL_LEVEL, MAPX.level(MAP) - 2), pos); });
-    } else {
-      const worst = g.items.some(x => x.status === '하') ? 'bad' : g.items.some(x => x.status === '중') ? 'mid' : (a.out ? 'off' : 'ok');
-      wrap.innerHTML = `<button class="pin ${worst}" aria-label="${esc(dispName(a))}">${n > 1 ? `<b>${n}</b>` : ''}</button><span class="pin-label">${esc(shortNo(a.id))} ${esc(a.item)}${n > 1 ? ` 외 ${n - 1}` : ''}</span>`;
-      wrap.addEventListener('click', ev => { ev.stopPropagation(); n > 1 ? mapSpot(g) : mapSelect(a.id); });
-    }
-    MAP_PINS.push(MAPX.overlay(MAP, pos, wrap, .5, 2));
+    const worst = g.items.some(x => x.status === '하') ? 'bad' : g.items.some(x => x.status === '중') ? 'mid' : (a.out ? 'off' : 'ok');
+    wrap.innerHTML = `<button class="${far && n > 1 ? 'cluster' : 'pin ' + worst}${g.items.some(x => x.id === MAP_SELECTED) ? ' selected' : ''}" aria-label="${esc(groupName(g.items))}">${n > 1 ? `<b>${n}</b>` : ''}</button>`;
+    mapPinActions(wrap, g); MAP_PINS.push(MAPX.overlay(map, pos, wrap, .5, 2));
   });
+  placeMapNames(groups, map);
 }
 function spotGroups(list) {         // 거의 같은 자리(3m) 자산끼리 묶기
   const groups = [];
@@ -1195,7 +1261,7 @@ async function initMainMap() {
   const all = filteredAssets(), list = all.filter(hasCoord);
   const cntEl = $('asset-count'); if (cntEl) cntEl.textContent = `${all.length}건 중 지도 표시 ${list.length}건${all.length > list.length ? ` · 좌표 없음 ${all.length - list.length}건` : ''}`;
   const box = $('asset-list'); if (!box) return;
-  box.innerHTML = `<div class="legend" style="margin-bottom:8px">${STATUSES.map(s => `<span class="${ST_KEY[s]}"><i></i>상태 ${s}</span>`).join('')}<span class="muted">· 축소하면 숫자로 묶이고, 확대하면 이름이 보여요</span></div><div class="map-box"><div id="kmap"></div></div>`;
+  box.innerHTML = `<div class="legend" style="margin-bottom:8px">${STATUSES.map(s => `<span class="${ST_KEY[s]}"><i></i>상태 ${s}</span>`).join('')}<span class="muted">· 원을 누르면 전체 목록 · 길게 누르기 / 오른쪽 클릭으로 위치 수정</span></div><div class="map-box"><div id="kmap"></div></div>`;
   const el = $('kmap');
   if (!list.length) { el.parentElement.insertAdjacentHTML('beforeend', `<div class="map-fail">${icon('pin', 30)}<b>지도에 표시할 자산이 없어요</b>좌표가 등록된 자산만 지도에 나와요.<br>휴대폰으로 [QR 스캔]을 하면 위치가 들어가요.</div>`); }
   try { await MAPX.load(); } catch (e) { el.parentElement.insertAdjacentHTML('beforeend', mapFail()); return; }
@@ -1203,11 +1269,14 @@ async function initMainMap() {
   MAP = MAPX.create(el, CONFIG.MAP_CENTER, 3);
   MAP_INFO = null;
   MAP_LIST = list;
-  const labelToggle = () => { if (!MAP) return; el.classList.toggle('show-labels', MAPX.level(MAP) <= LABEL_LEVEL); drawPins(); };
+  const ownMap = MAP;
+  const labelToggle = () => { if (MAP !== ownMap || !document.body.contains(el)) return; drawPins(); };
+  if (MAPX.g()) MAP.addListener('idle', labelToggle);
+  else kakao.maps.event.addListener(MAP, 'idle', labelToggle);
   MAPX.on(MAP, 'zoom', labelToggle);
-  MAPX.on(MAP, 'click', closeMapInfo);
+  MAPX.on(MAP, 'click', p => { if (MOVE && p) setMapDestination(p); else closeMapInfo(); });
   setTimeout(() => {
-    if (!MAP) return; MAPX.relayout(MAP);
+    if (MAP !== ownMap || !document.body.contains(el)) return; MAPX.relayout(MAP);
     if (MAP_FOCUS) { const f = MAP_FOCUS; MAP_FOCUS = null; mapSelect(f, 2); }
     else if (list.length === 1) mapSelect(list[0].id, 2);                       // 1건이면 정보창 자동
     else if (list.length > 1) MAPX.fit(MAP, list);
@@ -1220,21 +1289,25 @@ function mapCard(html, pos) {
   const el = document.createElement('div'); el.className = 'mapcard'; el.innerHTML = html;
   ['click', 'mousedown'].forEach(t => el.addEventListener(t, e => e.stopPropagation()));
   el.addEventListener('touchstart', e => e.stopPropagation(), { passive: true });
-  MAP_INFO = MAPX.overlay(MAP, pos, el, 1, 10, true); return el;
+  if (matchMedia('(max-width:640px)').matches) {
+    el.classList.add('map-sheet'); $('kmap').parentElement.append(el); MAP_INFO = { remove: () => el.remove() };
+  } else MAP_INFO = MAPX.overlay(MAP, pos, el, 1, 10, true);
+  return el;
 }
 function mapSelect(id, level) {
   const a = getAsset(id); if (!MAP || !a || !hasCoord(a)) return;
+  if (MOVE) return; MAP_SELECTED = id; drawPins();
   const pos = MAPX.ll(a.lat, a.lng);
-  mapCard(`<div class="mc-row">${a.thumb ? `<img src="${a.thumb}" class="mc-img" alt="">` : ''}<div style="min-width:0;flex:1">
+  mapCard(`<div class="mc-row">${a.thumb || a.photo?.path ? `<img src="${a.thumb || photoUrl(a)}" class="mc-img" alt="">` : ''}<div style="min-width:0;flex:1">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:6px"><span class="mono" style="color:var(--sub);font-size:12px">${a.id}</span>${stBadge(a)}</div>
       <b>${esc(dispName(a))}</b><div style="color:var(--sub)">${esc(a.location)}</div></div></div>
-    <button class="btn sm primary" onclick="openAsset('${a.id}')">상세 보기</button>`, pos);
+    <button class="btn sm primary" onclick="openAsset('${a.id}')">상세 보기</button><button class="btn sm" onclick="beginMapMove('${a.id}')">위치 수정</button>`, pos);
   if (level && MAPX.level(MAP) > level) MAPX.setLevel(MAP, level);
   MAPX.panTo(MAP, pos);
 }
 function mapSpot(g) {   // 같은 자리 여러 개 → 목록
   const pos = MAPX.ll(g.p.lat, g.p.lng);
-  mapCard(`<b style="margin:0 0 6px">이 위치의 자산 ${g.items.length}개</b><div class="spot-list">${g.items.map(a => `<button onclick="mapSelect('${a.id}')">${a.thumb ? `<img src="${a.thumb}" alt="">` : '<span class="ph"></span>'}<span><b>${esc(shortNo(a.id))}</b> ${esc(a.item)}<small>${esc(shortModel(a.model))}</small></span>${stBadge(a)}</button>`).join('')}</div>`, pos);
+  mapCard(`<b style="margin:0 0 6px">가까운 자산 ${g.items.length}개</b><small>이동할 자산은 목록에서 한 개를 선택하세요</small><div class="spot-list">${g.items.map(a => `<button onclick="mapSelect('${a.id}')">${a.thumb || a.photo?.path ? `<img src="${a.thumb || photoUrl(a)}" alt="">` : '<span class="ph"></span>'}<span><b>${esc(a.id)}</b> ${esc(dispName(a))}<small>${esc(shortModel(a.model))}</small></span>${stBadge(a)}</button>`).join('')}</div>`, pos);
   MAPX.panTo(MAP, pos);
 }
 function showOnMap(id) {
@@ -1242,6 +1315,106 @@ function showOnMap(id) {
   Object.assign(UI, { mode: 'map', q: '', cat: '전체', item: '전체', loc: '전체', filter: a && a.out ? (isGone(a) ? 'disposed' : 'out') : 'all' });
   go('assets');
 }
+
+// 위치 이동은 선택한 한 자산만 변경한다. 좌표 및 마지막 좌표 기록이 달라지면 저장/복구를 중단한다.
+function coordinateStamp(a) {
+  const l = (a.log || []).find(l => /^(좌표 입력|위치 갱신|좌표 변경|좌표 복구)|^수정:.*좌표/.test(l.t));
+  return l ? JSON.stringify([l.id || '', l.at, l.t]) : '';
+}
+function coordinateSnapshot(a) { return { lat: +a.lat, lng: +a.lng, stamp: coordinateStamp(a) }; }
+function sameCoordinate(a, b) { return hasCoord(a) && Math.abs(+a.lat - +b.lat) < 1e-9 && Math.abs(+a.lng - +b.lng) < 1e-9; }
+function canRestoreMove(a, l) {
+  return !!(l.move && l.id && l.move.from && sameCoordinate(a, l.move.to) && coordinateStamp(a) === JSON.stringify([l.id, l.at, l.t]));
+}
+function moveHistoryHTML(a, l) {
+  if (!l.move) return `<div><span>${esc(l.t)}</span><span class="muted">${fmtAt(l.at)}</span></div>`;
+  const point = p => `${Number(p.lat).toFixed(6)}, ${Number(p.lng).toFixed(6)}`;
+  return `<div class="coord-history"><span>${esc(l.t)}</span><span class="muted"> · ${fmtAt(l.at)}</span><small>${esc(point(l.move.from))} → ${esc(point(l.move.to))}</small>${canRestoreMove(a, l) ? `<button class="link" onclick="restoreMapMove('${a.id}','${l.id}')">이전 위치로 복구</button>` : '<small>이후 위치가 바뀐 기록은 바로 복구할 수 없어요</small>'}</div>`;
+}
+function undoMapToast(id, recordId, message) {
+  document.querySelectorAll('.undo-toast').forEach(el => el.remove());
+  const el = document.createElement('div'); el.className = 'toast undo-toast';
+  const text = document.createElement('span'); text.textContent = message; el.append(text);
+  const button = document.createElement('button'); button.textContent = '되돌리기';
+  button.onclick = async () => { button.disabled = true; if (await restoreMapMove(id, recordId)) el.remove(); else button.disabled = false; };
+  el.append(button); $('toasts').append(el); setTimeout(() => el.remove(), 12000);
+}
+async function saveMapPosition(id, target, expected, restoring = null) {
+  if (!validLat(+target.lat) || !validLng(+target.lng)) { toast('현장 좌표 범위를 확인해 주세요', 'warn'); return false; }
+  const to = { lat: +Number(target.lat).toFixed(6), lng: +Number(target.lng).toFixed(6) };
+  if (sameCoordinate(expected, to)) { toast('원래 위치와 같아요'); return false; }
+  const recordId = crypto.randomUUID();
+  const result = await saveChange(doc => {
+    const a = doc.assets.find(x => x.id === id);
+    if (!a || !sameCoordinate(a, expected) || coordinateStamp(a) !== expected.stamp) throw new Error('다른 기기에서 위치가 바뀌었어요. 새 위치를 확인한 뒤 다시 시도해 주세요');
+    if (restoring) {
+      const original = (a.log || []).find(l => l.id === restoring);
+      if (!original || !canRestoreMove(a, original)) throw new Error('이후 위치가 바뀌어 이 기록을 바로 복구할 수 없어요');
+    }
+    const from = { lat: +a.lat, lng: +a.lng }, at = new Date().toISOString();
+    const t = restoring ? '좌표 복구 (이전 위치로 복구)' : '좌표 변경 (지도에서 이동)';
+    a.lat = to.lat; a.lng = to.lng; a.updatedAt = at;
+    a.log = [{ id: recordId, at, t, move: { from, to, method: restoring ? '복구' : '지도에서 이동', restores: restoring || null } }, ...(a.log || [])].slice(0, LOG_MAX);
+    return recordId;
+  }, `위치 ${restoring ? '복구' : '이동'}: ${id}`, null);
+  if (result) { if (DRAWER) renderDrawer(); undoMapToast(id, result, restoring ? '이전 위치로 복구했습니다' : `${shortNo(id)} 위치를 변경했습니다`); }
+  return result;
+}
+async function restoreMapMove(id, recordId) {
+  try {
+    const latest = await Store.load(); DOC = latest;
+    const a = latest.assets.find(a => a.id === id), l = a?.log?.find(l => l.id === recordId);
+    if (!a || !l || !canRestoreMove(a, l)) { toast('이후 위치가 바뀌었거나 기록이 없어 바로 복구할 수 없어요', 'warn'); if (DRAWER) renderDrawer(); return false; }
+    return await saveMapPosition(id, l.move.from, coordinateSnapshot(a), recordId);
+  } catch (e) { toast(e.message, 'err'); return false; }
+}
+function cancelMapMove() {
+  if (!MOVE) return;
+  MOVE.listeners.forEach(l => { if (MAPX.g()) l.remove(); else kakao.maps.event.removeListener(l.map, l.type, l.fn); });
+  MOVE.marker.setMap(null); MOVE.bar.remove(); MOVE = null;
+  if (MAP) drawPins();
+}
+function setMapDestination(point) {
+  if (!MOVE || MOVE.busy || !point) return;
+  const lat = +Number(point.lat).toFixed(6), lng = +Number(point.lng).toFixed(6);
+  if (!validLat(lat) || !validLng(lng)) return toast('현장 좌표 범위를 확인해 주세요', 'warn');
+  MOVE.point = { lat, lng }; MOVE.marker.setPosition(MAPX.ll(lat, lng));
+  MOVE.bar.querySelector('.move-coordinates').textContent = `${lat.toFixed(6)}, ${lng.toFixed(6)} · 현장 위치명 유지`;
+}
+async function beginMapMove(id) {
+  const map = MAP; if (!map || MOVE || MOVE_STARTING) return;
+  MOVE_STARTING = true; closeMapInfo(); document.querySelectorAll('.undo-toast').forEach(el => el.remove());
+  let a;
+  try { const latest = await Store.load(); a = latest.assets.find(x => x.id === id); DOC = latest; }
+  catch (error) { toast(error.message, 'err'); return; }
+  finally { MOVE_STARTING = false; }
+  if (MAP !== map || !a || !hasCoord(a)) return;
+  MAP_SELECTED = id; MAP_LIST = MAP_LIST.map(old => getAsset(old.id)).filter(a => a && hasCoord(a));
+  const bar = document.createElement('div'); bar.className = 'move-bar';
+  bar.innerHTML = '<div class="move-description"><b></b><small>핀을 끌거나 지도에서 목적지를 누르세요</small><small class="move-coordinates"></small></div><button class="btn cancel-move">취소</button><button class="btn primary save-move">여기로 이동</button>';
+  bar.querySelector('b').textContent = `${a.id} ${dispName(a)} · 한 개만 이동`;
+  ['pointerdown', 'click', 'dblclick', 'contextmenu', 'touchstart'].forEach(t => bar.addEventListener(t, e => e.stopPropagation()));
+  $('kmap').parentElement.append(bar);
+  const marker = MAPX.g() ? new google.maps.Marker({ map, position: MAPX.ll(a.lat, a.lng), draggable: true, zIndex: 9999, title: `${a.id} 이동할 위치` }) : new kakao.maps.Marker({ map, position: MAPX.ll(a.lat, a.lng), draggable: true });
+  MOVE = { id, marker, bar, map, expected: coordinateSnapshot(a), point: { lat: +a.lat, lng: +a.lng }, listeners: [], busy: false };
+  if (MAPX.g()) {
+    MOVE.listeners.push(marker.addListener('dragend', e => setMapDestination({ lat: e.latLng.lat(), lng: e.latLng.lng() })));
+    MOVE.listeners.push(map.addListener('contextmenu', e => { e.domEvent?.preventDefault(); if (e.latLng) setMapDestination({ lat: e.latLng.lat(), lng: e.latLng.lng() }); }));
+  } else {
+    const fn = () => { const p = marker.getPosition(); setMapDestination({ lat: p.getLat(), lng: p.getLng() }); };
+    kakao.maps.event.addListener(marker, 'dragend', fn); MOVE.listeners.push({ map: marker, type: 'dragend', fn });
+  }
+  bar.querySelector('.cancel-move').onclick = () => { if (!MOVE?.busy) cancelMapMove(); };
+  bar.querySelector('.save-move').onclick = async () => {
+    const current = MOVE; if (!current || current.busy) return;
+    current.busy = true; bar.querySelectorAll('button').forEach(b => b.disabled = true);
+    MAP_FOCUS = id;
+    const result = await saveMapPosition(id, current.point, current.expected);
+    if (!result) { MAP_FOCUS = null; if (MOVE === current) { current.busy = false; bar.querySelectorAll('button').forEach(b => b.disabled = false); } }
+  };
+  setMapDestination(MOVE.point); drawPins(); MAPX.panTo(map, MAPX.ll(a.lat, a.lng));
+}
+window.addEventListener('keydown', e => { if (e.key === 'Escape' && MOVE && !MOVE.busy) cancelMapMove(); });
 
 /* ── 라벨 인쇄: 팝업 창 (자산 목록에서 체크한 것 / 상세 화면의 한 개) · PC 전용 ── */
 let PRINT_IDS = [];
@@ -1405,12 +1578,12 @@ function detailHTML(a) {
       ? `<button class="photo-pick strong" onclick="photoInput('${a.id}',true)">${icon('camera', 16)} 장비 사진 찍고 ${DOC.audit && !DOC.audit.checked[a.id] ? '실사 확인' : '찾음 처리'}</button><p class="hint" style="text-align:center">QR 라벨이 훼손돼 스캔이 안 될 때도 이 버튼으로 해요 · 사진은 필수예요</p>`
       : `<button class="photo-pick" onclick="photoInput('${a.id}')">${icon('camera', 16)} ${photoUrl(a) ? '사진 바꾸기' : '사진 넣기'}</button>`)}
     <div class="flabel" style="margin-top:20px">변경 이력</div>
-    <div class="hist">${(a.log || []).length ? a.log.map(l => `<div><span>${esc(l.t)}</span><span class="muted">${fmtAt(l.at)}</span></div>`).join('') : `<div><span class="muted">기록 없음 · 최종 변경 ${relTime(a.updatedAt)}</span></div>`}</div>
+    <div class="hist">${(a.log || []).length ? a.log.map(l => moveHistoryHTML(a, l)).join('') : `<div><span class="muted">기록 없음 · 최종 변경 ${relTime(a.updatedAt)}</span></div>`}</div>
   </div>
   <div class="p-foot"><button class="btn" onclick="openForm('${a.id}')">${icon('edit', 16)} 정보 수정</button>${a.out ? '' : `<button class="btn" onclick="openOut(['${a.id}'])">${icon('logout', 16)} 현장 종료 처리</button>`}<div class="del-line"><button class="link-gray" onclick="openRemoveAsset('${a.id}')">잘못 등록한 자산 지우기</button></div></div>`;
 }
 function coordLog(a) {   // 마지막 좌표 기록 (기록 목록에서) → { at, how }
-  const l = (a.log || []).find(x => /^(좌표 입력|위치 갱신|좌표 변경)/.test(x.t));
+  const l = (a.log || []).find(x => /^(좌표 입력|위치 갱신|좌표 변경|좌표 복구)/.test(x.t));
   return l ? { at: l.at, how: (l.t.match(/\((.*)\)/) || [])[1] || '' } : null;
 }
 function fmtAt(iso) { if (!iso) return ''; const d = new Date(iso); return `${d.getMonth() + 1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`; }
@@ -2479,7 +2652,7 @@ function startApp() {
 }
 window.addEventListener('hashchange', () => { render(); });
 window.addEventListener('keydown', e => { if (e.key === 'Escape') { if (!$('modal').classList.contains('hidden')) closeModal(); else closeDrawer(); } });
-let RESIZE_T; window.addEventListener('resize', () => { clearTimeout(RESIZE_T); RESIZE_T = setTimeout(() => { if ($('lab-sheets')) renderPrint(); if (MAP) MAP.relayout(); }, 150); });
+let RESIZE_T; window.addEventListener('resize', () => { clearTimeout(RESIZE_T); RESIZE_T = setTimeout(() => { if ($('lab-sheets')) renderPrint(); if (MAP) { MAPX.relayout(MAP); drawPins(); } }, 150); });
 
 /* 휴대폰 앱 설치 안내 (카카오톡으로 받은 링크 → 외부 브라우저 → 설치) */
 let INSTALL_EVT = null;
@@ -2512,7 +2685,7 @@ function showInstall() {
   box.innerHTML = h; box.classList.remove('hidden');
 }
 
-const BUILD = '2026-11-14f';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
+const BUILD = '2026-11-14h';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
 async function checkUpdate() {
   try {
     const t = await (await fetch(location.pathname + '?v=' + Date.now(), { cache: 'reload' })).text();
