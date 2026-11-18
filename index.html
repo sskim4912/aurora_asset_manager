@@ -1211,7 +1211,7 @@ function stopNFC(){if(NFC_SESSION){NFC_SESSION.controller.abort();clearTimeout(N
 function openNFC(id){
   stopNFC();if(!getAsset(id))return;
   const supported=window.isSecureContext&&'NDEFReader'in window;
-  openModal(`<div class="m-head"><h2>${esc(id)} · NFC 등록</h2><button class="icon-btn" onclick="closeModal()">×</button></div><div class="m-body"><p>기존 QR과 같은 자산 주소를 기록합니다. 자산·사진·GPS는 새로 만들거나 변경하지 않습니다.</p><p class="nfc-url">${esc(qrUrl(id))}</p><button class="btn sm" onclick="copyNFCURL('${id}')">자산 주소 복사</button><p>${supported?'카드 한 장만 준비하세요. 기존 내용이 다른 카드는 덮어쓰지 않습니다.':'NFC 쓰기는 NFC를 켠 Android Chrome에서 이용해 주세요. 아이폰 Safari·Chrome에서는 웹 NFC 기록을 지원하지 않습니다. 아이폰은 NFC Tools 같은 별도 앱에서 아래 주소를 URL로 기록할 수 있고, 기록된 카드는 아이폰 XS 이후 기종에서 접촉 후 알림을 눌러 열 수 있습니다.'}</p><p id="nfc-progress" role="status">${getAsset(id).nfc?.at?'마지막 기록·읽기 확인: '+esc(fmtAt(getAsset(id).nfc.at))+' (현재 카드 부착 여부는 확인하지 않음)':'등록 확인 기록 없음'}</p></div><div class="m-foot"><button class="btn" onclick="closeModal()">닫기·취소</button>${supported?`<button class="btn primary" id="nfc-start" onclick="startNFC('${id}')">카드 확인 시작</button><button class="btn primary hidden" id="nfc-write" onclick="writeNFC()">이 카드에 기록</button>`:''}</div>`);
+  openModal(`<div class="m-head"><h2>${esc(id)} · NFC 등록</h2><button class="icon-btn" onclick="closeModal()">×</button></div><div class="m-body"><p>기존 QR과 같은 자산 주소를 기록합니다. 자산·사진·GPS는 새로 만들거나 변경하지 않습니다.</p><p>카드 등록은 처음 한 번만 합니다. 이후 사진·위치·반출입 정보가 바뀌어도 다시 기록할 필요가 없습니다.</p><p class="nfc-url">${esc(qrUrl(id))}</p><button class="btn sm" onclick="copyNFCURL('${id}')">자산 주소 복사</button><p>${supported?'카드 한 장만 준비하세요. 기존 내용이 다른 카드는 덮어쓰지 않습니다.':'NFC 카드는 관리팀 안드로이드폰의 Chrome에서 한 번만 등록해 주세요. 등록 후에는 아이폰·안드로이드 모두 카드에 접촉해 자산 상세를 열 수 있습니다. 아이폰은 화면을 켜고 휴대폰 상단을 카드에 댄 뒤 나타나는 알림을 누르세요. 아이폰에 별도 앱을 설치할 필요는 없습니다. 아이폰에서는 카드 기록을 지원하지 않습니다.'}</p><p id="nfc-progress" role="status">${getAsset(id).nfc?.at?'마지막 기록·읽기 확인: '+esc(fmtAt(getAsset(id).nfc.at))+' (현재 카드 부착 여부는 확인하지 않음)':'등록 확인 기록 없음'}</p></div><div class="m-foot"><button class="btn" onclick="closeModal()">닫기·취소</button>${supported?`<button class="btn primary" id="nfc-start" onclick="startNFC('${id}')">카드 확인 시작</button><button class="btn primary hidden" id="nfc-write" onclick="writeNFC()">이 카드에 기록</button>`:''}</div>`);
 }
 async function copyNFCURL(id){try{await navigator.clipboard.writeText(qrUrl(id));toast('자산 주소를 복사했습니다 · NFC 앱에서 URL로 기록하세요');}catch{toast('주소를 길게 눌러 복사해 주세요','warn');}}
 const nfcProgress=t=>{if($('nfc-progress'))$('nfc-progress').textContent=t;};
@@ -3102,7 +3102,7 @@ function showInstall() {
   box.innerHTML = h; box.classList.remove('hidden');
 }
 
-const BUILD = '2026-11-19b';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
+const BUILD = '2026-11-19c';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
 async function checkUpdate() {
   try {
     const t = await (await fetch(location.pathname + '?v=' + Date.now(), { cache: 'reload' })).text();
