@@ -569,6 +569,8 @@ details[open].more summary::before{transform:rotate(90deg)}
 .new-asset-capture{padding:12px;background:#f3f7fb;border-radius:12px;margin-bottom:18px}.new-asset-capture img{display:block;width:100%;max-height:200px;object-fit:contain;border-radius:8px;margin-bottom:10px}.new-asset-capture .btn{width:100%}
 
 .tool-filters{display:flex;flex-wrap:wrap;gap:7px;margin:8px 0 14px}.tool-line{font-size:12px;font-weight:500;margin-top:5px;white-space:normal;overflow-wrap:anywhere}.tool-overdue,.tbl tbody tr.tool-overdue:hover{background:#fff1f2}.tool-alert{display:inline-block;background:#b91c1c;color:#fff;border-radius:6px;padding:3px 7px;font-weight:800}.tool-panel{border:1px solid #dbe3ed;border-radius:10px;padding:12px;margin:12px 0;overflow-wrap:anywhere}.tool-panel .btn{margin:4px 3px 4px 0}.tool-history{width:100%;border-collapse:collapse;table-layout:fixed;font-size:12px;margin-top:10px}.tool-history th,.tool-history td{border:1px solid #dbe3ed;padding:9px;vertical-align:top;overflow-wrap:anywhere}.tool-history th:first-child{background:#fff3e0}.tool-history th:last-child{background:#e8f5e9}.nfc-btn{font-size:11px;min-height:36px;padding:5px;white-space:nowrap}.tool-fields{display:grid;gap:10px}.tool-fields label{display:grid;gap:4px}.tool-fields .inp{width:100%;min-width:0}.tool-filters .chip{min-height:36px}.tool-history small{display:block;margin-top:5px}.nfc-url{word-break:break-all;font-size:12px;background:#f1f5f9;padding:10px;border-radius:6px}
+
+.mcard.has-thumb{padding-right:14px}.mc-photo{position:static;display:flex;justify-content:flex-end;align-items:center;gap:8px;margin-top:8px}.mc-photo .nfc-tile{width:52px;height:52px}.nfc-tile .i{flex:none}
 </style>
 </head>
 <body>
@@ -1118,14 +1120,15 @@ function updateAssetList() {
       <td class="qty">${a.qty} ${a.unit}</td><td>${stBadge(a)}</td><td>${sch(a)}</td><td class="muted" style="font-size:12.5px">${relTime(a.updatedAt)}</td></tr>`).join('')}</tbody>`}
   </table></div>
   <div class="mlist">${list.map(a => { const s = schedOf(a); return `
-    <div class="mcard has-thumb ${toolDays(a)<0?'tool-overdue':''}" onclick="openAsset('${a.id}')"><span class="mc-photo" onclick="event.stopPropagation()">${photoCell(a)}</span>
-      <div class="mc-top"><span class="mono sub" style="margin:0">${a.id} · ${esc(a.category)}</span><span onclick="event.stopPropagation()">${nfcButton(a)}</span>${stBadge(a)}</div>
+    <div class="mcard has-thumb ${toolDays(a)<0?'tool-overdue':''}" onclick="openAsset('${a.id}')">
+      <div class="mc-top"><span class="mono sub" style="margin:0">${a.id} · ${esc(a.category)}</span>${stBadge(a)}</div>
       <div class="mc-name">${esc(a.item)}${isLease(a) ? ' <span class="tag-lease">임대</span>' : ''} <span class="qty" style="font-size:13px;color:var(--sub)">${a.qty} ${a.unit}</span></div>
       ${shortModel(a.model) ? `<div class="mc-sub" style="margin-bottom:3px">${esc(shortModel(a.model))}</div>` : ''}
       ${toolSummary(a)}
       <div class="mc-sub">${icon('pin', 14)}${esc(a.location||'위치 미등록')}${hasCoord(a) ? '' : ' <span class="no-coord">● 좌표 없음</span>'}</div>
       ${isLease(a) ? `<div class="mc-sub mc-lease">🏢 ${esc(a.leaseVendor || '업체 미입력')}${a.leaseContact ? ' · ' + esc(a.leaseContact) : ''}${a.leaseTel ? ` · <a class="link" href="tel:${esc(a.leaseTel.replace(/[^0-9+]/g, ''))}" onclick="event.stopPropagation()">${esc(a.leaseTel)}</a>` : ''}<br>📅 ${esc(a.leaseStart || '?')} ~ ${esc(a.rentalDue || '?')} ${leaseLeft(a)}</div>` : ''}
       ${s && !(LV && isLease(a)) ? `<div class="mc-due"><span class="due ${s.lvl}">${s.t}</span></div>` : ''}
+      <div class="mc-photo" onclick="event.stopPropagation()">${photoCell(a)}${nfcButton(a)}</div>
     </div>`; }).join('')}</div>`;
   if (leaseEmpty) { const tb = box.querySelector('tbody'), ml = box.querySelector('.mlist');
     if (tb) tb.innerHTML = `<tr><td colspan="11" class="empty-row">${leaseEmpty}</td></tr>`;
@@ -1200,13 +1203,17 @@ async function cancelTool(id){
 }
 /* NFC 단건 등록: 읽기 검사 → 비어 있거나 동일 URL인 태그에만 쓰기 → 재접촉 검증 */
 let NFC_SESSION=null;
-function nfcButton(a,full=false){return `<button class="btn sm nfc-btn" onclick="openNFC('${a.id}')" title="${esc(a.id)} NFC 등록${a.nfc?.at?' · 마지막 읽기 확인 '+fmtAt(a.nfc.at):''}" aria-label="${esc(a.id)} NFC 등록">◉ ${full?'NFC 등록':'NFC'}${a.nfc?.at?' ✓':''}</button>`;}
+function nfcButton(a,full=false){
+  const image='<svg class="i" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 7a7 7 0 0 0 0 10M5 4a11 11 0 0 0 0 16M16 7a7 7 0 0 1 0 10M19 4a11 11 0 0 1 0 16M10 15V9l4 6V9" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  return `<button class="${full?'btn sm nfc-btn':'thumb-btn add nfc-tile'}" onclick="openNFC('${a.id}')" title="${esc(a.id)} NFC 등록${a.nfc?.at?' · 마지막 읽기 확인 '+fmtAt(a.nfc.at):''}" aria-label="${esc(a.id)} NFC 등록">${image}<span>NFC 등록</span></button>`;
+}
 function stopNFC(){if(NFC_SESSION){NFC_SESSION.controller.abort();clearTimeout(NFC_SESSION.timer);NFC_SESSION=null;}}
 function openNFC(id){
   stopNFC();if(!getAsset(id))return;
   const supported=window.isSecureContext&&'NDEFReader'in window;
-  openModal(`<div class="m-head"><h2>${esc(id)} · NFC 등록</h2><button class="icon-btn" onclick="closeModal()">×</button></div><div class="m-body"><p>기존 QR과 같은 자산 주소를 기록합니다. 자산·사진·GPS는 새로 만들거나 변경하지 않습니다.</p><p class="nfc-url">${esc(qrUrl(id))}</p><p>${supported?'카드 한 장만 준비하세요. 기존 내용이 다른 카드는 덮어쓰지 않습니다.':'NFC 쓰기는 NFC를 켠 Android Chrome에서 이용해 주세요. iPhone·PC에서는 이 기능을 지원하지 않을 수 있습니다.'}</p><p id="nfc-progress" role="status">${getAsset(id).nfc?.at?'마지막 기록·읽기 확인: '+esc(fmtAt(getAsset(id).nfc.at))+' (현재 카드 부착 여부는 확인하지 않음)':'등록 확인 기록 없음'}</p></div><div class="m-foot"><button class="btn" onclick="closeModal()">닫기·취소</button>${supported?`<button class="btn primary" id="nfc-start" onclick="startNFC('${id}')">카드 확인 시작</button><button class="btn primary hidden" id="nfc-write" onclick="writeNFC()">이 카드에 기록</button>`:''}</div>`);
+  openModal(`<div class="m-head"><h2>${esc(id)} · NFC 등록</h2><button class="icon-btn" onclick="closeModal()">×</button></div><div class="m-body"><p>기존 QR과 같은 자산 주소를 기록합니다. 자산·사진·GPS는 새로 만들거나 변경하지 않습니다.</p><p class="nfc-url">${esc(qrUrl(id))}</p><button class="btn sm" onclick="copyNFCURL('${id}')">자산 주소 복사</button><p>${supported?'카드 한 장만 준비하세요. 기존 내용이 다른 카드는 덮어쓰지 않습니다.':'NFC 쓰기는 NFC를 켠 Android Chrome에서 이용해 주세요. 아이폰 Safari·Chrome에서는 웹 NFC 기록을 지원하지 않습니다. 아이폰은 NFC Tools 같은 별도 앱에서 아래 주소를 URL로 기록할 수 있고, 기록된 카드는 아이폰 XS 이후 기종에서 접촉 후 알림을 눌러 열 수 있습니다.'}</p><p id="nfc-progress" role="status">${getAsset(id).nfc?.at?'마지막 기록·읽기 확인: '+esc(fmtAt(getAsset(id).nfc.at))+' (현재 카드 부착 여부는 확인하지 않음)':'등록 확인 기록 없음'}</p></div><div class="m-foot"><button class="btn" onclick="closeModal()">닫기·취소</button>${supported?`<button class="btn primary" id="nfc-start" onclick="startNFC('${id}')">카드 확인 시작</button><button class="btn primary hidden" id="nfc-write" onclick="writeNFC()">이 카드에 기록</button>`:''}</div>`);
 }
+async function copyNFCURL(id){try{await navigator.clipboard.writeText(qrUrl(id));toast('자산 주소를 복사했습니다 · NFC 앱에서 URL로 기록하세요');}catch{toast('주소를 길게 눌러 복사해 주세요','warn');}}
 const nfcProgress=t=>{if($('nfc-progress'))$('nfc-progress').textContent=t;};
 function nfcFail(s,e){if(NFC_SESSION!==s)return;stopNFC();nfcProgress(e.name==='NotAllowedError'?'NFC 권한을 허용해 주세요.':e.name==='NotSupportedError'?'지원하지 않는 카드 또는 기기입니다.':e.name==='AbortError'?'취소되었습니다.':'처리 실패: '+e.message+' · 카드 확인 시작으로 재시도하세요.');$('nfc-start')?.classList.remove('hidden');$('nfc-write')?.classList.add('hidden');}
 async function startNFC(id){
@@ -3095,7 +3102,7 @@ function showInstall() {
   box.innerHTML = h; box.classList.remove('hidden');
 }
 
-const BUILD = '2026-11-19a';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
+const BUILD = '2026-11-19b';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
 async function checkUpdate() {
   try {
     const t = await (await fetch(location.pathname + '?v=' + Date.now(), { cache: 'reload' })).text();
