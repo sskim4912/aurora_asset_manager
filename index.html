@@ -567,6 +567,8 @@ details[open].more summary::before{transform:rotate(90deg)}
 @media(max-width:899px){.map-summary{width:100%;font-size:12px;gap:5px 12px;margin:0 0 8px}.map-summary small{font-size:11px}.map-navigation{gap:6px}.map-navigation .btn{font-size:11px;padding:6px 8px}.map-box{height:58dvh;min-height:360px;max-height:680px}.asset-actions>.list-head{white-space:normal}.map-location-tools{font-size:11px}}
 
 .new-asset-capture{padding:12px;background:#f3f7fb;border-radius:12px;margin-bottom:18px}.new-asset-capture img{display:block;width:100%;max-height:200px;object-fit:contain;border-radius:8px;margin-bottom:10px}.new-asset-capture .btn{width:100%}
+
+.tool-filters{display:flex;flex-wrap:wrap;gap:7px;margin:8px 0 14px}.tool-line{font-size:12px;font-weight:500;margin-top:5px;white-space:normal;overflow-wrap:anywhere}.tool-overdue,.tbl tbody tr.tool-overdue:hover{background:#fff1f2}.tool-alert{display:inline-block;background:#b91c1c;color:#fff;border-radius:6px;padding:3px 7px;font-weight:800}.tool-panel{border:1px solid #dbe3ed;border-radius:10px;padding:12px;margin:12px 0;overflow-wrap:anywhere}.tool-panel .btn{margin:4px 3px 4px 0}.tool-history{width:100%;border-collapse:collapse;table-layout:fixed;font-size:12px;margin-top:10px}.tool-history th,.tool-history td{border:1px solid #dbe3ed;padding:9px;vertical-align:top;overflow-wrap:anywhere}.tool-history th:first-child{background:#fff3e0}.tool-history th:last-child{background:#e8f5e9}.nfc-btn{font-size:11px;min-height:36px;padding:5px;white-space:nowrap}.tool-fields{display:grid;gap:10px}.tool-fields label{display:grid;gap:4px}.tool-fields .inp{width:100%;min-width:0}.tool-filters .chip{min-height:36px}.tool-history small{display:block;margin-top:5px}.nfc-url{word-break:break-all;font-size:12px;background:#f1f5f9;padding:10px;border-radius:6px}
 </style>
 </head>
 <body>
@@ -663,7 +665,7 @@ const BASE_CATALOG = {
 
 const LOG_MAX = 15;     // 자산별 변경 이력 보관 개수 (B5)
 function addLog(x, t, at) { x.log = [{ at: at || new Date().toISOString(), t }, ...(x.log || [])].slice(0, LOG_MAX); }
-const DATA_VERSION = 6;   // 데이터 구조 버전: 더 새 버전 데이터를 만나면 저장을 막아 덮어쓰기 사고를 방지
+const DATA_VERSION = 7;   // 데이터 구조 버전: 더 새 버전 데이터를 만나면 저장을 막아 덮어쓰기 사고를 방지
 function seedDoc() { return { version: 3, updatedAt: '', catalog: {}, assets: [] }; }
 
 /* ═══════════════════════════════════════════
@@ -774,6 +776,7 @@ function normalizeDoc(d) {
       location: a.location || '', locInit: a.locInit || a.location || '', manager: a.manager || '',
       status: normStatus(a.status) || '상', lat: num(a.lat), lng: num(a.lng),
       nextCheck: a.nextCheck || '', rentalDue: a.rentalDue || '', leaseVendor: a.leaseVendor || '', leaseStart: a.leaseStart || '', leaseTel: a.leaseTel || '', leaseContact: a.leaseContact || '',
+      tool: a.tool && typeof a.tool === 'object' ? a.tool : null, toolHistory: Array.isArray(a.toolHistory) ? a.toolHistory : [], nfc: a.nfc || null,
       note: a.note || '', out, updatedAt: a.updatedAt || '',
       log: Array.isArray(a.log) ? a.log.slice(0, LOG_MAX) : [], thumb: a.thumb || '',
       photo: a.photo && a.photo.path ? a.photo : (a.photoAt ? { path: `photos/${a.id}.jpg`, at: a.photoAt } : null),
@@ -828,7 +831,7 @@ const qrUrl = id => qrBase() + '?id=' + encodeURIComponent(id);
 let DOC = null;
 let DRAWER = null;          // {mode:'detail'|'form', id, draft}
 let PENDING_ID = null;      // QR로 들어온 자산번호
-const UI = { q: '', filter: 'all', cat: '전체', item: '전체', loc: '전체', mode: 'list', sel: new Set(),
+const UI = { toolFilter: 'all', q: '', filter: 'all', cat: '전체', item: '전체', loc: '전체', mode: 'list', sel: new Set(),
   sort: (lsGet('aam_sort') && lsGet('aam_sort').k) ? lsGet('aam_sort') : { k: 'id', d: 1 }, paper: lsGet('aam_paper') === 'A3' ? 'A3' : 'A4' };
 const getAsset = id => DOC.assets.find(a => a.id === id);
 const activeAssets = () => DOC.assets.filter(a => !a.out);
@@ -938,6 +941,7 @@ function todos() {
   const out = []; const miss = missingIds();
   activeAssets().forEach(a => {
     const tags = [];
+    if(toolDays(a)<0) tags.push({level:'red',text:'공구 반납 '+(-toolDays(a))+'일 지연',rank:toolDays(a)-1000});
     if (a.status === '하') tags.push({ level: 'red', text: '상태 하', rank: -1000 });
     const c = dday(a.nextCheck);
     if (c !== null && c <= 7) tags.push({ level: c < 0 ? 'red' : 'amber', text: '점검 ' + ddText(c), rank: c });
@@ -1021,6 +1025,7 @@ function renderAssets() {
     </div>
     <div class="list-head"><span id="asset-count"></span>${fk ? `<span class="chip on" onclick="setFilter('all')">${fk} ✕</span>` : ''}</div>
   </div>
+  <div id="tool-filters">${toolFiltersHTML()}</div>
   <div id="sel-bar"></div>
   <div id="asset-list"></div>`;
 }
@@ -1041,7 +1046,7 @@ function applyAssetFilters() {
   lsSet('aam_sort', UI.sort); UI.sel.clear(); closeModal(); render();
 }
 function afterAssets() { if (UI.mode === 'map') initMainMap(); else updateAssetList(); }
-function refreshList() { UI.sel.clear(); afterAssets(); }
+function refreshList() { UI.sel.clear(); const el=$('tool-filters');if(el)el.innerHTML=toolFiltersHTML(); afterAssets(); }
 function filteredAssets() {
   const q = UI.q.trim().toLowerCase(), f = UI.filter;
   const todo = f === 'todo' ? new Set(todos().map(t => t.a.id)) : null;
@@ -1057,8 +1062,9 @@ function filteredAssets() {
       if (f === 'unaudited' && (!DOC.audit || DOC.audit.checked[a.id])) return false;
       if (f.startsWith('st:') && a.status !== f.slice(3)) return false;
     }
+    if (UI.cat === '공기구' && !toolMatches(a,UI.toolFilter)) return false;
     return (UI.cat === '전체' || a.category === UI.cat) && (UI.item === '전체' || a.item === UI.item) && (UI.loc === '전체' || a.location === UI.loc) &&
-      (!q || [a.id, a.item, a.model, a.contract, a.location, a.category, a.note, a.manager, a.leaseVendor, a.out && a.out.type, a.out && a.out.to, a.out && a.out.docNo].some(v => String(v || '').toLowerCase().includes(q)));
+      (!q || [a.id, a.item, a.model, a.contract, a.location, a.category, a.note, a.manager, a.tool?.borrower, a.tool?.place, a.leaseVendor, a.out && a.out.type, a.out && a.out.to, a.out && a.out.docNo].some(v => String(v || '').toLowerCase().includes(q)));
   });
 }
 function schedOf(a) {
@@ -1077,6 +1083,7 @@ const SORT_VAL = {
 };
 function setSort(k) { UI.sort = UI.sort.k === k ? { k, d: -UI.sort.d } : { k, d: k === 'updated' ? -1 : 1 }; lsSet('aam_sort', UI.sort); updateAssetList(); }
 function sortList(list) {
+  if(UI.cat==='공기구' && UI.toolFilter==='overdue') return list.slice().sort((a,b)=>toolDays(a)-toolDays(b)||a.id.localeCompare(b.id));
   const f = SORT_VAL[UI.sort.k] || SORT_VAL.id, d = UI.sort.d;
   return list.slice().sort((x, y) => { const a = f(x), b = f(y); return (typeof a === 'number' && typeof b === 'number' ? a - b : String(a).localeCompare(String(b), 'ko', { numeric: true })) * d || x.id.localeCompare(y.id); });
 }
@@ -1099,34 +1106,137 @@ function updateAssetList() {
   box.innerHTML = (grp.length > 1 || UI.loc !== '전체' && grp.length ? `<div class="loc-groups"><span class="muted">위치별:</span>${grp.map(([l, n], i) => `<button class="chip ${UI.loc === l ? 'on' : ''}" onclick="toggleLocGrp(${i})">${esc(l)} <b>${n}</b></button>`).join('')}</div>` : '') + `
   <div class="tbl-wrap"><table class="tbl">
     <thead><tr><th class="ck"><input type="checkbox" ${allOn ? 'checked' : ''} onclick="selAll(this.checked)" aria-label="전체 선택"></th>
-      ${LV ? `${th('id', '관리번호', 118)}<th style="width:62px">사진</th>${th('name', '품목 · 모델')}<th>임대 업체</th><th>임대 기간</th><th style="width:90px">남은 기간</th><th>업체 담당자</th><th>업체 연락처</th>${th('status', '상태', 96)}</tr></thead>
-    <tbody>${list.map(a => `<tr class="${UI.sel.has(a.id) ? 'picked' : ''}" onclick="openAsset('${a.id}')">
+      ${LV ? `${th('id', '관리번호', 118)}<th style="width:62px">사진</th><th style="width:52px">NFC</th>${th('name', '품목 · 모델')}<th>임대 업체</th><th>임대 기간</th><th style="width:90px">남은 기간</th><th>업체 담당자</th><th>업체 연락처</th>${th('status', '상태', 96)}</tr></thead>
+    <tbody>${list.map(a => `<tr class="${UI.sel.has(a.id) ? 'picked' : ''} ${toolDays(a)<0?'tool-overdue':''}" onclick="openAsset('${a.id}')">
       <td class="ck" onclick="event.stopPropagation()"><input type="checkbox" ${UI.sel.has(a.id) ? 'checked' : ''} onclick="selOne('${a.id}',this.checked)"></td>
-      <td class="mono">${a.id}</td><td onclick="event.stopPropagation()">${photoCell(a)}</td><td class="nm">${esc(a.item)}<div class="ri-sub" style="font-weight:400">${esc(shortModel(a.model))}</div></td>
+      <td class="mono">${a.id}</td><td onclick="event.stopPropagation()">${photoCell(a)}</td><td onclick="event.stopPropagation()">${nfcButton(a)}</td><td class="nm">${esc(a.item)}<div class="ri-sub" style="font-weight:400">${esc(shortModel(a.model))}</div>${toolSummary(a)}</td>
       <td>${esc(a.leaseVendor || '—')}</td><td style="font-size:12.5px;white-space:nowrap">${esc(a.leaseStart || '?')} ~ ${esc(a.rentalDue || '?')}</td><td>${leaseLeft(a)}</td>
-      <td>${esc(a.leaseContact || '—')}</td><td onclick="event.stopPropagation()">${a.leaseTel ? `<a class="link" href="tel:${esc(a.leaseTel.replace(/[^0-9+]/g, ''))}">${esc(a.leaseTel)}</a>` : '—'}</td><td>${stBadge(a)}</td></tr>`).join('')}</tbody>` : `${th('id', '관리번호', 118)}<th style="width:62px">사진</th>${th('name', '품목 · 모델')}${th('category', '분류', 120)}${th('location', '위치')}${th('qty', '수량', 70)}${th('status', '상태', 96)}${th('sched', '일정', 120)}${th('updated', '최종 변경', 96)}</tr></thead>
-    <tbody>${list.map(a => `<tr class="${UI.sel.has(a.id) ? 'picked' : ''}" onclick="openAsset('${a.id}')">
+      <td>${esc(a.leaseContact || '—')}</td><td onclick="event.stopPropagation()">${a.leaseTel ? `<a class="link" href="tel:${esc(a.leaseTel.replace(/[^0-9+]/g, ''))}">${esc(a.leaseTel)}</a>` : '—'}</td><td>${stBadge(a)}</td></tr>`).join('')}</tbody>` : `${th('id', '관리번호', 118)}<th style="width:62px">사진</th><th style="width:52px">NFC</th>${th('name', '품목 · 모델')}${th('category', '분류', 120)}${th('location', '위치')}${th('qty', '수량', 70)}${th('status', '상태', 96)}${th('sched', '일정', 120)}${th('updated', '최종 변경', 96)}</tr></thead>
+    <tbody>${list.map(a => `<tr class="${UI.sel.has(a.id) ? 'picked' : ''} ${toolDays(a)<0?'tool-overdue':''}" onclick="openAsset('${a.id}')">
       <td class="ck" onclick="event.stopPropagation()"><input type="checkbox" ${UI.sel.has(a.id) ? 'checked' : ''} onclick="selOne('${a.id}',this.checked)"></td>
-      <td class="mono">${a.id}</td><td onclick="event.stopPropagation()">${photoCell(a)}</td><td class="nm">${esc(a.item)}${isLease(a) ? ' <span class="tag-lease">임대</span>' : ''}<div class="ri-sub" style="font-weight:400">${esc(shortModel(a.model))}</div></td><td>${esc(a.category)}</td><td>${esc(a.location||'위치 미등록')}${hasCoord(a) ? '' : ' <span class="no-coord" title="좌표 없음">●</span>'}</td>
+      <td class="mono">${a.id}</td><td onclick="event.stopPropagation()">${photoCell(a)}</td><td onclick="event.stopPropagation()">${nfcButton(a)}</td><td class="nm">${esc(a.item)}${isLease(a) ? ' <span class="tag-lease">임대</span>' : ''}<div class="ri-sub" style="font-weight:400">${esc(shortModel(a.model))}</div>${toolSummary(a)}</td><td>${esc(a.category)}</td><td>${esc(a.location||'위치 미등록')}${hasCoord(a) ? '' : ' <span class="no-coord" title="좌표 없음">●</span>'}</td>
       <td class="qty">${a.qty} ${a.unit}</td><td>${stBadge(a)}</td><td>${sch(a)}</td><td class="muted" style="font-size:12.5px">${relTime(a.updatedAt)}</td></tr>`).join('')}</tbody>`}
   </table></div>
   <div class="mlist">${list.map(a => { const s = schedOf(a); return `
-    <div class="mcard has-thumb" onclick="openAsset('${a.id}')"><span class="mc-photo" onclick="event.stopPropagation()">${photoCell(a)}</span>
-      <div class="mc-top"><span class="mono sub" style="margin:0">${a.id} · ${esc(a.category)}</span>${stBadge(a)}</div>
+    <div class="mcard has-thumb ${toolDays(a)<0?'tool-overdue':''}" onclick="openAsset('${a.id}')"><span class="mc-photo" onclick="event.stopPropagation()">${photoCell(a)}</span>
+      <div class="mc-top"><span class="mono sub" style="margin:0">${a.id} · ${esc(a.category)}</span><span onclick="event.stopPropagation()">${nfcButton(a)}</span>${stBadge(a)}</div>
       <div class="mc-name">${esc(a.item)}${isLease(a) ? ' <span class="tag-lease">임대</span>' : ''} <span class="qty" style="font-size:13px;color:var(--sub)">${a.qty} ${a.unit}</span></div>
       ${shortModel(a.model) ? `<div class="mc-sub" style="margin-bottom:3px">${esc(shortModel(a.model))}</div>` : ''}
+      ${toolSummary(a)}
       <div class="mc-sub">${icon('pin', 14)}${esc(a.location||'위치 미등록')}${hasCoord(a) ? '' : ' <span class="no-coord">● 좌표 없음</span>'}</div>
       ${isLease(a) ? `<div class="mc-sub mc-lease">🏢 ${esc(a.leaseVendor || '업체 미입력')}${a.leaseContact ? ' · ' + esc(a.leaseContact) : ''}${a.leaseTel ? ` · <a class="link" href="tel:${esc(a.leaseTel.replace(/[^0-9+]/g, ''))}" onclick="event.stopPropagation()">${esc(a.leaseTel)}</a>` : ''}<br>📅 ${esc(a.leaseStart || '?')} ~ ${esc(a.rentalDue || '?')} ${leaseLeft(a)}</div>` : ''}
       ${s && !(LV && isLease(a)) ? `<div class="mc-due"><span class="due ${s.lvl}">${s.t}</span></div>` : ''}
     </div>`; }).join('')}</div>`;
   if (leaseEmpty) { const tb = box.querySelector('tbody'), ml = box.querySelector('.mlist');
-    if (tb) tb.innerHTML = `<tr><td colspan="10" class="empty-row">${leaseEmpty}</td></tr>`;
+    if (tb) tb.innerHTML = `<tr><td colspan="11" class="empty-row">${leaseEmpty}</td></tr>`;
     if (ml) ml.innerHTML = `<div class="card empty">${leaseEmpty}</div>`; }
 }
 
 function leaseLeft(a) { if (a.out) return '<span class="muted">반납됨</span>'; const r = dday(a.rentalDue); if (r === null) return '<span class="muted">—</span>';
   return `<span class="due ${r < 0 ? 'red' : r <= 14 ? 'amber' : 'gray'}">${ddText(r)}</span>`; }
 /* ── 체크해서 한꺼번에: 상태 바꾸기 · 라벨 인쇄 · 현장 종료 ── */
+/* 공기구 사용 관리: GPS/등록 위치와 독립, 세대 조건부 저장으로 동시 반출 방지 */
+const isTool = a => a?.category === '공기구';
+const toolState = a => isTool(a) ? (a.tool?.state || 'unknown') : '';
+const toolDays = a => !a.out && toolState(a)==='out' && a.tool.due ? (dday(a.tool.due) ?? Infinity) : Infinity;
+const TOOL_LABEL = {unknown:'상태 미확인',stored:'창고 보관',out:'반출 중',repair:'수리 중'};
+function toolMatches(a,k){return k==='all'||(k==='overdue'?toolDays(a)<0:toolState(a)===k);}
+function toolFiltersHTML(){
+  if(UI.cat!=='공기구')return '';
+  const assets=DOC.assets.filter(a=>isTool(a)&&!a.out);
+  return `<div class="tool-filters">${[['all','전체'],['stored','창고 보관'],['out','반출 중'],['overdue','반납 지연'],['repair','수리 중'],['unknown','미확인']].map(([k,t])=>`<button class="chip ${UI.toolFilter===k?'on':''}" onclick="UI.toolFilter='${k}';refreshList()">${t} ${assets.filter(a=>toolMatches(a,k)).length}</button>`).join('')}</div>${UI.toolFilter==='overdue'?'<p class="hint">반납 지연 건만 · 오래 지연된 순으로 정렬</p>':''}`;
+}
+function toolSummary(a){
+  if(!isTool(a)||a.out)return '';
+  const t=a.tool||{},d=toolDays(a),state=toolState(a);
+  return `<div class="tool-line">${d<0?`<span class="tool-alert">반납 ${-d}일 지연</span>`:esc(TOOL_LABEL[state]||'상태 미확인')} ${state==='out'?`<div>${esc(t.borrower)} · ${esc(t.place)}${d<0?'':` · ${Number.isFinite(d)?'반납 '+ddText(d):'반납일 미지정'}`}</div>`:state==='stored'?' · '+esc(t.place):''}</div>`;
+}
+function toolDetail(a){
+  if(!isTool(a))return '';
+  const t=a.tool||{},state=toolState(a),history=a.toolHistory||[];
+  const cell=e=>`${esc(fmtAt(e.at))}<small>가져간 사람 ${esc(e.borrower)}<br>사용 장소 ${esc(e.place)}<br>반납 예정 ${esc(e.due||'미지정')}<br>인계 담당자 ${esc(e.operator||'미지정')}</small>${e.components?`<small>구성품 ${esc(e.components)}</small>`:''}${e.note?`<small>${esc(e.note)}</small>`:''}`;
+  return `<section class="tool-panel"><b>공기구 사용 현황</b>${toolSummary(a)}${t.components?`<p class="hint">구성품: ${esc(t.components)}</p>`:''}${!a.out?`<div>${state==='stored'?`<button class="btn primary" onclick="openTool('${a.id}','out')">반출하기</button>`:''}${state==='out'?`<button class="btn primary" onclick="openTool('${a.id}','return')">반입하기</button>`:''}${state==='unknown'?`<p class="hint">실제 상태를 확인해 주세요. 기존 자료는 창고 보관으로 자동 지정하지 않습니다.</p><button class="btn" onclick="openTool('${a.id}','stored')">창고 보관 확인</button><button class="btn" onclick="openTool('${a.id}','out')">현재 반출 등록</button>`:''}${state==='stored'||state==='unknown'?`<button class="btn" onclick="openTool('${a.id}','repair')">수리 보내기</button>`:''}${state==='repair'?`<p class="hint">수리 사유: ${esc(t.note||'')} · ${esc(fmtAt(t.at))}</p><button class="btn" onclick="openTool('${a.id}','stored')">수리 완료·창고 보관</button>`:''}${history.length&&!history[0].cancelled?`<button class="btn sm" onclick="cancelTool('${a.id}')">마지막 처리 정정</button>`:''}</div>`:''}
+  <div class="flabel" style="margin-top:14px">반출·반납 이력</div><table class="tool-history"><thead><tr><th scope="col">반출</th><th scope="col">반납 · 창고 보관</th></tr></thead><tbody>${history.length?history.map(e=>e.kind==='out'?`<tr><td>${cell(e)}${e.cancelled?`<small>취소: ${esc(e.cancelled.reason)}</small>`:''}</td><td>${e.returned?`${esc(fmtAt(e.returned.at))}<small>반납자 ${esc(e.returned.person)}<br>입고 확인자 ${esc(e.returned.operator)}<br>보관 장소 ${esc(e.returned.place)}<br>상태 ${esc(e.returned.status)}<br>구성품 ${esc(e.returned.components||'미기록')}<br>${esc(e.returned.note||'')}</small>`:e.cancelled?'취소된 반출':`<b>미반납</b>${t.eventId===e.id&&toolDays(a)<0?`<p class="tool-alert">${-toolDays(a)}일 지연</p>`:''}`}</td></tr>`:`<tr><td colspan="2">${esc(fmtAt(e.at))} · ${e.kind==='return'?'반입':e.kind==='repair'?'수리 시작':'창고 보관 확인'} · ${esc(e.operator)} · ${esc(e.place)}${e.cancelled?` · 취소: ${esc(e.cancelled.reason)}`:''}</td></tr>`).join(''):'<tr><td colspan="2">기록 없음</td></tr>'}</tbody></table></section>`;
+}
+let TOOL_EDIT=null;
+function openTool(id,kind){
+  const a=getAsset(id);if(!isTool(a)||a.out)return;
+  TOOL_EDIT={id,kind,expected:JSON.stringify(a.tool||null),eventId:crypto.randomUUID()};
+  const field=(key,label,value='',type='text',required=false)=>`<label>${label}<input class="inp" id="tool-${key}" type="${type}" value="${esc(value)}" ${required?'required':''} maxlength="300"></label>`;
+  openModal(`<form onsubmit="event.preventDefault();saveTool(this)"><div class="m-head"><h2>${esc(a.id)} · ${{out:'반출',return:'반입',stored:'창고 보관 확인',repair:'수리 보내기'}[kind]}</h2><button type="button" class="icon-btn" onclick="closeModal()">×</button></div><div class="m-body tool-fields">${kind==='out'?field('person','가져가는 사람 *','','text',true):kind==='return'?field('person','반납한 사람 *',a.tool?.borrower||'','text',true):''}${field('operator',kind==='out'?'인계·입력 담당자 *':kind==='return'?'입고 확인자 *':'확인 담당자 *','','text',true)}${field('place',kind==='out'?'사용 장소 *':kind==='repair'?'수리 업체·장소 *':'보관 장소 *',kind==='stored'||kind==='return'?a.location:'','text',true)}${kind==='out'?field('due','반납 예정일 (미입력 시 지연 계산 제외)','','date'):''}${field('components','구성품 (수량까지 확인)',a.tool?.components||'')}<label><input type="checkbox" required> 구성품과 수량을 확인했습니다</label>${kind==='return'?`<label>반입 상태<select class="inp" id="tool-status">${STATUSES.map(s=>`<option ${a.status===s?'selected':''}>${s}</option>`).join('')}</select></label>`:''}${field('note',kind==='repair'?'수리 사유 *':'메모', '', 'text',kind==='repair')}<p class="hint">사진은 상세 화면의 사진 버튼으로 추가할 수 있습니다. 이 처리는 GPS와 등록 위치를 바꾸지 않습니다.</p></div><div class="m-foot"><button type="button" class="btn" onclick="closeModal()">취소</button><button class="btn primary" type="submit">확인·저장</button></div></form>`);
+}
+function applyTool(doc,edit,f){
+  const a=doc.assets.find(x=>x.id===edit.id);
+  if(!a||!isTool(a)||a.out)throw Error('처리할 수 없는 자산입니다');
+  if((a.toolHistory||[]).some(e=>e.id===edit.eventId))return true;
+  if(JSON.stringify(a.tool||null)!==edit.expected)throw Error('다른 담당자가 상태를 변경했습니다. 새로고침 후 다시 확인해 주세요');
+  const state=toolState(a),k=edit.kind;
+  if(k==='out'&&!['stored','unknown'].includes(state)||k==='return'&&state!=='out'||k==='repair'&&!['stored','unknown'].includes(state)||k==='stored'&&!['unknown','repair'].includes(state))throw Error('현재 상태에서 처리할 수 없습니다');
+  const now=new Date().toISOString(),before=structuredClone(a.tool||null),e={id:edit.eventId,kind:k,at:now,operator:f.operator,place:f.place,components:f.components,note:f.note,before};
+  a.toolHistory||=[];
+  if(k==='return'){
+    const loan=a.toolHistory.find(x=>x.id===a.tool.eventId&&!x.cancelled);if(!loan)throw Error('반출 이력을 찾을 수 없습니다');
+    loan.returned={at:now,person:f.person,operator:f.operator,place:f.place,status:f.status,components:f.components,note:f.note};e.loanId=loan.id;a.status=f.status;
+  }
+  if(k==='out')Object.assign(e,{borrower:f.person,due:f.due});
+  a.tool={state:k==='out'?'out':k==='repair'?'repair':'stored',eventId:e.id,at:now,borrower:k==='out'?f.person:'',due:k==='out'?f.due:'',place:f.place,components:f.components,note:f.note};
+  e.beforeStatus=f.beforeStatus||a.status;
+  a.toolHistory.unshift(e);a.updatedAt=now;addLog(a,'공기구 '+({out:'반출',return:'반입',stored:'창고 보관',repair:'수리 시작'}[k]),now);return true;
+}
+async function saveTool(form){
+  const edit=TOOL_EDIT;if(!edit)return;const val=k=>$('tool-'+k)?.value.trim()||'';
+  const f={person:val('person'),operator:val('operator'),place:val('place'),due:val('due'),components:val('components'),note:val('note'),status:val('status'),beforeStatus:getAsset(edit.id)?.status};
+  if(!f.operator||!f.place||(['out','return'].includes(edit.kind)&&!f.person)||edit.kind==='repair'&&!f.note){toast('필수 항목을 입력해 주세요','warn');return;}
+  if(f.due&&(!/^\d{4}-\d{2}-\d{2}$/.test(f.due)||!Number.isFinite(dday(f.due))))return;
+  const btn=form.querySelector('[type=submit]');btn.disabled=true;
+  const ok=await saveChange(doc=>applyTool(doc,edit,f),'공기구 사용 처리','저장했습니다');
+  if(ok){closeModal();if(DRAWER?.id===edit.id)renderDrawer();}else btn.disabled=false;
+}
+async function cancelTool(id){
+  const a=getAsset(id),latest=a.toolHistory?.[0];if(!latest||latest.cancelled)return;
+  const reason=prompt('마지막 처리를 취소하는 이유를 입력해 주세요');if(!reason?.trim())return;
+  const expected=JSON.stringify(a.tool||null);
+  const ok=await saveChange(doc=>{const x=doc.assets.find(y=>y.id===id),e=x?.toolHistory?.[0];if(!x||!e||e.id!==latest.id||e.cancelled||JSON.stringify(x.tool||null)!==expected)throw Error('상태가 변경되었습니다. 다시 확인해 주세요');e.cancelled={at:new Date().toISOString(),reason:reason.trim()};if(e.loanId){const loan=x.toolHistory.find(l=>l.id===e.loanId);if(loan)delete loan.returned;}x.tool=e.before;x.status=e.beforeStatus||x.status;x.updatedAt=new Date().toISOString();addLog(x,'공기구 처리 정정: '+reason.trim());return true;},'공구 정정','정정했습니다');if(ok)renderDrawer();
+}
+/* NFC 단건 등록: 읽기 검사 → 비어 있거나 동일 URL인 태그에만 쓰기 → 재접촉 검증 */
+let NFC_SESSION=null;
+function nfcButton(a,full=false){return `<button class="btn sm nfc-btn" onclick="openNFC('${a.id}')" title="${esc(a.id)} NFC 등록${a.nfc?.at?' · 마지막 읽기 확인 '+fmtAt(a.nfc.at):''}" aria-label="${esc(a.id)} NFC 등록">◉ ${full?'NFC 등록':'NFC'}${a.nfc?.at?' ✓':''}</button>`;}
+function stopNFC(){if(NFC_SESSION){NFC_SESSION.controller.abort();clearTimeout(NFC_SESSION.timer);NFC_SESSION=null;}}
+function openNFC(id){
+  stopNFC();if(!getAsset(id))return;
+  const supported=window.isSecureContext&&'NDEFReader'in window;
+  openModal(`<div class="m-head"><h2>${esc(id)} · NFC 등록</h2><button class="icon-btn" onclick="closeModal()">×</button></div><div class="m-body"><p>기존 QR과 같은 자산 주소를 기록합니다. 자산·사진·GPS는 새로 만들거나 변경하지 않습니다.</p><p class="nfc-url">${esc(qrUrl(id))}</p><p>${supported?'카드 한 장만 준비하세요. 기존 내용이 다른 카드는 덮어쓰지 않습니다.':'NFC 쓰기는 NFC를 켠 Android Chrome에서 이용해 주세요. iPhone·PC에서는 이 기능을 지원하지 않을 수 있습니다.'}</p><p id="nfc-progress" role="status">${getAsset(id).nfc?.at?'마지막 기록·읽기 확인: '+esc(fmtAt(getAsset(id).nfc.at))+' (현재 카드 부착 여부는 확인하지 않음)':'등록 확인 기록 없음'}</p></div><div class="m-foot"><button class="btn" onclick="closeModal()">닫기·취소</button>${supported?`<button class="btn primary" id="nfc-start" onclick="startNFC('${id}')">카드 확인 시작</button><button class="btn primary hidden" id="nfc-write" onclick="writeNFC()">이 카드에 기록</button>`:''}</div>`);
+}
+const nfcProgress=t=>{if($('nfc-progress'))$('nfc-progress').textContent=t;};
+function nfcFail(s,e){if(NFC_SESSION!==s)return;stopNFC();nfcProgress(e.name==='NotAllowedError'?'NFC 권한을 허용해 주세요.':e.name==='NotSupportedError'?'지원하지 않는 카드 또는 기기입니다.':e.name==='AbortError'?'취소되었습니다.':'처리 실패: '+e.message+' · 카드 확인 시작으로 재시도하세요.');$('nfc-start')?.classList.remove('hidden');$('nfc-write')?.classList.add('hidden');}
+async function startNFC(id){
+  stopNFC();const s={id,url:qrUrl(id),controller:new AbortController(),phase:'read'};NFC_SESSION=s;
+  s.timer=setTimeout(()=>nfcFail(s,Error('시간 초과')),60000);
+  try{
+    const reader=new NDEFReader();s.reader=reader;
+    reader.onreadingerror=()=>nfcProgress('읽지 못했습니다. 카드를 떼었다가 다시 대 주세요.');
+    reader.onreading=async event=>{
+      if(NFC_SESSION!==s)return;
+      const records=[...event.message.records],urls=records.filter(r=>r.recordType==='url').map(r=>new TextDecoder().decode(r.data));
+      if(s.phase==='read'){
+        if(!event.serialNumber){nfcFail(s,Error('카드 식별이 불가능하여 안전하게 기록할 수 없습니다'));return;}
+        if(records.some(r=>r.recordType!=='empty')&&!(records.length===1&&urls[0]===s.url)){nfcFail(s,Error('기존 내용이 있는 카드입니다. 다른 빈 카드를 사용해 주세요'));return;}
+        s.serial=event.serialNumber;if(urls[0]===s.url){s.phase='verify';nfcProgress('이미 같은 주소입니다. 카드를 떼었다가 다시 대어 확인하세요.');$('nfc-start').classList.add('hidden');return;}s.phase='ready';nfcProgress('카드 확인 완료. 같은 카드를 유지하고 이 카드에 기록을 누르세요.');$('nfc-start').classList.add('hidden');$('nfc-write').classList.remove('hidden');
+      }else if(s.phase==='ready'&&event.serialNumber!==s.serial){nfcFail(s,Error('카드가 바뀌었습니다'));}
+      else if(s.phase==='verify'&&event.serialNumber===s.serial&&records.length===1&&urls[0]===s.url){
+        s.phase='saving';s.controller.abort();clearTimeout(s.timer);nfcProgress('주소 일치 확인 완료 · 등록 확인 기록 저장 중');
+        const ok=await saveChange(doc=>{const a=doc.assets.find(x=>x.id===id);if(!a)throw Error('자산을 찾을 수 없습니다');a.nfc={at:new Date().toISOString()};return true;},'NFC 읽기 확인');
+        if(NFC_SESSION!==s)return;NFC_SESSION=null;nfcProgress(ok?'완료: QR과 같은 주소를 기록하고 다시 읽어 확인했습니다.':'카드 주소는 확인했지만 등록 확인 기록 저장에 실패했습니다. 다시 확인해 주세요.');if(DRAWER?.id===id)renderDrawer();
+      }
+    };
+    await reader.scan({signal:s.controller.signal});nfcProgress('빈 카드 또는 이 자산 주소가 담긴 카드를 대 주세요.');
+  }catch(e){nfcFail(s,e);}
+}
+async function writeNFC(){
+  const s=NFC_SESSION;if(!s||s.phase!=='ready')return;s.phase='writing';$('nfc-write').classList.add('hidden');
+  try{await s.reader.write({records:[{recordType:'url',data:s.url}]},{overwrite:false,signal:s.controller.signal});if(NFC_SESSION!==s)return;s.phase='verify';nfcProgress('기록 완료. 카드를 떼었다가 다시 대어 주소를 확인하세요.');}catch(e){nfcFail(s,e);}
+}
+
 function photoCell(a) {   // 목록의 사진 칸: 사진 있으면 작은 사진(누르면 크게), 없으면 📷(누르면 바로 촬영)
   const pn = photoList(a).length;
   if (a.thumb || PHOTO_LOCAL[a.id]) return `<button class="thumb-btn" onclick="showPhoto('${a.id}')" title="사진 크게 보기 (${pn}장)"><img class="thumb" src="${a.thumb || PHOTO_LOCAL[a.id]}" alt="">${pn > 1 ? `<span class="pcount">${pn}</span>` : ''}</button>`;
@@ -1859,6 +1969,7 @@ function detailHTML(a) {
     : `<div class="flabel">상태 — 누르면 바로 저장돼요</div>
     <div class="seg" style="margin-bottom:8px">${STATUSES.map(s => `<button class="${ST_KEY[s]} ${a.status === s ? 'on' : ''}" onclick="setStatus('${a.id}','${s}')" title="${ST_DESC[s]}">${s}</button>`).join('')}</div>
     <p class="hint" style="margin:0 0 18px">${ST_DESC[a.status]}</p>`}
+    ${toolDetail(a)}
     <dl class="info">
       ${row('위치', `${esc(a.location||'위치 미등록')}${hasCoord(a) ? `<button class="link" onclick="showOnMap('${a.id}')">지도에서 보기</button>` : '<span class="muted" style="font-size:12.5px">좌표 없음</span>'}`)}
       ${hasCoord(a) ? row('GPS 좌표', `<span class="mono" style="font-size:12.5px">${(+a.lat).toFixed(6)}, ${(+a.lng).toFixed(6)}</span>${(c => c ? `<div class="muted" style="font-size:12px">${fmtAt(c.at)} 기록${c.how ? ' · ' + esc(c.how) : ''}</div>` : '')(coordLog(a))}`) : ''}
@@ -1875,7 +1986,7 @@ function detailHTML(a) {
       ${a.note ? row('비고', esc(a.note)) : ''}
     </dl>
     <div class="qr-box">${qr ? `<img src="${qr}" alt="QR">` : ''}<div><b>QR 라벨</b><p class="sub" style="margin-bottom:8px">휴대폰 카메라로 찍으면 이 화면이 열려요</p>
-      <button class="btn sm desktop-only" onclick="printOne('${a.id}')">${icon('printer', 14)} 라벨 인쇄</button></div></div>
+      <button class="btn sm desktop-only" onclick="printOne('${a.id}')">${icon('printer', 14)} 라벨 인쇄</button> ${nfcButton(a,true)}</div></div>
     ${a.out ? '' : ((DOC.audit && !DOC.audit.checked[a.id]) || missingIds().has(a.id)
       ? `<button class="photo-pick strong" onclick="photoInput('${a.id}',true)">${icon('camera', 16)} 장비 사진 찍고 ${DOC.audit && !DOC.audit.checked[a.id] ? '실사 확인' : '찾음 처리'}</button><p class="hint" style="text-align:center">QR 라벨이 훼손돼 스캔이 안 될 때도 이 버튼으로 해요 · 사진은 필수예요</p>`
       : `<button class="photo-pick" onclick="photoInput('${a.id}')">${icon('camera', 16)} ${photoUrl(a) ? '사진 바꾸기' : '사진 넣기'}</button>`)}
@@ -2641,19 +2752,7 @@ function showCamGuide() {
 }
 
 /* 휴대폰 기본 카메라로 QR을 찍어 들어왔을 때: 위치(🟢일 때만 자동) + 사진 찍기 안내 */
-async function qrOpened(id) {
-  if (DRAWER && DRAWER.id === id) { DRAWER.fromQR = true; renderDrawer(); }
-  const pos = await new Promise(res => {
-    if (!navigator.geolocation) return res(null);
-    navigator.geolocation.getCurrentPosition(p => res({ lat: p.coords.latitude, lng: p.coords.longitude, acc: p.coords.accuracy }), () => res(null), { enableHighAccuracy: true, timeout: 15000, maximumAge: 5000 });
-  });
-  const a = getAsset(id); if (!a || a.out || !pos) return;
-  if (pos.acc <= GPS_GREEN && !(hasCoord(a) && distM({ lat: +a.lat, lng: +a.lng }, pos) < GPS_SAME)) {
-    const ok = await saveChange(doc => { const x = doc.assets.find(y => y.id === id); if (!x) return; const now = new Date().toISOString(); const had = hasCoord(x);
-      x.lat = +pos.lat.toFixed(6); x.lng = +pos.lng.toFixed(6); x.updatedAt = now; addLog(x, `${had ? '위치 갱신' : '좌표 입력'} (QR, 오차 약 ${Math.round(pos.acc)}m)`, now); }, `위치 저장: ${id} (오차 ${Math.round(pos.acc)}m)`, `📍 위치 저장 (오차 ${Math.round(pos.acc)}m)`);
-    if (ok && DRAWER && DRAWER.id === id) renderDrawer();
-  } else if (pos.acc > GPS_GREEN) toast(`위치 오차가 커서(${Math.round(pos.acc)}m) 저장하지 않았어요 · [QR 스캔]으로 다시 시도해 주세요`, 'warn');
-}
+function qrOpened(id) { /* QR/NFC 주소 접속은 상세 열기만: 사진·GPS·실사 변경은 명시적 작업으로 처리 */ }
 
 /* 지도에서 위치 찍기 */
 let PICK = null, PMAP = null, PMARK = null, PICK_CB = null;
@@ -2688,7 +2787,7 @@ function applyPick() {
 
 /* 모달 */
 function openModal(html, size = '') { $('modal-box').className = 'modal ' + size; $('modal-box').innerHTML = html; $('modal').classList.remove('hidden'); }
-function closeModal() { $('modal').classList.add('hidden'); $('modal-box').innerHTML = ''; PMAP = null; }
+function closeModal() { stopNFC(); $('modal').classList.add('hidden'); $('modal-box').innerHTML = ''; PMAP = null; }
 
 /* ═══════════════════════════════════════════
    [6] 엑셀
@@ -2996,7 +3095,7 @@ function showInstall() {
   box.innerHTML = h; box.classList.remove('hidden');
 }
 
-const BUILD = '2026-11-14q';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
+const BUILD = '2026-11-19a';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
 async function checkUpdate() {
   try {
     const t = await (await fetch(location.pathname + '?v=' + Date.now(), { cache: 'reload' })).text();
