@@ -582,8 +582,12 @@ details[open].more summary::before{transform:rotate(90deg)}
 .print-paper-seg{grid-template-columns:repeat(3,1fr)}.compact-labels .label{padding:.8mm 1.4mm}.compact-labels .lb-top{height:2.4mm;font-size:5pt}.compact-labels .lb-qr{margin-top:1.3mm}.compact-labels .lb-id{font-size:10pt;margin-top:1.2mm}.compact-labels .lb-name{margin-top:.4mm}
 
 .tool-filters-simple{align-items:center;margin-bottom:8px}.tool-filters-simple .chip{white-space:nowrap}.tool-filters-simple .tool-warning{border-color:#fca5a5;color:#b91c1c;background:#fff1f2}.tool-filters-simple .tool-warning.on{background:#b91c1c;color:#fff;border-color:#b91c1c}.tool-more{position:relative}.tool-more>summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:center;user-select:none}.tool-more>summary::-webkit-details-marker{display:none}.tool-more-options{position:absolute;right:0;top:calc(100% + 6px);width:190px;padding:5px;background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:0 8px 24px #10203026;z-index:35}.tool-more-options button{display:flex;justify-content:space-between;gap:10px;width:100%;border:0;background:#fff;padding:10px;border-radius:6px;font-size:13px;cursor:pointer;text-align:left}.tool-more-options button:hover,.tool-more-options button.on{background:#e8f1ff;color:var(--acc)}.tool-more-options span{font-weight:700}.tool-unknown-hint{display:block;max-width:100%;background:#eef2f8;border:1px solid var(--line);color:var(--sub);font-size:12px;text-align:left;padding:7px 10px;border-radius:8px;margin:0 0 10px;cursor:pointer}.tool-unknown-hint.on{color:var(--acc);border-color:var(--acc)}
-@media(min-width:900px){.stats{grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}.stats>.stat{min-height:150px;padding:12px 14px;min-width:0}.stats .stat .num{font-size:32px;line-height:1.15;margin-top:3px}.stats .stat-badge{margin-top:6px;padding-top:0;min-height:0;align-items:flex-start}.stats .stat-sub.empty{display:none}.stats .stat-sub{line-height:1.4}.stats .lease-link,.stats .trash-link,.stats .coord-link{font-size:11px;padding:3px 6px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.stats .stat-badge:empty{display:none}}
+@media(min-width:900px){.stats{grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}.stats>.stat{min-height:150px;padding:12px 14px;min-width:0}.stats .stat .num{font-size:32px;line-height:1.15;margin-top:3px}.stats .stat-badge{margin-top:auto;padding-top:0;min-height:0;align-items:flex-start}.stats .stat-sub.empty{display:none}.stats .stat-sub{line-height:1.4}.stats .lease-link,.stats .trash-link,.stats .coord-link{font-size:11px;padding:3px 6px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.stats .stat-badge:empty{display:none}}
 @media(max-width:899px){.stats>.stat{padding:8px 9px}.stats .stat-badge{padding-top:1px;margin-top:1px}.tool-filters-simple{position:relative}.tool-more{position:static}.tool-more-options{position:absolute;left:0;right:auto;top:100%;width:260px;max-width:100%}.tool-unknown-hint{font-size:11px;padding:6px 9px}}
+
+
+.todo-card .stat-sub{white-space:normal;overflow:visible;text-overflow:clip}.todo-counts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px 6px;font-size:11px;line-height:1.4;margin-top:2px}.todo-counts span{min-width:0;overflow-wrap:anywhere}.todo-counts b{color:var(--red);white-space:nowrap}.todo-reasons{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;font-weight:500}.todo-reasons .due{font-size:11px;white-space:normal}
+@media(max-width:899px){.todo-counts{font-size:10px;gap:2px 4px}.todo-card .stat-sub{line-height:1.4}.stats .stat-badge{align-self:end}}
 
 </style>
 </head>
@@ -616,6 +620,7 @@ details[open].more summary::before{transform:rotate(90deg)}
       <div class="dd-menu" id="header-more-menu">
         <button id="hdr-install" class="hidden" type="button" onclick="closeHeaderMenu();installApp()">📲 홈 화면 추가</button>
         <button onclick="closeHeaderMenu();openSettings()">설정</button>
+        <button onclick="closeHeaderMenu();openTrash()">삭제 보관함</button>
         <button onclick="closeHeaderMenu();logout()">로그아웃</button>
       </div>
     </div>
@@ -958,14 +963,14 @@ function todos() {
   const out = []; const miss = missingIds();
   activeAssets().forEach(a => {
     const tags = [];
-    if(toolMissing(a).length) tags.push({level:'red',text:'구성품 미반납',rank:-950});
-    if(toolDays(a)<0) tags.push({level:'red',text:'공구 반납 '+(-toolDays(a))+'일 지연',rank:toolDays(a)-1000});
-    if (a.status === '하') tags.push({ level: 'red', text: '상태 하', rank: -1000 });
+    if(toolMissing(a).length) tags.push({key:'parts',level:'red',text:'구성품 미반납',rank:-950});
+    if(toolDays(a)<0) tags.push({key:'tool',level:'red',text:'공구 반납 '+(-toolDays(a))+'일 지연',rank:toolDays(a)-1000});
+    if (a.status === '하') tags.push({ key:'condition', level: 'red', text: '상태 하', rank: -1000 });
     const c = dday(a.nextCheck);
-    if (c !== null && c <= 7) tags.push({ level: c < 0 ? 'red' : 'amber', text: '점검 ' + ddText(c), rank: c });
+    if (c !== null && c <= 7) tags.push({ key:'check', level: c < 0 ? 'red' : 'amber', text: '점검 ' + ddText(c), rank: c });
     const r = dday(a.rentalDue);
-    if (r !== null && r <= 14) tags.push({ level: r < 0 ? 'red' : 'amber', text: '임대 반납 ' + ddText(r), rank: r });
-    if (miss.has(a.id)) tags.push({ level: 'red', text: '실사 미발견', rank: -900 });
+    if (r !== null && r <= 14) tags.push({ key:'lease', level: r < 0 ? 'red' : 'amber', text: '임대 반납 ' + ddText(r), rank: r });
+    if (miss.has(a.id)) tags.push({ key:'audit', level: 'red', text: '실사 미발견', rank: -900 });
     if (tags.length) out.push({ a, tags: tags.sort((x, y) => x.rank - y.rank) });
   });
   return out;
@@ -973,20 +978,26 @@ function todos() {
 
 /* ── 요약 카드 (누르면 아래 목록이 걸러져요) ── */
 const cardBody = (label, num, l1, l2, badge) => `<div class="lbl">${label}</div><div class="num">${num}</div><div class="stat-sub${!l1 ? ' empty' : ''}">${l1 || '&nbsp;'}</div><div class="stat-sub${!l2 ? ' empty' : ''}">${l2 || '&nbsp;'}</div><div class="stat-badge">${badge || ''}</div>`;
+const TODO_GROUPS={tool:'공구 지연',parts:'구성품 미반납',condition:'상태 하',check:'점검 필요',lease:'임대 반납',audit:'실사 미발견'};
+function todoSummaryHTML(list){
+  if(!list.length)return '현재 확인할 일이 없습니다';
+  const counts={};list.forEach(({tags})=>new Set(tags.map(t=>t.key)).forEach(key=>counts[key]=(counts[key]||0)+1));
+  return `<div class="todo-counts">${Object.entries(TODO_GROUPS).filter(([key])=>counts[key]).map(([key,label])=>`<span>${label} <b>${counts[key]}</b></span>`).join('')}</div>`;
+}
 function cardsHTML() {
   const act = activeAssets(); const cnt = s => act.filter(a => a.status === s).length;
-  const td = todos().length, ym = todayStr().slice(0, 7);
+  const todoList = todos(), td = todoList.length, ym = todayStr().slice(0, 7);
   const outs = DOC.assets.filter(a => a.out && !isGone(a)), disp = DOC.assets.filter(isGone);
   const month = l => l.filter(a => (a.out.date || '').startsWith(ym)).length;
   const by = t => outs.filter(a => a.out.type === t).length;
   const coord = act.filter(hasCoord).length, lease = act.filter(isLease).length, leaseOut = DOC.assets.filter(a => a.out && isLease(a)).length;
-  const card = (key, label, num, l1, l2, badge, cls = '') => `<button class="stat ${cls} ${UI.filter === key ? 'on' : ''}" onclick="setFilter('${key}')">${cardBody(label, num, l1, l2, badge)}</button>`;
+  const card = (key, label, num, l1, l2, badge, cls = '') => `<button class="stat ${cls} ${UI.filter === key ? 'on' : ''}" onclick="setFilter('${key}')" ${key==='todo'?'title="확인할 자산 수입니다. 한 자산에 여러 사유가 있으면 사유별 건수 합계는 더 클 수 있습니다."':''}>${cardBody(label, num, l1, l2, badge)}</button>`;
   const st = s => `<span class="st-link ${UI.filter === 'st:' + s ? 'on' : ''}" onclick="event.stopPropagation();setFilter('st:${s}')">${s} ${cnt(s)}</span>`;
   return `<div class="stats">
     ${card('all', '전체 자산', `${act.length}<small>건</small>`, STATUSES.map(st).join(' · '), '', `<span class="lease-link ${UI.filter === 'lease' ? 'on' : ''}" onclick="event.stopPropagation();setFilter('lease')">임대/임차 ${lease + leaseOut}건 · 사용 중 ${lease} ›</span>`)}
-    ${card('todo', '할 일', `${td}<small>건</small>`, '상태 하 · 점검 임박', '임대 반납 임박 · 실사 미발견', '', td ? 'alert' : '')}
-    ${card('out', '현장 종료', `${outs.length}<small>건</small>`, `창고 ${by('GS 자재창고 반납')} · 타현장 ${by('타현장 전용')}`, `이번 달 ${month(outs)}건`, `<span class="lease-link ${UI.filter === 'leaseOut' ? 'on' : ''}" onclick="event.stopPropagation();setFilter('leaseOut')">임대/임차 반납 ${leaseOut}건 ›</span>`, 'gray')}
-    ${card('disposed', '폐기 · 분실', `${disp.length}<small>건</small>`, `폐기 ${disp.filter(a => a.out.type === '폐기').length} · 분실/망실 ${disp.filter(a => a.out.type === LOSS).length}`, `이번 달 ${month(disp)}건`, `<span class="trash-link" onclick="event.stopPropagation();openTrash()">🗂 삭제 보관 ${DOC.trash.filter(t => !t.restoredAt).length}건 ›</span>`, 'gray')}
+    ${card('todo', '할 일', `${td}<small>건</small>`, todoSummaryHTML(todoList), '', '', 'todo-card'+(td?' alert':''))}
+    ${card('out', '현장 종료', `${outs.length}<small>건</small>`, outs.length?`창고 반납 ${by('GS 자재창고 반납')} · 타현장 전출 ${by('타현장 전용')}`:'현장 종료 내역이 없습니다', outs.length?`이번 달 처리 ${month(outs)}건`:'', `<span class="lease-link ${UI.filter === 'leaseOut' ? 'on' : ''}" onclick="event.stopPropagation();setFilter('leaseOut')">임대/임차 반납 ${leaseOut}건 ›</span>`, 'gray')}
+    ${card('disposed', '폐기 · 분실', `${disp.length}<small>건</small>`, disp.length?`폐기 ${disp.filter(a => a.out.type === '폐기').length} · 분실/망실 ${disp.filter(a => a.out.type === LOSS).length}`:'폐기·분실 내역이 없습니다', disp.length?`이번 달 처리 ${month(disp)}건`:'', '', 'gray')}
     ${auditCardHTML(act.length - coord)}
   </div>`;
 }
@@ -1117,6 +1128,8 @@ function updateAssetList() {
   const leaseEmpty = !list.length && !UI.q && { lease: `<b>임대/임차 장비가 아직 없어요</b>비품을 눌러 [정보 수정] → 추가 정보 → 취득 구분에서 '임대/임차'를 고르면 여기에 모여요.`, leaseOut: '<b>반납한 임대/임차 장비가 없어요</b>' }[UI.filter];
   if (!list.length && !leaseEmpty) { box.innerHTML = `<div class="card empty"><b>해당하는 자산이 없어요</b>검색어나 필터를 바꿔 보세요</div>`; return; }
   const TV = UI.cat === '공기구';
+  const todoReasons = UI.filter==='todo'?new Map(todos().map(({a,tags})=>[a.id,tags])):null;
+  const reasonsHTML = a => todoReasons?`<div class="todo-reasons">${(todoReasons.get(a.id)||[]).map(t=>`<span class="due ${t.level}">${esc(t.text)}</span>`).join('')}</div>`:'';
   const LV = UI.filter === 'lease' || UI.filter === 'leaseOut';   // 임대/임차 보기: 표 칸이 임대용으로
   const sch = a => { const s = schedOf(a); return s ? `<span class="due ${s.lvl}">${s.t}</span>` : '<span class="muted">—</span>'; };
   const th = (k, l, w) => `<th ${w ? `style="width:${w}px"` : ''} class="sortable ${UI.sort.k === k ? 'on' : ''}" onclick="setSort('${k}')">${l}<span class="arrow">${UI.sort.k === k ? (UI.sort.d > 0 ? '▲' : '▼') : '↕'}</span></th>`;
@@ -1128,12 +1141,12 @@ function updateAssetList() {
       ${LV ? `${th('id', '관리번호', 118)}<th style="width:62px">사진</th><th style="width:52px">NFC</th>${th('name', '품목 · 모델')}<th>임대 업체</th><th>임대 기간</th><th style="width:90px">남은 기간</th><th>업체 담당자</th><th>업체 연락처</th>${th('status', '상태', 96)}</tr></thead>
     <tbody>${list.map(a => `<tr class="${UI.sel.has(a.id) ? 'picked' : ''} ${toolDays(a)<0?'tool-overdue':''}" onclick="openAsset('${a.id}')">
       <td class="ck" onclick="event.stopPropagation()"><input type="checkbox" ${UI.sel.has(a.id) ? 'checked' : ''} onclick="selOne('${a.id}',this.checked)"></td>
-      <td class="mono">${a.id}</td><td onclick="event.stopPropagation()">${photoCell(a)}</td><td onclick="event.stopPropagation()">${nfcButton(a)}</td><td class="nm">${esc(a.item)}<div class="ri-sub" style="font-weight:400">${esc(shortModel(a.model))}</div>${toolSummary(a)}</td>
+      <td class="mono">${a.id}</td><td onclick="event.stopPropagation()">${photoCell(a)}</td><td onclick="event.stopPropagation()">${nfcButton(a)}</td><td class="nm">${esc(a.item)}<div class="ri-sub" style="font-weight:400">${esc(shortModel(a.model))}</div>${toolSummary(a)}${reasonsHTML(a)}</td>
       <td>${esc(a.leaseVendor || '—')}</td><td style="font-size:12.5px;white-space:nowrap">${esc(a.leaseStart || '?')} ~ ${esc(a.rentalDue || '?')}</td><td>${leaseLeft(a)}</td>
       <td>${esc(a.leaseContact || '—')}</td><td onclick="event.stopPropagation()">${a.leaseTel ? `<a class="link" href="tel:${esc(a.leaseTel.replace(/[^0-9+]/g, ''))}">${esc(a.leaseTel)}</a>` : '—'}</td><td>${stBadge(a)}</td></tr>`).join('')}</tbody>` : `${th('id', '관리번호', 118)}<th style="width:62px">사진</th><th style="width:52px">NFC</th>${th('name', '품목 · 모델')}${TV?'':th('category', '분류', 120)}${th('location', '위치')}${th('qty', '수량', 70)}${th('status', '상태', 96)}${th('sched', '일정', 120)}${TV?'':th('updated', '최종 변경', 96)}</tr></thead>
     <tbody>${list.map(a => `<tr class="${UI.sel.has(a.id) ? 'picked' : ''} ${toolDays(a)<0?'tool-overdue':''}" onclick="openAsset('${a.id}')">
       <td class="ck" onclick="event.stopPropagation()"><input type="checkbox" ${UI.sel.has(a.id) ? 'checked' : ''} onclick="selOne('${a.id}',this.checked)"></td>
-      <td class="mono">${a.id}</td><td onclick="event.stopPropagation()">${photoCell(a)}</td><td onclick="event.stopPropagation()">${nfcButton(a)}</td><td class="nm">${esc(a.item)}${isLease(a) ? ' <span class="tag-lease">임대</span>' : ''}<div class="ri-sub" style="font-weight:400">${esc(shortModel(a.model))}</div>${toolSummary(a)}</td>${TV?'':`<td>${esc(a.category)}</td>`}<td>${esc(a.location||'위치 미등록')}${hasCoord(a) ? '' : ' <span class="no-coord" title="좌표 없음">●</span>'}</td>
+      <td class="mono">${a.id}</td><td onclick="event.stopPropagation()">${photoCell(a)}</td><td onclick="event.stopPropagation()">${nfcButton(a)}</td><td class="nm">${esc(a.item)}${isLease(a) ? ' <span class="tag-lease">임대</span>' : ''}<div class="ri-sub" style="font-weight:400">${esc(shortModel(a.model))}</div>${toolSummary(a)}${reasonsHTML(a)}</td>${TV?'':`<td>${esc(a.category)}</td>`}<td>${esc(a.location||'위치 미등록')}${hasCoord(a) ? '' : ' <span class="no-coord" title="좌표 없음">●</span>'}</td>
       <td class="qty">${a.qty} ${a.unit}</td><td>${stBadge(a)}</td><td>${sch(a)}</td>${TV?'':`<td class="muted" style="font-size:12.5px">${relTime(a.updatedAt)}</td>`}</tr>`).join('')}</tbody>`}
   </table></div>
   <div class="mlist">${list.map(a => { const s = schedOf(a); return `
@@ -1141,7 +1154,7 @@ function updateAssetList() {
       <div class="mc-top"><span class="mono sub" style="margin:0">${a.id} · ${esc(a.category)}</span>${stBadge(a)}</div>
       <div class="mc-name">${esc(a.item)}${isLease(a) ? ' <span class="tag-lease">임대</span>' : ''} <span class="qty" style="font-size:13px;color:var(--sub)">${a.qty} ${a.unit}</span></div>
       ${shortModel(a.model) ? `<div class="mc-sub" style="margin-bottom:3px">${esc(shortModel(a.model))}</div>` : ''}
-      ${toolSummary(a)}
+      ${toolSummary(a)}${reasonsHTML(a)}
       <div class="mc-sub">${icon('pin', 14)}${esc(a.location||'위치 미등록')}${hasCoord(a) ? '' : ' <span class="no-coord">● 좌표 없음</span>'}</div>
       ${isLease(a) ? `<div class="mc-sub mc-lease">🏢 ${esc(a.leaseVendor || '업체 미입력')}${a.leaseContact ? ' · ' + esc(a.leaseContact) : ''}${a.leaseTel ? ` · <a class="link" href="tel:${esc(a.leaseTel.replace(/[^0-9+]/g, ''))}" onclick="event.stopPropagation()">${esc(a.leaseTel)}</a>` : ''}<br>📅 ${esc(a.leaseStart || '?')} ~ ${esc(a.rentalDue || '?')} ${leaseLeft(a)}</div>` : ''}
       ${s && !(LV && isLease(a)) ? `<div class="mc-due"><span class="due ${s.lvl}">${s.t}</span></div>` : ''}
@@ -3319,7 +3332,7 @@ function showInstall() {
   box.innerHTML = h; box.classList.remove('hidden');
 }
 
-const BUILD = '2026-11-19k';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
+const BUILD = '2026-11-19l';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
 async function checkUpdate() {
   try {
     const t = await (await fetch(location.pathname + '?v=' + Date.now(), { cache: 'reload' })).text();
