@@ -580,6 +580,11 @@ details[open].more summary::before{transform:rotate(90deg)}
 .nfc-external{margin-top:14px;padding:12px;border:1px solid var(--line);border-radius:10px;background:#f8fafc}.nfc-external b{font-size:13px}.nfc-external .btn{margin-top:10px;white-space:normal}.nfc-user-check{display:flex;align-items:flex-start;gap:9px;font-size:13px;line-height:1.55;padding:12px;background:#eff6ff;border-radius:8px;margin:12px 0;cursor:pointer}.nfc-user-check input{width:18px;height:18px;flex:none;margin:2px 0 0;accent-color:var(--acc)}.external-nfc-form{display:flex;flex-direction:column;min-height:0;max-height:inherit}.external-nfc-form .m-head,.external-nfc-form .m-foot{flex:none}.external-nfc-form .m-foot{justify-content:flex-end}.external-nfc-form .m-body{min-height:0;overflow:auto}
 .nfc-release-field{display:flex;flex-direction:column;gap:5px;margin:12px 0;font-size:13px}.nfc-release-field .inp{width:100%;min-width:0}.nfc-history{margin-top:14px;font-size:12px;color:var(--sub)}.nfc-history summary{cursor:pointer;font-weight:600}.nfc-history>div{padding:8px 0;border-bottom:1px solid var(--line)}.nfc-history p{margin:4px 0;overflow-wrap:anywhere}
 .print-paper-seg{grid-template-columns:repeat(3,1fr)}.compact-labels .label{padding:.8mm 1.4mm}.compact-labels .lb-top{height:2.4mm;font-size:5pt}.compact-labels .lb-qr{margin-top:1.3mm}.compact-labels .lb-id{font-size:10pt;margin-top:1.2mm}.compact-labels .lb-name{margin-top:.4mm}
+
+.tool-filters-simple{align-items:center;margin-bottom:8px}.tool-filters-simple .chip{white-space:nowrap}.tool-filters-simple .tool-warning{border-color:#fca5a5;color:#b91c1c;background:#fff1f2}.tool-filters-simple .tool-warning.on{background:#b91c1c;color:#fff;border-color:#b91c1c}.tool-more{position:relative}.tool-more>summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:center;user-select:none}.tool-more>summary::-webkit-details-marker{display:none}.tool-more-options{position:absolute;right:0;top:calc(100% + 6px);width:190px;padding:5px;background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:0 8px 24px #10203026;z-index:35}.tool-more-options button{display:flex;justify-content:space-between;gap:10px;width:100%;border:0;background:#fff;padding:10px;border-radius:6px;font-size:13px;cursor:pointer;text-align:left}.tool-more-options button:hover,.tool-more-options button.on{background:#e8f1ff;color:var(--acc)}.tool-more-options span{font-weight:700}.tool-unknown-hint{display:block;max-width:100%;background:#eef2f8;border:1px solid var(--line);color:var(--sub);font-size:12px;text-align:left;padding:7px 10px;border-radius:8px;margin:0 0 10px;cursor:pointer}.tool-unknown-hint.on{color:var(--acc);border-color:var(--acc)}
+@media(min-width:900px){.stats{grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}.stats>.stat{min-height:150px;padding:12px 14px;min-width:0}.stats .stat .num{font-size:32px;line-height:1.15;margin-top:3px}.stats .stat-badge{margin-top:6px;padding-top:0;min-height:0;align-items:flex-start}.stats .stat-sub.empty{display:none}.stats .stat-sub{line-height:1.4}.stats .lease-link,.stats .trash-link,.stats .coord-link{font-size:11px;padding:3px 6px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.stats .stat-badge:empty{display:none}}
+@media(max-width:899px){.stats>.stat{padding:8px 9px}.stats .stat-badge{padding-top:1px;margin-top:1px}.tool-filters-simple{position:relative}.tool-more{position:static}.tool-more-options{position:absolute;left:0;right:auto;top:100%;width:260px;max-width:100%}.tool-unknown-hint{font-size:11px;padding:6px 9px}}
+
 </style>
 </head>
 <body>
@@ -1111,6 +1116,7 @@ function updateAssetList() {
   const box = $('asset-list'); if (!box) return;
   const leaseEmpty = !list.length && !UI.q && { lease: `<b>임대/임차 장비가 아직 없어요</b>비품을 눌러 [정보 수정] → 추가 정보 → 취득 구분에서 '임대/임차'를 고르면 여기에 모여요.`, leaseOut: '<b>반납한 임대/임차 장비가 없어요</b>' }[UI.filter];
   if (!list.length && !leaseEmpty) { box.innerHTML = `<div class="card empty"><b>해당하는 자산이 없어요</b>검색어나 필터를 바꿔 보세요</div>`; return; }
+  const TV = UI.cat === '공기구';
   const LV = UI.filter === 'lease' || UI.filter === 'leaseOut';   // 임대/임차 보기: 표 칸이 임대용으로
   const sch = a => { const s = schedOf(a); return s ? `<span class="due ${s.lvl}">${s.t}</span>` : '<span class="muted">—</span>'; };
   const th = (k, l, w) => `<th ${w ? `style="width:${w}px"` : ''} class="sortable ${UI.sort.k === k ? 'on' : ''}" onclick="setSort('${k}')">${l}<span class="arrow">${UI.sort.k === k ? (UI.sort.d > 0 ? '▲' : '▼') : '↕'}</span></th>`;
@@ -1124,11 +1130,11 @@ function updateAssetList() {
       <td class="ck" onclick="event.stopPropagation()"><input type="checkbox" ${UI.sel.has(a.id) ? 'checked' : ''} onclick="selOne('${a.id}',this.checked)"></td>
       <td class="mono">${a.id}</td><td onclick="event.stopPropagation()">${photoCell(a)}</td><td onclick="event.stopPropagation()">${nfcButton(a)}</td><td class="nm">${esc(a.item)}<div class="ri-sub" style="font-weight:400">${esc(shortModel(a.model))}</div>${toolSummary(a)}</td>
       <td>${esc(a.leaseVendor || '—')}</td><td style="font-size:12.5px;white-space:nowrap">${esc(a.leaseStart || '?')} ~ ${esc(a.rentalDue || '?')}</td><td>${leaseLeft(a)}</td>
-      <td>${esc(a.leaseContact || '—')}</td><td onclick="event.stopPropagation()">${a.leaseTel ? `<a class="link" href="tel:${esc(a.leaseTel.replace(/[^0-9+]/g, ''))}">${esc(a.leaseTel)}</a>` : '—'}</td><td>${stBadge(a)}</td></tr>`).join('')}</tbody>` : `${th('id', '관리번호', 118)}<th style="width:62px">사진</th><th style="width:52px">NFC</th>${th('name', '품목 · 모델')}${th('category', '분류', 120)}${th('location', '위치')}${th('qty', '수량', 70)}${th('status', '상태', 96)}${th('sched', '일정', 120)}${th('updated', '최종 변경', 96)}</tr></thead>
+      <td>${esc(a.leaseContact || '—')}</td><td onclick="event.stopPropagation()">${a.leaseTel ? `<a class="link" href="tel:${esc(a.leaseTel.replace(/[^0-9+]/g, ''))}">${esc(a.leaseTel)}</a>` : '—'}</td><td>${stBadge(a)}</td></tr>`).join('')}</tbody>` : `${th('id', '관리번호', 118)}<th style="width:62px">사진</th><th style="width:52px">NFC</th>${th('name', '품목 · 모델')}${TV?'':th('category', '분류', 120)}${th('location', '위치')}${th('qty', '수량', 70)}${th('status', '상태', 96)}${th('sched', '일정', 120)}${TV?'':th('updated', '최종 변경', 96)}</tr></thead>
     <tbody>${list.map(a => `<tr class="${UI.sel.has(a.id) ? 'picked' : ''} ${toolDays(a)<0?'tool-overdue':''}" onclick="openAsset('${a.id}')">
       <td class="ck" onclick="event.stopPropagation()"><input type="checkbox" ${UI.sel.has(a.id) ? 'checked' : ''} onclick="selOne('${a.id}',this.checked)"></td>
-      <td class="mono">${a.id}</td><td onclick="event.stopPropagation()">${photoCell(a)}</td><td onclick="event.stopPropagation()">${nfcButton(a)}</td><td class="nm">${esc(a.item)}${isLease(a) ? ' <span class="tag-lease">임대</span>' : ''}<div class="ri-sub" style="font-weight:400">${esc(shortModel(a.model))}</div>${toolSummary(a)}</td><td>${esc(a.category)}</td><td>${esc(a.location||'위치 미등록')}${hasCoord(a) ? '' : ' <span class="no-coord" title="좌표 없음">●</span>'}</td>
-      <td class="qty">${a.qty} ${a.unit}</td><td>${stBadge(a)}</td><td>${sch(a)}</td><td class="muted" style="font-size:12.5px">${relTime(a.updatedAt)}</td></tr>`).join('')}</tbody>`}
+      <td class="mono">${a.id}</td><td onclick="event.stopPropagation()">${photoCell(a)}</td><td onclick="event.stopPropagation()">${nfcButton(a)}</td><td class="nm">${esc(a.item)}${isLease(a) ? ' <span class="tag-lease">임대</span>' : ''}<div class="ri-sub" style="font-weight:400">${esc(shortModel(a.model))}</div>${toolSummary(a)}</td>${TV?'':`<td>${esc(a.category)}</td>`}<td>${esc(a.location||'위치 미등록')}${hasCoord(a) ? '' : ' <span class="no-coord" title="좌표 없음">●</span>'}</td>
+      <td class="qty">${a.qty} ${a.unit}</td><td>${stBadge(a)}</td><td>${sch(a)}</td>${TV?'':`<td class="muted" style="font-size:12.5px">${relTime(a.updatedAt)}</td>`}</tr>`).join('')}</tbody>`}
   </table></div>
   <div class="mlist">${list.map(a => { const s = schedOf(a); return `
     <div class="mcard has-thumb ${toolDays(a)<0?'tool-overdue':''}" onclick="openAsset('${a.id}')">
@@ -1169,11 +1175,20 @@ function toolAvailable(a,k){
   return Math.max(0,k.qty-toolMissing(a).reduce((n,m)=>n+(m.items.find(x=>x.id===k.id)?.qty||0),0));
 }
 function toolMatches(a,k){return k==='all'||(k==='overdue'?toolDays(a)<0:k==='missing'?toolMissing(a).length>0:k==='undated'?toolState(a)==='out'&&!a.tool.due:toolState(a)===k);}
+function setToolFilter(key){
+  if(!['all','stored','out','overdue','missing','undated','repair','unknown'].includes(key))return;
+  UI.toolFilter=key;refreshList();
+}
 function toolFiltersHTML(){
   if(UI.cat!=='공기구')return '';
-  const assets=DOC.assets.filter(a=>isTool(a)&&!a.out);
-  return `<div class="tool-filters">${[['all','전체'],['stored','창고 보관'],['out','반출 중'],['overdue','반납 지연'],['missing','구성품 미반납'],['undated','반납일 미정'],['repair','수리 중'],['unknown','미확인']].map(([k,t])=>`<button class="chip ${UI.toolFilter===k?'on':''}" onclick="UI.toolFilter='${k}';refreshList()">${t} ${assets.filter(a=>toolMatches(a,k)).length}</button>`).join('')}</div>${UI.toolFilter==='overdue'?'<p class="hint">반납 지연 건만 · 오래 지연된 순으로 정렬</p>':''}`;
+  const assets=DOC.assets.filter(a=>isTool(a)&&!a.out),count=k=>assets.filter(a=>toolMatches(a,k)).length;
+  const extra=[['repair','수리 중'],['unknown','미확인'],['undated','반납일 미정']],selected=extra.find(([k])=>k===UI.toolFilter);
+  const chip=(k,t,warn=false)=>`<button class="chip ${UI.toolFilter===k?'on':''} ${warn?'tool-warning':''}" onclick="setToolFilter('${k}')" aria-pressed="${UI.toolFilter===k}">${t} ${count(k)}</button>`;
+  return `<div class="tool-filters tool-filters-simple">${[['all','전체'],['stored','창고 보관'],['out','반출 중']].map(([k,t])=>chip(k,t)).join('')}${[['overdue','반납 지연'],['missing','구성품 미반납']].filter(([k])=>count(k)>0||UI.toolFilter===k).map(([k,t])=>chip(k,t,true)).join('')}<details class="tool-more"><summary class="chip ${selected?'on':''}">${selected?selected[1]+' '+count(selected[0]):'더보기'} ▾</summary><div class="tool-more-options" aria-label="추가 공기구 필터">${extra.map(([k,t])=>`<button class="${UI.toolFilter===k?'on':''}" onclick="setToolFilter('${k}')" aria-pressed="${UI.toolFilter===k}">${t}<span>${count(k)}</span></button>`).join('')}</div></details></div>${count('unknown')?`<button class="tool-unknown-hint ${UI.toolFilter==='unknown'?'on':''}" onclick="setToolFilter('unknown')">사용 상태를 확인할 공구 ${count('unknown')}개 ›</button>`:''}${UI.toolFilter==='overdue'?'<p class="hint">반납 지연 건만 · 오래 지연된 순으로 정렬</p>':''}`;
 }
+addEventListener('click',e=>document.querySelectorAll('.tool-more[open]').forEach(el=>{if(!el.contains(e.target))el.open=false;}));
+addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.tool-more[open]').forEach(el=>{el.open=false;el.querySelector('summary').focus();});});
+
 function toolSummary(a){
   if(!isTool(a)||a.out)return '';
   const t=a.tool||{},d=toolDays(a),state=toolState(a),missing=toolMissing(a);
@@ -3304,7 +3319,7 @@ function showInstall() {
   box.innerHTML = h; box.classList.remove('hidden');
 }
 
-const BUILD = '2026-11-19j';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
+const BUILD = '2026-11-19k';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
 async function checkUpdate() {
   try {
     const t = await (await fetch(location.pathname + '?v=' + Date.now(), { cache: 'reload' })).text();
