@@ -578,6 +578,7 @@ details[open].more summary::before{transform:rotate(90deg)}
 @media(max-width:350px){.tool-dialog .tool-pair{grid-template-columns:1fr}.tool-dialog .m-body{padding:10px 12px}.tool-dialog .m-head,.tool-dialog .m-foot{padding-left:12px;padding-right:12px}}
 
 .nfc-external{margin-top:14px;padding:12px;border:1px solid var(--line);border-radius:10px;background:#f8fafc}.nfc-external b{font-size:13px}.nfc-external .btn{margin-top:10px;white-space:normal}.nfc-user-check{display:flex;align-items:flex-start;gap:9px;font-size:13px;line-height:1.55;padding:12px;background:#eff6ff;border-radius:8px;margin:12px 0;cursor:pointer}.nfc-user-check input{width:18px;height:18px;flex:none;margin:2px 0 0;accent-color:var(--acc)}.external-nfc-form{display:flex;flex-direction:column;min-height:0;max-height:inherit}.external-nfc-form .m-head,.external-nfc-form .m-foot{flex:none}.external-nfc-form .m-foot{justify-content:flex-end}.external-nfc-form .m-body{min-height:0;overflow:auto}
+.nfc-release-field{display:flex;flex-direction:column;gap:5px;margin:12px 0;font-size:13px}.nfc-release-field .inp{width:100%;min-width:0}.nfc-history{margin-top:14px;font-size:12px;color:var(--sub)}.nfc-history summary{cursor:pointer;font-weight:600}.nfc-history>div{padding:8px 0;border-bottom:1px solid var(--line)}.nfc-history p{margin:4px 0;overflow-wrap:anywhere}
 </style>
 </head>
 <body>
@@ -674,7 +675,7 @@ const BASE_CATALOG = {
 
 const LOG_MAX = 15;     // 자산별 변경 이력 보관 개수 (B5)
 function addLog(x, t, at) { x.log = [{ at: at || new Date().toISOString(), t }, ...(x.log || [])].slice(0, LOG_MAX); }
-const DATA_VERSION = 8;   // 데이터 구조 버전: 더 새 버전 데이터를 만나면 저장을 막아 덮어쓰기 사고를 방지
+const DATA_VERSION = 9;   // 데이터 구조 버전: 더 새 버전 데이터를 만나면 저장을 막아 덮어쓰기 사고를 방지
 function seedDoc() { return { version: 3, updatedAt: '', catalog: {}, assets: [] }; }
 
 /* ═══════════════════════════════════════════
@@ -786,7 +787,7 @@ function normalizeDoc(d) {
       status: normStatus(a.status) || '상', lat: num(a.lat), lng: num(a.lng),
       nextCheck: a.nextCheck || '', rentalDue: a.rentalDue || '', leaseVendor: a.leaseVendor || '', leaseStart: a.leaseStart || '', leaseTel: a.leaseTel || '', leaseContact: a.leaseContact || '',
       toolKit: Array.isArray(a.toolKit) ? a.toolKit : [],
-      tool: a.tool && typeof a.tool === 'object' ? a.tool : null, toolHistory: Array.isArray(a.toolHistory) ? a.toolHistory : [], nfc: a.nfc || null,
+      tool: a.tool && typeof a.tool === 'object' ? a.tool : null, toolHistory: Array.isArray(a.toolHistory) ? a.toolHistory : [], nfc: a.nfc || null, nfcHistory: Array.isArray(a.nfcHistory) ? a.nfcHistory : [],
       note: a.note || '', out, updatedAt: a.updatedAt || '',
       log: Array.isArray(a.log) ? a.log.slice(0, LOG_MAX) : [], thumb: a.thumb || '',
       photo: a.photo && a.photo.path ? a.photo : (a.photoAt ? { path: `photos/${a.id}.jpg`, at: a.photoAt } : null),
@@ -1339,20 +1340,55 @@ function stopNFC(){if(NFC_SESSION){NFC_SESSION.controller.abort();clearTimeout(N
 function openNFC(id){
   stopNFC();if(!getAsset(id))return;
   const supported=window.isSecureContext&&'NDEFReader'in window;
-  openModal(`<div class="m-head"><h2>${esc(id)} · NFC 등록</h2><button class="icon-btn" onclick="closeModal()">×</button></div><div class="m-body"><p>기존 QR과 같은 자산 주소를 기록합니다. 자산·사진·GPS는 새로 만들거나 변경하지 않습니다.</p><p>카드 등록은 처음 한 번만 합니다. 이후 사진·위치·반출입 정보가 바뀌어도 다시 기록할 필요가 없습니다.</p><p class="nfc-url">${esc(qrUrl(id))}</p><button class="btn sm" onclick="copyNFCURL('${id}')">자산 주소 복사</button><p>${supported?'카드 한 장만 준비하세요. 기존 내용이 다른 카드는 덮어쓰지 않습니다.':'카드 기록은 안드로이드 Chrome 또는 아이폰의 별도 NFC 기록 앱에서 할 수 있습니다. 아이폰 웹브라우저에서는 카드에 직접 기록할 수 없습니다. 외부 앱으로 기록했다면 카드를 접촉해 올바른 자산 화면이 열리는지 확인한 뒤 아래 확인 버튼을 누르세요.'}</p><p id="nfc-progress" role="status">${getAsset(id).nfc?.at?esc(nfcMethodText(getAsset(id).nfc))+': '+esc(fmtAt(getAsset(id).nfc.at))+' (현재 카드 부착 여부는 확인하지 않음)':'등록 확인 기록 없음'}</p>${!getAsset(id).nfc?.at?`<div class="nfc-external"><b>외부 앱에서 카드를 등록하셨나요?</b><p class="hint">QR과 NFC는 같은 주소를 사용하므로 접속만으로는 NFC 등록을 자동 확인할 수 없습니다.</p><button class="btn" onclick="openExternalNFC('${id}')">외부 앱에서 등록한 카드 확인</button></div>`:''}</div><div class="m-foot"><button class="btn" onclick="closeModal()">닫기·취소</button>${supported?`<button class="btn primary" id="nfc-start" onclick="startNFC('${id}')">카드 확인 시작</button><button class="btn primary hidden" id="nfc-write" onclick="writeNFC()">이 카드에 기록</button>`:''}</div>`);
+  openModal(`<div class="m-head"><h2>${esc(id)} · NFC 등록</h2><button class="icon-btn" onclick="closeModal()">×</button></div><div class="m-body"><p>기존 QR과 같은 자산 주소를 기록합니다. 자산·사진·GPS는 새로 만들거나 변경하지 않습니다.</p><p>카드 등록은 처음 한 번만 합니다. 이후 사진·위치·반출입 정보가 바뀌어도 다시 기록할 필요가 없습니다.</p><p class="nfc-url">${esc(qrUrl(id))}</p><button class="btn sm" onclick="copyNFCURL('${id}')">자산 주소 복사</button><p>${supported?'카드 한 장만 준비하세요. 기존 내용이 다른 카드는 덮어쓰지 않습니다.':'카드 기록은 안드로이드 Chrome 또는 아이폰의 별도 NFC 기록 앱에서 할 수 있습니다. 아이폰 웹브라우저에서는 카드에 직접 기록할 수 없습니다. 외부 앱으로 기록했다면 카드를 접촉해 올바른 자산 화면이 열리는지 확인한 뒤 아래 확인 버튼을 누르세요.'}</p><p id="nfc-progress" role="status">${getAsset(id).nfc?.at?esc(nfcMethodText(getAsset(id).nfc))+': '+esc(fmtAt(getAsset(id).nfc.at))+' (현재 카드 부착 여부는 확인하지 않음)':'등록 확인 기록 없음'}</p>${!getAsset(id).nfc?.at?`<div class="nfc-external"><b>외부 앱에서 카드를 등록하셨나요?</b><p class="hint">QR과 NFC는 같은 주소를 사용하므로 접속만으로는 NFC 등록을 자동 확인할 수 없습니다.</p><button class="btn" onclick="openExternalNFC('${id}')">외부 앱에서 등록한 카드 확인</button></div>`:''}${getAsset(id).nfc?.at?`<div class="nfc-external"><b>카드가 제거되거나 다른 용도로 바뀌었나요?</b><p class="hint">등록 상태만 해제합니다. 고정 자산 주소·QR·자산 자료는 유지되며 카드 안의 주소는 지워지지 않습니다.</p><button class="btn" onclick="openNFCRelease('${id}')">NFC 등록 해제</button></div>`:''}${nfcHistoryHTML(getAsset(id))}</div><div class="m-foot"><button class="btn" onclick="closeModal()">닫기·취소</button>${supported?`<button class="btn primary" id="nfc-start" onclick="startNFC('${id}')">카드 확인 시작</button><button class="btn primary hidden" id="nfc-write" onclick="writeNFC()">이 카드에 기록</button>`:''}</div>`);
+}
+
+
+const NFC_RELEASE_REASONS=['카드 제거','카드 분실·훼손','다른 자산으로 변경','등록 오류','기타'];
+const nfcStamp=a=>JSON.stringify({current:a.nfc||null,last:a.nfcHistory?.[0]?.id||null});
+function recordNFCConfirmation(doc,session,method){
+  const a=doc.assets.find(x=>x.id===session.id);if(!a)throw Error('자산을 찾을 수 없습니다');
+  a.nfcHistory||=[];if(a.nfcHistory.some(e=>e.id===session.eventId))return true;
+  if(nfcStamp(a)!==session.expected)throw Error('다른 기기에서 NFC 등록 상태가 바뀌었습니다. 새로 열어 확인해 주세요');
+  if(method==='external_user'&&a.nfc?.at)return true;
+  const now=new Date().toISOString();a.nfc={at:now,method,url:session.url};
+  a.nfcHistory.unshift({id:session.eventId,kind:'confirm',at:now,method,url:session.url});return true;
+}
+function nfcHistoryHTML(a){
+  const history=a.nfcHistory||[];if(!history.length)return '';
+  return `<details class="nfc-history"><summary>NFC 등록·해제 이력 ${history.length}건</summary>${history.map(e=>`<div><b>${e.kind==='release'?'등록 해제':'등록 확인'}</b> · ${esc(fmtAt(e.at))}<p>${e.kind==='release'?esc(e.reason)+(e.note?' · '+esc(e.note):''):esc(nfcMethodText(e))}${e.kind==='release'&&e.previous?.at?'<br>이전 확인: '+esc(fmtAt(e.previous.at))+' · '+esc(nfcMethodText(e.previous)):''}</p></div>`).join('')}</details>`;
+}
+let NFC_RELEASE=null;
+function openNFCRelease(id){
+  stopNFC();const a=getAsset(id);if(!a?.nfc?.at)return;
+  NFC_RELEASE={id,eventId:crypto.randomUUID(),expected:nfcStamp(a)};
+  openModal(`<form class="external-nfc-form" onsubmit="event.preventDefault();saveNFCRelease(this)"><div class="m-head"><h2>NFC 등록 해제</h2><button type="button" class="icon-btn" onclick="closeModal()" aria-label="닫기">×</button></div><div class="m-body"><p><b>${esc(a.id)} · ${esc(a.item)}</b></p><p>이 자산의 NFC 표시를 회색 ‘NFC 등록’으로 되돌립니다.</p><label class="nfc-release-field" for="nfc-release-reason">해제 사유<select class="inp" id="nfc-release-reason" required onchange="$('nfc-release-note').required=this.value==='기타'"><option value="">사유를 선택하세요</option>${NFC_RELEASE_REASONS.map(r=>`<option>${r}</option>`).join('')}</select></label><label class="nfc-release-field" for="nfc-release-note">메모 (기타 선택 시 필수)<input class="inp" id="nfc-release-note" maxlength="300" placeholder="필요할 때만 입력"></label><label class="nfc-user-check"><input id="nfc-release-check" type="checkbox" required><span>등록 상태만 해제되며, <b>카드 안의 주소는 삭제되지 않음</b>을 확인했습니다.</span></label><p class="hint">고정 자산 주소·QR·위치·사진·반출입 자료는 유지됩니다. 새 카드는 기존 주소로 다시 등록할 수 있습니다.</p><p class="hint" id="nfc-release-error" role="alert"></p></div><div class="m-foot"><button type="button" class="btn" onclick="openNFC('${id}')">취소</button><button type="submit" class="btn primary">등록 해제</button></div></form>`);
+}
+function applyNFCRelease(doc,session,reason,note){
+  const a=doc.assets.find(x=>x.id===session.id);if(!a)throw Error('자산을 찾을 수 없습니다');
+  a.nfcHistory||=[];if(a.nfcHistory.some(e=>e.id===session.eventId))return true;
+  if(nfcStamp(a)!==session.expected||!a.nfc?.at)throw Error('다른 기기에서 NFC 상태가 변경되었습니다. 새로 확인해 주세요');
+  if(!NFC_RELEASE_REASONS.includes(reason)||reason==='기타'&&!note.trim())throw Error('해제 사유를 확인해 주세요');
+  a.nfcHistory.unshift({id:session.eventId,kind:'release',at:new Date().toISOString(),reason,note:note.trim(),previous:structuredClone(a.nfc)});
+  a.nfc=null;return true;
+}
+async function saveNFCRelease(form){
+  if(!form.reportValidity()||!$('nfc-release-check')?.checked)return;
+  const session=NFC_RELEASE;if(!session)return;
+  const reason=$('nfc-release-reason').value,note=$('nfc-release-note').value.trim(),btn=form.querySelector('[type=submit]');btn.disabled=true;btn.textContent='해제 중…';
+  const ok=await saveChange(doc=>applyNFCRelease(doc,session,reason,note),'NFC 등록 해제','NFC 등록 상태를 해제했습니다');
+  if(ok){if(form.isConnected&&NFC_RELEASE===session){openNFC(session.id);if(DRAWER?.id===session.id)renderDrawer();}}
+  else if(form.isConnected){btn.disabled=false;btn.textContent='등록 해제';$('nfc-release-error').textContent='해제하지 못했습니다. 상태와 연결을 확인하고 다시 시도해 주세요.';}
 }
 
 let EXTERNAL_NFC=null;
 function openExternalNFC(id){
   stopNFC();const a=getAsset(id);if(!a)return;
-  const session={id,url:qrUrl(id)};EXTERNAL_NFC=session;
+  const session={id,url:qrUrl(id),eventId:crypto.randomUUID(),expected:nfcStamp(a)};EXTERNAL_NFC=session;
   openModal(`<form class="external-nfc-form" onsubmit="event.preventDefault();confirmExternalNFC(this)"><div class="m-head"><h2>외부 앱 NFC 등록 확인</h2><button type="button" class="icon-btn" onclick="closeModal()" aria-label="닫기">×</button></div><div class="m-body"><p><b>${esc(a.id)} · ${esc(a.item)}</b></p><p>외부 앱에서 기록한 카드를 휴대폰에 접촉해 이 자산의 상세 화면이 열리는지 직접 확인해 주세요.</p><p class="nfc-url">${esc(session.url)}</p><label class="nfc-user-check"><input id="external-nfc-checked" type="checkbox" required><span>실제 카드를 접촉해 <b>${esc(a.id)}</b>의 상세 화면이 열리는 것을 확인했습니다.</span></label><p class="hint">카드를 자동으로 읽어 검증하는 기능이 아닙니다. 저장 시 ‘외부 앱 기록·사용자 확인’으로 남기며, 목록과 상세에 파란색 ‘NFC 완료’가 표시됩니다.</p><p id="external-nfc-error" class="hint" role="alert"></p></div><div class="m-foot"><button type="button" class="btn" onclick="openNFC('${id}')">취소</button><button type="submit" class="btn primary">등록 확인·저장</button></div></form>`);
 }
-function applyExternalNFC(doc,session){
-  const a=doc.assets.find(x=>x.id===session.id);if(!a)throw Error('자산을 찾을 수 없습니다');
-  if(a.nfc?.at)return true; // 이미 저장된 직접 읽기 확인과 최초 확인 기록을 덮어쓰지 않음
-  a.nfc={at:new Date().toISOString(),method:'external_user',url:session.url};return true;
-}
+function applyExternalNFC(doc,session){return recordNFCConfirmation(doc,session,'external_user');}
+
 async function confirmExternalNFC(form){
   if(!form.reportValidity()||!$('external-nfc-checked')?.checked)return;
   const session=EXTERNAL_NFC;if(!session)return;
@@ -1367,7 +1403,7 @@ async function copyNFCURL(id){try{await navigator.clipboard.writeText(qrUrl(id))
 const nfcProgress=t=>{if($('nfc-progress'))$('nfc-progress').textContent=t;};
 function nfcFail(s,e){if(NFC_SESSION!==s)return;stopNFC();nfcProgress(e.name==='NotAllowedError'?'NFC 권한을 허용해 주세요.':e.name==='NotSupportedError'?'지원하지 않는 카드 또는 기기입니다.':e.name==='AbortError'?'취소되었습니다.':'처리 실패: '+e.message+' · 카드 확인 시작으로 재시도하세요.');$('nfc-start')?.classList.remove('hidden');$('nfc-write')?.classList.add('hidden');}
 async function startNFC(id){
-  stopNFC();const s={id,url:qrUrl(id),controller:new AbortController(),phase:'read'};NFC_SESSION=s;
+  stopNFC();const a=getAsset(id);if(!a)return;const s={id,url:qrUrl(id),eventId:crypto.randomUUID(),expected:nfcStamp(a),controller:new AbortController(),phase:'read'};NFC_SESSION=s;
   s.timer=setTimeout(()=>nfcFail(s,Error('시간 초과')),60000);
   try{
     const reader=new NDEFReader();s.reader=reader;
@@ -1382,7 +1418,7 @@ async function startNFC(id){
       }else if(s.phase==='ready'&&event.serialNumber!==s.serial){nfcFail(s,Error('카드가 바뀌었습니다'));}
       else if(s.phase==='verify'&&event.serialNumber===s.serial&&records.length===1&&urls[0]===s.url){
         s.phase='saving';s.controller.abort();clearTimeout(s.timer);nfcProgress('주소 일치 확인 완료 · 등록 확인 기록 저장 중');
-        const ok=await saveChange(doc=>{const a=doc.assets.find(x=>x.id===id);if(!a)throw Error('자산을 찾을 수 없습니다');a.nfc={at:new Date().toISOString(),method:'web_nfc',url:s.url};return true;},'NFC 읽기 확인');
+        const ok=await saveChange(doc=>recordNFCConfirmation(doc,s,'web_nfc'),'NFC 읽기 확인');
         if(NFC_SESSION!==s)return;NFC_SESSION=null;nfcProgress(ok?'완료: QR과 같은 주소를 기록하고 다시 읽어 확인했습니다.':'카드 주소는 확인했지만 등록 확인 기록 저장에 실패했습니다. 다시 확인해 주세요.');if(DRAWER?.id===id)renderDrawer();
       }
     };
@@ -3266,7 +3302,7 @@ function showInstall() {
   box.innerHTML = h; box.classList.remove('hidden');
 }
 
-const BUILD = '2026-11-19h';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
+const BUILD = '2026-11-19i';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
 async function checkUpdate() {
   try {
     const t = await (await fetch(location.pathname + '?v=' + Date.now(), { cache: 'reload' })).text();

@@ -75,7 +75,7 @@ async function data(request, env) {
   if (enc.encode(body).length > 10 * 1024 * 1024) fail(413, '데이터가 너무 커요');
   let doc; try { doc = JSON.parse(body); } catch { fail(400, '데이터 형식을 확인해 주세요'); }
   if (!doc || !Array.isArray(doc.assets) || !Number.isInteger(doc.version)) fail(400, '자산 데이터 형식을 확인해 주세요');
-  if (doc.version < 8) fail(409, '앱이 업데이트되었습니다. 새로고침 후 저장해 주세요');
+  if (doc.version < 9) fail(409, '앱이 업데이트되었습니다. 새로고침 후 저장해 주세요');
   // 현재 세대를 백업한 뒤 조건부 쓰기: 다른 기기의 변경을 덮어쓰지 않는다.
   if (generation !== '0') {
     const dst = encodeURIComponent('backups/assets-' + generation + '.json');
