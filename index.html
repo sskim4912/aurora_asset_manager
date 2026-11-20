@@ -593,6 +593,9 @@ details[open].more summary::before{transform:rotate(90deg)}
 .finder-panel{scroll-margin-top:74px;padding:12px;margin-bottom:10px;background:#fff;border:1px solid #93c5fd;border-radius:12px;min-width:0}.finder-head{display:flex;justify-content:space-between;align-items:center;gap:8px}.finder-head b{font-size:14px;overflow-wrap:anywhere}.finder-head small{display:block;color:var(--sub);font-size:11px;margin-top:2px}.finder-head .btn{white-space:nowrap;flex:none}.finder-metrics{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-top:8px}.finder-metrics strong{font-size:21px;color:#0b57a3}.finder-metrics span{font-size:12px;color:var(--sub)}#finder-status{font-size:13px;font-weight:650;margin:8px 0;line-height:1.5;overflow-wrap:anywhere}.finder-controls{display:flex;flex-wrap:wrap;align-items:center;gap:6px}.finder-controls .btn{min-height:38px;font-size:12px}.finder-controls small{font-size:11px;color:var(--sub)}.finder-note{font-size:11px;color:var(--sub);line-height:1.5;margin:8px 0 0}.asset-find-action{margin:12px 0}.asset-find-action .btn{width:100%;min-height:42px}.map-location-tools[hidden],.normal-map-control[hidden]{display:none!important}.mapcard .btn{margin:4px 4px 0 0}
 @media(max-width:640px){.finder-panel{padding:10px}.finder-head .btn{font-size:12px;padding:7px 9px}.finder-metrics strong{font-size:19px}.finder-controls .btn{flex:1;min-width:100px}#finder-status{font-size:12px}.finder-panel+.map-box{height:52dvh;min-height:300px}}
 
+
+.finder-controls .finder-on-auto{background:#0b57a3;border-color:#0b57a3;color:#fff}.finder-controls .finder-on-sound{background:#166534;border-color:#166534;color:#fff}.finder-controls .finder-off{background:#eef0f3;border-color:#b8c0cc;color:#475569}.finder-controls .finder-audio-blocked{background:#fff4e5;border-color:#f59e0b;color:#92400e}.finder-controls .btn{white-space:normal}.finder-audio-help{display:flex;align-items:center;gap:8px;margin-top:8px}.finder-audio-help .btn{flex:none;min-height:36px}.finder-audio-help span{font-size:11px;color:var(--sub);line-height:1.4;overflow-wrap:anywhere}
+
 </style>
 </head>
 <body>
@@ -1915,16 +1918,34 @@ function finderReading(distance,accuracy,age){
   const radius=Math.max(5,accuracy);
   return {state:distance<=radius?'near':'moving',radius};
 }
+function finderWavURL(){
+  const rate=24000,length=6000,buffer=new ArrayBuffer(44+length*2),view=new DataView(buffer);
+  const str=(offset,value)=>[...value].forEach((c,i)=>view.setUint8(offset+i,c.charCodeAt(0)));
+  str(0,'RIFF');view.setUint32(4,36+length*2,true);str(8,'WAVE');str(12,'fmt ');view.setUint32(16,16,true);view.setUint16(20,1,true);view.setUint16(22,1,true);view.setUint32(24,rate,true);view.setUint32(28,rate*2,true);view.setUint16(32,2,true);view.setUint16(34,16,true);str(36,'data');view.setUint32(40,length*2,true);
+  for(let i=0;i<length;i++){const envelope=Math.max(0,Math.min(1,i/360,(length-i)/720));view.setInt16(44+i*2,Math.sin(2*Math.PI*1100*i/rate)*23000*envelope,true);}
+  return URL.createObjectURL(new Blob([buffer],{type:'audio/wav'}));
+}
+function finderAudioReady(s){return s.media?!!s.mediaReady:s.audio?.state==='running';}
+function finderAudioStatus(text){const el=$('finder-audio-status');if(el)el.textContent=text;}
+function finderAudioFailure(s){if(FINDER!==s)return;s.mediaReady=false;s.audioError=true;updateFinderControls(s);finderAudioStatus('소리 재생이 중단됐습니다. 소리 시험을 눌러 다시 시작해 주세요.');}
+function finderPlaybackSession(){try{if(navigator.audioSession)navigator.audioSession.type='playback';}catch{}}
+function playFinderMedia(s){
+  if(FINDER!==s||!s.sound||!s.media)return;
+  try{try{s.media.currentTime=0;}catch{}const promise=s.media.play();Promise.resolve(promise).then(()=>{if(FINDER===s){s.mediaReady=true;s.audioError=false;updateFinderControls(s);}}).catch(()=>finderAudioFailure(s));}catch{finderAudioFailure(s);}
+}
 function finderTone(s,arrival=false){
+  if(FINDER===s&&s.sound&&s.media){playFinderMedia(s);if(arrival)for(const delay of [270,540]){const timer=setTimeout(()=>{s.audioTimers.delete(timer);playFinderMedia(s);},delay);s.audioTimers.add(timer);}return;}
   if(FINDER!==s||!s.sound||s.audio?.state!=='running')return;
   const ctx=s.audio,at=ctx.currentTime;
   try{for(const offset of arrival?[0,.25,.5]:[0]){
     const osc=ctx.createOscillator(),gain=ctx.createGain();osc.type='sine';osc.frequency.value=arrival?1450:1100;
     gain.gain.setValueAtTime(0,at+offset);gain.gain.linearRampToValueAtTime(.65,at+offset+.015);gain.gain.setValueAtTime(.65,at+offset+.13);gain.gain.linearRampToValueAtTime(0,at+offset+.18);
     osc.connect(gain);gain.connect(ctx.destination);s.tones.add(osc);osc.onended=()=>{s.tones.delete(osc);osc.disconnect();gain.disconnect();};osc.start(at+offset);osc.stop(at+offset+.19);
-  }}catch{ s.audioError=true; }
+  }}catch{ finderAudioFailure(s); }
 }
-function finderSilence(s){
+function finderSilence(s,force=false){
+  if(!force&&Date.now()<(s?.soundTestUntil||0))return;
+  if(s?.media)try{s.media.pause();}catch{}for(const timer of s?.audioTimers||[])clearTimeout(timer);s?.audioTimers?.clear();
   for(const osc of s?.tones||[])try{osc.stop();}catch{}s?.tones?.clear();
   if(s?.canVibrate)try{navigator.vibrate(0);}catch{}
 }
@@ -1933,8 +1954,10 @@ function finderPulse(s,arrival=false){
   if(FINDER===s&&s.vibration&&s.canVibrate)try{if(navigator.vibrate(arrival?[120,100,120]:90)===false){s.canVibrate=false;s.vibration=false;updateFinderControls(s);}}catch{s.canVibrate=false;s.vibration=false;updateFinderControls(s);}
 }
 function clearAssetFinder(){
-  const s=FINDER;if(!s)return;FINDER=null;clearInterval(s.timer);finderSilence(s);
+  const s=FINDER;if(!s)return;FINDER=null;clearInterval(s.timer);finderSilence(s,true);
   if(s.audio)try{Promise.resolve(s.audio.close()).catch(()=>{});}catch{}
+  if(s.media)try{s.media.onerror=null;s.media.removeAttribute('src');s.media.load();}catch{}if(s.mediaURL)URL.revokeObjectURL(s.mediaURL);
+  try{if(navigator.audioSession&&s.previousAudioSession)navigator.audioSession.type=s.previousAudioSession;}catch{}
   if(s.wake)try{Promise.resolve(s.wake.release()).catch(()=>{});}catch{}
   if(s.map&&MAPX.g())s.map.setOptions({maxZoom:20});
   $('finder-panel')?.remove();document.querySelector('.map-location-tools')?.removeAttribute('hidden');
@@ -1943,29 +1966,44 @@ function clearAssetFinder(){
 function endAssetFinder(){stopMyPosition();toast('비품 찾기를 종료했습니다');}
 function pauseFinderView(){if(FINDER){FINDER.auto=false;if(FINDER.map&&MAPX.g())FINDER.map.setOptions({maxZoom:20});updateFinderControls(FINDER);}}
 function resumeFinderView(){const s=FINDER;if(!s)return;s.auto=true;s.lastFit=0;updateFinderControls(s);fitFinderView(s,true);}
+function toggleFinderAuto(){if(FINDER?.auto)pauseFinderView();else resumeFinderView();}
 function updateFinderControls(s){
   if(FINDER!==s)return;
-  const auto=$('finder-auto');if(auto){auto.classList.toggle('primary',s.auto);auto.setAttribute('aria-pressed',String(s.auto));}
-  const sound=$('finder-sound');if(sound){sound.textContent=s.sound?(s.audio?.state==='running'?'소리 켜짐':'소리 켜기'):'소리 꺼짐';sound.setAttribute('aria-pressed',String(s.sound));}
-  const vibration=$('finder-vibration');if(vibration){vibration.disabled=!s.canVibrate;vibration.textContent=!s.canVibrate?'진동 미지원':s.vibration?'진동 켜짐':'진동 꺼짐';vibration.setAttribute('aria-pressed',String(s.vibration));}
+  const auto=$('finder-auto');if(auto){auto.textContent=s.auto?'✓ 자동 맞춤 켜짐':'자동 맞춤 꺼짐';auto.classList.toggle('primary',s.auto);auto.classList.toggle('finder-on-auto',s.auto);auto.classList.toggle('finder-off',!s.auto);auto.setAttribute('aria-pressed',String(s.auto));}
+  const sound=$('finder-sound');if(sound){const ready=s.sound&&finderAudioReady(s)&&!s.audioError;sound.textContent=!s.sound?'소리 꺼짐':ready?'✓ 소리 켜짐':'소리 재시작';sound.classList.toggle('finder-on-sound',!!ready);sound.classList.toggle('finder-off',!s.sound);sound.classList.toggle('finder-audio-blocked',s.sound&&!ready);sound.setAttribute('aria-pressed',String(!!ready));}
+  const vibration=$('finder-vibration');if(vibration){vibration.disabled=!s.canVibrate;vibration.textContent=!s.canVibrate?'진동 미지원':s.vibration?'진동 켜짐':'진동 꺼짐';vibration.classList.toggle('finder-on-sound',s.vibration);vibration.classList.toggle('finder-off',!s.vibration);vibration.setAttribute('aria-pressed',String(s.vibration));}
 }
-async function toggleFinderSound(){
+function activateFinderSound(s){
+  if(FINDER!==s)return;s.sound=true;s.audioError=false;finderPlaybackSession();
+  if(s.media){playFinderMedia(s);return;}
+  try{const Audio=window.AudioContext||window.webkitAudioContext;if(!s.audio&&Audio){s.audio=new Audio();s.audio.onstatechange=()=>{if(FINDER===s){updateFinderControls(s);if(s.audio.state!=='running'&&s.sound)finderAudioStatus('소리가 중단됐습니다. 소리 시험을 눌러주세요.');}};}
+    Promise.resolve(s.audio?.resume()).then(()=>{if(FINDER!==s)return;if(s.audio?.state==='running'){s.audioError=false;finderTone(s);updateFinderControls(s);}else finderAudioFailure(s);}).catch(()=>finderAudioFailure(s));
+  }catch{finderAudioFailure(s);}
+}
+function toggleFinderSound(){
   const s=FINDER;if(!s)return;
-  if(s.sound&&s.audio?.state==='running'){s.sound=false;finderSilence(s);}
-  else{try{const Audio=window.AudioContext||window.webkitAudioContext;if(!s.audio&&Audio)s.audio=new Audio();await s.audio?.resume();if(FINDER!==s)return;s.sound=s.audio?.state==='running';if(s.sound)finderTone(s);else toast('소리 재생을 시작하지 못했습니다. 브라우저 설정을 확인해 주세요','warn');}catch{s.sound=false;toast('소리를 켜지 못했습니다. 다시 시도해 주세요','warn');}}
+  if(s.sound&&finderAudioReady(s)&&!s.audioError){s.sound=false;finderSilence(s,true);finderAudioStatus('소리 안내가 꺼져 있습니다.');}
+  else activateFinderSound(s);
   updateFinderControls(s);
 }
+function testFinderSound(){
+  const s=FINDER;if(!s)return;
+  finderSilence(s,true);s.soundTestUntil=Date.now()+700;activateFinderSound(s);finderAudioStatus('시험음을 재생합니다. 안 들리면 무음 모드·미디어 음량·블루투스 출력을 확인하세요.');
+}
+
 function toggleFinderVibration(){const s=FINDER;if(!s?.canVibrate)return;s.vibration=!s.vibration;if(!s.vibration)navigator.vibrate(0);else navigator.vibrate(90);updateFinderControls(s);}
 function startFindAsset(id){
   const a=getAsset(id);if(!a||!hasCoord(a)){toast('위치 등록 후 찾기 가능합니다','warn');return;}
   if(!navigator.geolocation){toast('이 브라우저는 위치 확인을 지원하지 않습니다','warn');return;}
   if(document.hidden)return;
   stopMyPosition();
-  const Audio=window.AudioContext||window.webkitAudioContext;let audio=null;
-  try{if(Audio){audio=new Audio();audio.resume().catch(()=>{});}}catch{}
-  const s={id,target:{lat:+a.lat,lng:+a.lng},phase:'pending',navigation:true,map:null,audio,tones:new Set(),sound:!!audio,canVibrate:!IS_IOS&&typeof navigator.vibrate==='function',vibration:!IS_IOS&&typeof navigator.vibrate==='function',auto:true,readings:[],nearCount:0,nearSince:0,arrived:false,announced:false,band:null,lastPulse:0,lastFit:0,lastFix:0};
+  const Audio=window.AudioContext||window.webkitAudioContext;let audio=null,media=null,mediaURL=null;
+  const previousAudioSession=navigator.audioSession?.type;finderPlaybackSession();
+  try{if(IS_IOS){mediaURL=finderWavURL();media=new window.Audio(mediaURL);media.preload='auto';media.playsInline=true;media.volume=1;}else if(Audio)audio=new Audio();}catch{}
+  const s={id,target:{lat:+a.lat,lng:+a.lng},phase:'pending',navigation:true,map:null,audio,media,mediaURL,previousAudioSession,mediaReady:false,audioTimers:new Set(),tones:new Set(),sound:!!(audio||media),canVibrate:!IS_IOS&&typeof navigator.vibrate==='function',vibration:!IS_IOS&&typeof navigator.vibrate==='function',auto:true,readings:[],nearCount:0,nearSince:0,arrived:false,announced:false,band:null,lastPulse:0,lastFit:0,lastFix:0};
   FINDER=s;
-  if(audio)Promise.resolve(audio.resume()).then(()=>{if(FINDER===s)finderTone(s);}).catch(()=>{s.audioError=true;});
+  if(media)media.onerror=()=>finderAudioFailure(s);if(audio)audio.onstatechange=()=>{if(FINDER===s){updateFinderControls(s);if(audio.state!=='running'&&s.sound)finderAudioStatus('소리가 중단됐습니다. 소리 시험을 눌러주세요.');}};
+  s.soundTestUntil=Date.now()+700;activateFinderSound(s);
   if(MAP&&UI.mode==='map'&&$('kmap')&&MAP_LIST.some(a=>a.id===id)){closeDrawer();beginAssetFinder(s,MAP);}
   else showOnMap(id);
 }
@@ -1973,10 +2011,10 @@ function beginAssetFinder(s,map){
   if(FINDER!==s||!map||document.hidden)return;
   s.map=map;s.phase='tracking';MAP_SELECTED=s.id;closeMapInfo();drawPins();
   const panel=document.createElement('section');panel.id='finder-panel';panel.className='finder-panel';
-  panel.innerHTML=`<div class="finder-head"><div><b>${esc(s.id)} · ${esc(getAsset(s.id)?.item)}</b><small>선택한 비품 찾기</small></div><button class="btn" onclick="endAssetFinder()">찾기 종료</button></div><div class="finder-metrics"><strong id="finder-distance">위치 확인 중</strong><span id="finder-accuracy"></span><span id="finder-direction"></span></div><p id="finder-status" role="status" aria-live="polite">위치 권한을 허용해 주세요. 정확한 신호를 기다리고 있습니다.</p><div class="finder-controls"><button class="btn sm primary" id="finder-auto" onclick="resumeFinderView()" aria-pressed="true">자동 화면 맞춤</button><button class="btn sm" id="finder-sound" onclick="toggleFinderSound()" aria-pressed="${s.sound}">소리 ${s.sound?'켜짐':'꺼짐'}</button>${s.canVibrate?'<button class="btn sm" id="finder-vibration" onclick="toggleFinderVibration()" aria-pressed="true">진동 켜짐</button>':'<small>진동 미지원 · 소리와 화면으로 안내</small>'}</div><p class="finder-note">화면을 켜 두고 미디어 음량을 조절하세요. 직선거리 안내이며 안전한 이동 경로가 아닙니다. 저장된 비품 좌표에도 오차가 있을 수 있습니다.</p>`;
+  panel.innerHTML=`<div class="finder-head"><div><b>${esc(s.id)} · ${esc(getAsset(s.id)?.item)}</b><small>선택한 비품 찾기</small></div><button class="btn" onclick="endAssetFinder()">찾기 종료</button></div><div class="finder-metrics"><strong id="finder-distance">위치 확인 중</strong><span id="finder-accuracy"></span><span id="finder-direction"></span></div><p id="finder-status" role="status" aria-live="polite">위치 권한을 허용해 주세요. 정확한 신호를 기다리고 있습니다.</p><div class="finder-controls"><button class="btn sm primary" id="finder-auto" onclick="toggleFinderAuto()" title="내 위치와 비품이 함께 보이도록 화면을 조절합니다" aria-pressed="true">자동 맞춤 켜짐</button><button class="btn sm" id="finder-sound" onclick="toggleFinderSound()" aria-pressed="${s.sound}">소리 ${s.sound?'켜짐':'꺼짐'}</button>${s.canVibrate?'<button class="btn sm" id="finder-vibration" onclick="toggleFinderVibration()" aria-pressed="true">진동 켜짐</button>':'<small>진동 미지원 · 소리와 화면으로 안내</small>'}</div><div class="finder-audio-help"><button class="btn sm" onclick="testFinderSound()">소리 시험</button><span id="finder-audio-status" role="status">시작할 때 시험음이 납니다. 안 들리면 소리 시험을 눌러주세요.</span></div><p class="finder-note">화면을 켜 두고 미디어 음량을 조절하세요. 직선거리 안내이며 안전한 이동 경로가 아닙니다. 저장된 비품 좌표에도 오차가 있을 수 있습니다.</p>`;
   const box=$('kmap')?.parentElement;if(!box){stopMyPosition();return;}
   box.before(panel);document.querySelector('.map-location-tools')?.setAttribute('hidden','');document.querySelectorAll('.normal-map-control').forEach(el=>el.hidden=true);
-  updateFinderControls(s);showMyPosition(true);
+  updateFinderControls(s);if(s.audioError)finderAudioStatus('소리 재생을 시작하지 못했습니다. 소리 시험을 눌러주세요.');showMyPosition(true);
   if(FINDER!==s)return;s.timer=setInterval(()=>finderTick(s,false),250);
   if(navigator.wakeLock?.request)navigator.wakeLock.request('screen').then(lock=>{if(FINDER===s)s.wake=lock;else lock.release().catch(()=>{});}).catch(()=>{});
   panel.scrollIntoView({block:'start',behavior:'smooth'});
@@ -1997,13 +2035,13 @@ function finderTick(s,newFix){
   if(FINDER!==s||s.phase!=='tracking')return;
   const a=getAsset(s.id);if(MAP!==s.map||document.hidden||!a||!hasCoord(a)||+a.lat!==s.target.lat||+a.lng!==s.target.lng){stopMyPosition();return;}
   const now=Date.now(),position=MY_POSITION;
-  if(!position){setFinderStatus('GPS 정확도 확인 중 · 위치 권한과 GPS 설정을 확인하세요');finderSilence(s);return;}
+  if(!position){setFinderStatus('GPS 정확도 확인 중 · 소리·진동 안내 대기');finderSilence(s);return;}
   const raw=distM(position,s.target),reading=finderReading(raw,position.acc,now-position.at);
   if($('finder-distance'))$('finder-distance').textContent=`직선거리 약 ${formatMapDistance(raw)}`;
   if($('finder-direction'))$('finder-direction').textContent=raw<1?'주변을 확인하세요':`비품 방향 ${finderDirection(position,s.target)} · 지도 북쪽 기준`;
   if($('finder-accuracy'))$('finder-accuracy').textContent=`내 위치 오차 ±${formatMapDistance(position.acc)}`;
   if(reading.state==='waiting'){
-    s.nearCount=0;s.nearSince=0;s.readings=[];s.band=null;if(newFix&&now-position.at<=10000)fitFinderView(s);if(now-position.at>10000){clearMapDistance();if($('finder-distance'))$('finder-distance').textContent='위치 갱신 대기';}finderSilence(s);setFinderStatus(reading.message);return;
+    s.nearCount=0;s.nearSince=0;s.readings=[];s.band=null;if(newFix&&now-position.at<=10000)fitFinderView(s);if(now-position.at>10000){clearMapDistance();if($('finder-distance'))$('finder-distance').textContent='위치 갱신 대기';}finderSilence(s);setFinderStatus(reading.message+' · 거리 알림 대기');updateFinderControls(s);return;
   }
   if(newFix){
     s.readings=s.readings.filter(v=>now-v.at<=10000);s.readings.push({d:raw,at:now});s.readings=s.readings.slice(-3);
@@ -2018,7 +2056,7 @@ function finderTick(s,newFix){
     return;
   }
   if(reading.state==='near'){setFinderStatus('근처 위치 확인 중 · GPS 오차 범위를 확인하고 있습니다');finderSilence(s);return;}
-  setFinderStatus(s.band===3?'비품 방향으로 이동하세요 · 50m 안에서 소리 간격 안내를 시작합니다':'가까워질수록 소리·진동 간격이 짧아집니다');
+  setFinderStatus(s.band===3?'50m 초과 · 거리 알림 대기':!s.sound&&!s.vibration?'소리·진동 꺼짐 · 지도와 거리로 확인하세요':'가까워질수록 소리·진동 간격이 짧아집니다');updateFinderControls(s);
   const interval=[700,1500,3000,0][s.band??3];
   if(interval&&now-s.lastPulse>=interval){s.lastPulse=now;finderPulse(s);}
 }
@@ -3479,7 +3517,7 @@ function showInstall() {
   box.innerHTML = h; box.classList.remove('hidden');
 }
 
-const BUILD = '2026-11-21b';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
+const BUILD = '2026-11-21c';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
 async function checkUpdate() {
   try {
     const t = await (await fetch(location.pathname + '?v=' + Date.now(), { cache: 'reload' })).text();
