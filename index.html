@@ -589,6 +589,10 @@ details[open].more summary::before{transform:rotate(90deg)}
 .todo-card .stat-sub{white-space:normal;overflow:visible;text-overflow:clip}.todo-counts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px 6px;font-size:11px;line-height:1.4;margin-top:2px}.todo-counts span{min-width:0;overflow-wrap:anywhere}.todo-counts b{color:var(--red);white-space:nowrap}.todo-reasons{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;font-weight:500}.todo-reasons .due{font-size:11px;white-space:normal}
 @media(max-width:899px){.todo-counts{font-size:10px;gap:2px 4px}.todo-card .stat-sub{line-height:1.4}.stats .stat-badge{align-self:end}}
 
+
+.finder-panel{padding:12px;margin-bottom:10px;background:#fff;border:1px solid #93c5fd;border-radius:12px;min-width:0}.finder-head{display:flex;justify-content:space-between;align-items:center;gap:8px}.finder-head b{font-size:14px;overflow-wrap:anywhere}.finder-head small{display:block;color:var(--sub);font-size:11px;margin-top:2px}.finder-head .btn{white-space:nowrap;flex:none}.finder-metrics{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-top:8px}.finder-metrics strong{font-size:21px;color:#0b57a3}.finder-metrics span{font-size:12px;color:var(--sub)}#finder-status{font-size:13px;font-weight:650;margin:8px 0;line-height:1.5;overflow-wrap:anywhere}.finder-controls{display:flex;flex-wrap:wrap;align-items:center;gap:6px}.finder-controls .btn{min-height:38px;font-size:12px}.finder-controls small{font-size:11px;color:var(--sub)}.finder-note{font-size:11px;color:var(--sub);line-height:1.5;margin:8px 0 0}.asset-find-action{margin:12px 0}.asset-find-action .btn{width:100%;min-height:42px}.map-location-tools[hidden],.normal-map-control[hidden]{display:none!important}.mapcard .btn{margin:4px 4px 0 0}
+@media(max-width:640px){.finder-panel{padding:10px}.finder-head .btn{font-size:12px;padding:7px 9px}.finder-metrics strong{font-size:19px}.finder-controls .btn{flex:1;min-width:100px}#finder-status{font-size:12px}.finder-panel+.map-box{height:52dvh;min-height:300px}}
+
 </style>
 </head>
 <body>
@@ -756,6 +760,7 @@ async function apiRequest(path, options = {}) {
     const detail = await response.json().catch(() => ({}));
     const error = new Error(detail.error || `저장소 연결 오류 (${response.status})`); error.status = response.status;
     if (response.status === 401) {
+      stopMyPosition();
       $('gate').classList.remove('hidden'); $('app').classList.add('hidden');
       $('gate-err').textContent = '저장을 계속하려면 다시 로그인해 주세요';
     }
@@ -933,6 +938,7 @@ async function login(e) {
   finally { if (submit) submit.disabled = false; }
 }
 async function logout() {
+  stopMyPosition();
   try { await apiRequest('/api/logout', { method: 'POST' }); location.href = location.pathname; }
   catch (error) { toast(error.message, 'err'); }
 }
@@ -953,7 +959,8 @@ function goHome() {   // GS 로고: 첫 화면으로
 function render() {
   if (!DOC) return;
   const v = currentView();
-  stopMyPosition(); cancelMapMove(); closeMapInfo(); resetMapPins(); MAP_INITIAL_VIEW=null; MAP = null;
+  const keepFinder=!!(FINDER?.phase==='pending'&&FINDER.navigation&&UI.mode==='map'&&v==='assets');if(keepFinder)FINDER.navigation=false;
+  stopMyPosition(keepFinder); cancelMapMove(); closeMapInfo(); resetMapPins(); MAP_INITIAL_VIEW=null; MAP = null;
   $('view').innerHTML = VIEWS[v].render();
   if (VIEWS[v].after) VIEWS[v].after();
 }
@@ -1535,7 +1542,7 @@ const MAPX = {
   g: () => !!CONFIG.GOOGLE_MAPS_KEY,
   load() { return this.g() ? loadGoogle() : loadKakao(); },
   ll(lat, lng) { return this.g() ? new google.maps.LatLng(+lat, +lng) : new kakao.maps.LatLng(+lat, +lng); },
-  create(el, c, lv) {
+  create(el, c, lv, customZoom=false) {
     if (this.g()) {
       const m = new google.maps.Map(el, { center: { lat: +c[0], lng: +c[1] }, zoom: 21 - lv, mapTypeId: 'satellite', gestureHandling: 'greedy', clickableIcons: false,
         mapTypeControl: true, mapTypeControlOptions: { position: google.maps.ControlPosition.TOP_LEFT, style: google.maps.MapTypeControlStyle.HORIZONTAL_BAR, mapTypeIds: ['satellite', 'roadmap'] },
@@ -1546,7 +1553,7 @@ const MAPX = {
     const m = new kakao.maps.Map(el, { center: new kakao.maps.LatLng(+c[0], +c[1]), level: lv });
     m.setMapTypeId(kakao.maps.MapTypeId.HYBRID);
     m.addControl(new kakao.maps.MapTypeControl(), kakao.maps.ControlPosition.TOPLEFT);
-    m.addControl(new kakao.maps.ZoomControl(), kakao.maps.ControlPosition.RIGHT);
+    if(!customZoom)m.addControl(new kakao.maps.ZoomControl(), kakao.maps.ControlPosition.RIGHT);
     return m;
   },
   level(m) { return this.g() ? 21 - m.getZoom() : m.getLevel(); },
@@ -1695,17 +1702,17 @@ function drawPins() {
   MAP_PINS=entries.map(e=>e.overlay);arrangeNearLabels(entries,map);
 }
 function mapZoomBy(delta) {
-  if(!MAP)return;
+  if(!MAP)return;pauseFinderView();
   if(MAPX.g())MAP.setZoom(Math.max(3,Math.min(20,MAP.getZoom()+delta)));
   else MAPX.setLevel(MAP,Math.max(1,Math.min(14,MAPX.level(MAP)-delta)));
 }
 function mapShowAll() {
   if(!MAP||!MAP_LIST.length)return toast('표시할 좌표가 없어요','warn');
-  closeMapInfo();MAP_SELECTED=null;clearMapDistance();MAPX.fit(MAP,MAP_LIST);drawPins();
+  if(FINDER)stopMyPosition();closeMapInfo();MAP_SELECTED=null;clearMapDistance();MAPX.fit(MAP,MAP_LIST);drawPins();
 }
 function mapRestoreInitial() {
   if(!MAP||!MAP_INITIAL_VIEW)return;
-  closeMapInfo();MAP_SELECTED=null;clearMapDistance();
+  if(FINDER)stopMyPosition();closeMapInfo();MAP_SELECTED=null;clearMapDistance();
   MAP.setCenter(MAPX.ll(MAP_INITIAL_VIEW.lat,MAP_INITIAL_VIEW.lng));MAPX.setLevel(MAP,MAP_INITIAL_VIEW.level);drawPins();
 }
 function rememberInitialMap(map) {
@@ -1725,16 +1732,16 @@ async function initMainMap() {
   const box = $('asset-list'); if (!box) return;
   box.innerHTML = `<div class="map-summary" aria-live="polite"><b>지도 ${list.length}건</b><span>좌표 없음 ${all.length-list.length}건</span><small>전체 ${all.length}건</small></div>
     <div class="legend map-legend">${STATUSES.map(s=>`<span class="${ST_KEY[s]}"><i></i>상태 ${s}</span>`).join('')}<span class="muted">원을 누르면 자산 선택</span></div>
-    <div class="map-navigation" aria-label="지도 조작"><button class="btn" onclick="mapZoomBy(1)" aria-label="지도 확대">+</button><button class="btn" onclick="mapZoomBy(-1)" aria-label="지도 축소">−</button><button class="btn" onclick="mapShowAll()">전체 비품 보기</button><button class="btn" onclick="mapRestoreInitial()">처음 화면으로</button></div>
-    <div class="map-location-tools"><button class="btn sm" id="show-my-position" onclick="showMyPosition()">내 위치</button><span id="my-position-status">현재 위치는 저장하지 않아요</span><button class="link" id="stop-my-position" onclick="stopMyPosition()" hidden>끄기</button></div><div class="map-box"><div id="kmap"></div></div>`;
-  const el = $('kmap');
+    <div class="map-navigation" aria-label="지도 조작"><button class="btn" onclick="mapZoomBy(1)" aria-label="지도 확대">＋ 확대</button><button class="btn" onclick="mapZoomBy(-1)" aria-label="지도 축소">－ 축소</button><button class="btn normal-map-control" onclick="mapShowAll()">전체 비품 보기</button><button class="btn normal-map-control" onclick="mapRestoreInitial()">처음 화면으로</button></div>
+    <div class="map-location-tools"><button class="btn sm" id="show-my-position" onclick="showMyPosition()">내 위치 보기</button><span id="my-position-status">현재 위치는 저장하지 않아요</span><button class="link" id="stop-my-position" onclick="stopMyPosition()" hidden>끄기</button></div><div class="map-box"><div id="kmap"></div></div>`;
+  const el = $('kmap');if(FINDER?.phase==='pending')FINDER.mount=el;
   if (!list.length) { el.parentElement.insertAdjacentHTML('beforeend', `<div class="map-fail">${icon('pin', 30)}<b>지도에 표시할 자산이 없어요</b>좌표가 등록된 자산만 지도에 나와요.<br>휴대폰으로 [QR 스캔]을 하면 위치가 들어가요.</div>`); }
-  try { await MAPX.load(); } catch (e) { el.parentElement.insertAdjacentHTML('beforeend', mapFail()); return; }
+  try { await MAPX.load(); } catch (e) { if(FINDER?.mount===el)stopMyPosition();el.parentElement.insertAdjacentHTML('beforeend', mapFail()); return; }
   if (!document.body.contains(el)) return;
-  MAP = MAPX.create(el, CONFIG.MAP_CENTER, 3);
+  MAP = MAPX.create(el, CONFIG.MAP_CENTER, 3, true);
   MAP_INFO = null; MAP_SELECTED = null;
   MAP_LIST = list;
-  const ownMap = MAP;
+  const ownMap = MAP;bindFinderMapControls(ownMap,el);
   let drawFrame=0;
   const labelToggle=()=>{if(drawFrame)return;drawFrame=requestAnimationFrame(()=>{drawFrame=0;if(MAP!==ownMap||!document.body.contains(el))return;drawPins();el.classList.remove('map-zooming');});};
   if(MAPX.g())MAP.addListener('idle',labelToggle);else kakao.maps.event.addListener(MAP,'idle',labelToggle);
@@ -1742,7 +1749,8 @@ async function initMainMap() {
   MAPX.on(MAP, 'click', p => { if (MOVE && p) setMapDestination(p); else closeMapInfo(); });
   setTimeout(() => {
     if (MAP !== ownMap || !document.body.contains(el)) return; MAPX.relayout(MAP);
-    if (MAP_FOCUS) { const f = MAP_FOCUS; MAP_FOCUS = null; mapSelect(f, 2); }
+    if(FINDER?.phase==='pending'&&FINDER.mount===el){MAP_FOCUS=null;beginAssetFinder(FINDER,ownMap);}
+    else if (MAP_FOCUS) { const f = MAP_FOCUS; MAP_FOCUS = null; mapSelect(f, 2); }
     else if (list.length === 1) mapSelect(list[0].id, 2);                       // 1건이면 정보창 자동
     else if (list.length > 1) MAPX.fit(MAP, list);
     if(MAPX.g())google.maps.event.addListenerOnce(ownMap,'idle',()=>rememberInitialMap(ownMap));
@@ -1763,17 +1771,17 @@ function mapCard(html, pos) {
 }
 function mapSelect(id, level) {
   const a = getAsset(id); if (!MAP || !a || !hasCoord(a)) return;
-  if (MOVE) return; MAP_SELECTED = id; drawPins();
+  if (MOVE) return;if(FINDER?.id===id){MAP_SELECTED=id;drawPins();$('finder-panel')?.scrollIntoView({block:'nearest'});return;}if(FINDER&&FINDER.id!==id)stopMyPosition(); MAP_SELECTED = id; drawPins();
   const pos = MAPX.ll(a.lat, a.lng);
   mapCard(`<div class="mc-row">${a.thumb || a.photo?.path ? `<img src="${a.thumb || photoUrl(a)}" class="mc-img" alt="">` : ''}<div style="min-width:0;flex:1">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:6px"><span class="mono" style="color:var(--sub);font-size:12px">${a.id}</span>${stBadge(a)}</div>
       <b>${esc(dispName(a))}</b><div style="color:var(--sub)">${esc(a.location)}</div></div></div>
-    <div id="asset-distance" class="asset-distance"></div><button class="btn sm primary" onclick="openAsset('${a.id}')">상세 보기</button><button class="btn sm" onclick="beginMapMove('${a.id}')">위치 수정</button>`, pos);
+    <div id="asset-distance" class="asset-distance"></div><button class="btn sm primary" onclick="startFindAsset('${a.id}')">이 비품 찾기</button><button class="btn sm" onclick="openAsset('${a.id}')">상세 보기</button><button class="btn sm" onclick="beginMapMove('${a.id}')">위치 수정</button>`, pos);
   if (level && MAPX.level(MAP) > level) MAPX.setLevel(MAP, level);
   focusDistanceSelection(MAP, a); drawMapDistance();
 }
 function mapSpot(g) {   // 같은 자리 여러 개 → 목록
-  MAP_SELECTED = null; clearMapDistance();
+  if(FINDER)stopMyPosition();MAP_SELECTED = null; clearMapDistance();
   const pos = MAPX.ll(g.p.lat, g.p.lng);
   mapCard(`<b style="margin:0 0 6px">가까운 자산 ${g.items.length}개</b><small>이동할 자산은 목록에서 한 개를 선택하세요</small><div class="spot-list">${g.items.map(a => `<button onclick="mapSelect('${a.id}')">${a.thumb || a.photo?.path ? `<img src="${a.thumb || photoUrl(a)}" alt="">` : '<span class="ph"></span>'}<span><b>${esc(a.id)}</b> ${esc(dispName(a))}<small>${esc(shortModel(a.model))}</small></span>${stBadge(a)}</button>`).join('')}</div>`, pos);
   MAPX.panTo(MAP, pos);
@@ -1801,6 +1809,7 @@ function clearMapDistance() {
   if (DISTANCE_BADGE) DISTANCE_BADGE.remove(); DISTANCE_BADGE = null;
 }
 function focusDistanceSelection(map, asset) {
+  if(FINDER)return;
   if (MY_POSITION && Date.now() - MY_POSITION.at <= 60000 && distM(MY_POSITION, asset) > 30) {
     if (MAPX.g()) {
       map.setOptions({ maxZoom: 20 });
@@ -1812,10 +1821,10 @@ function focusDistanceSelection(map, asset) {
 }
 function drawMapDistance() {
   clearMapDistance();
-  const out = $('asset-distance') || MAP_INFO?.element?.querySelector('#asset-distance'), selected = getAsset(MAP_SELECTED);
+  const out = $('asset-distance') || MAP_INFO?.element?.querySelector('#asset-distance'), selected = FINDER?{...getAsset(FINDER.id),...FINDER.target}:getAsset(MAP_SELECTED);
   if (!MAP || !selected || !hasCoord(selected) || MOVE) return;
   if (!MY_POSITION) { if (out) out.textContent = '내 위치를 켜면 직선거리를 볼 수 있어요'; return; }
-  const stale = Date.now() - MY_POSITION.at > 60000;
+  const stale = Date.now() - MY_POSITION.at > (FINDER?10000:60000);
   if (stale) { if (out) out.textContent = '내 위치 갱신 대기 중 · 내 위치 버튼으로 다시 확인해 주세요'; return; }
   const target = { lat: +selected.lat, lng: +selected.lng }, distance = distM(MY_POSITION, target);
   const uncertain = MY_POSITION.acc >= distance;
@@ -1837,7 +1846,8 @@ function drawMapDistance() {
 function updateMyPosition(position, map) {
   if (MAP !== map) return;
   const c = position.coords;
-  if (![c.latitude, c.longitude, c.accuracy].every(Number.isFinite) || c.accuracy < 0) return;
+  if (![c.latitude, c.longitude, c.accuracy].every(Number.isFinite) || c.accuracy < 0 || !validLat(c.latitude)||!validLng(c.longitude)) return;
+  if(FINDER){const timestamp=Number.isFinite(position.timestamp)?position.timestamp:Date.now();if(Date.now()-timestamp>10000||timestamp>Date.now()+2000||timestamp<=FINDER.lastFix)return;FINDER.lastFix=timestamp;}
   MY_POSITION = { lat: c.latitude, lng: c.longitude, acc: c.accuracy, at: Number.isFinite(position.timestamp) ? position.timestamp : Date.now() };
   const point = MAPX.ll(c.latitude, c.longitude);
   if (MAPX.g()) {
@@ -1853,38 +1863,174 @@ function updateMyPosition(position, map) {
   const hint = $('my-position-status'); if (hint) hint.textContent = `내 위치 정확도 ±${formatMapDistance(c.accuracy)}`;
   const stop = $('stop-my-position'); if (stop) stop.hidden = false;
   const button = $('show-my-position'); if (button) { button.disabled = false; button.textContent = '내 위치로'; }
-  drawMapDistance();
+  drawMapDistance();if(FINDER)finderTick(FINDER,true);return true;
 }
-function stopMyPosition() {
-  MY_LOCATION_RUN++;
+function stopMyPosition(keepFinder=false) {
+  if(!keepFinder)clearAssetFinder();MY_LOCATION_RUN++;
   if (MY_WATCH !== null) navigator.geolocation?.clearWatch(MY_WATCH);
   clearInterval(MY_POSITION_TIMER); MY_POSITION_TIMER = null; MY_WATCH = null; MY_POSITION = null;
   if (MY_DOT) { if (MY_DOT.remove) MY_DOT.remove(); else MY_DOT.setMap(null); } MY_DOT = null;
   if (MY_ACCURACY) MY_ACCURACY.setMap(null); MY_ACCURACY = null; clearMapDistance();
   if ($('my-position-status')) $('my-position-status').textContent = '현재 위치는 저장하지 않아요';
-  if ($('show-my-position')) { $('show-my-position').disabled = false; $('show-my-position').textContent = '내 위치'; }
+  if ($('show-my-position')) { $('show-my-position').disabled = false; $('show-my-position').textContent = '내 위치 보기'; }
   if ($('stop-my-position')) $('stop-my-position').hidden = true;
   if ($('asset-distance')) $('asset-distance').textContent = '내 위치를 켜면 직선거리를 볼 수 있어요';
 }
-function showMyPosition() {
+function showMyPosition(forFind=false) {
   if (!MAP) return;
-  if (MY_POSITION && Date.now() - MY_POSITION.at <= 60000) { MAPX.panTo(MAP, MAPX.ll(MY_POSITION.lat, MY_POSITION.lng)); return; }
+  if (!forFind && MY_POSITION && Date.now() - MY_POSITION.at <= 60000) { MAPX.panTo(MAP, MAPX.ll(MY_POSITION.lat, MY_POSITION.lng)); return; }
   if (!navigator.geolocation) return toast('이 브라우저는 현재 위치를 지원하지 않아요', 'warn');
-  stopMyPosition(); const map = MAP, run = MY_LOCATION_RUN;
+  stopMyPosition(forFind); const map = MAP, run = MY_LOCATION_RUN;
   $('show-my-position').disabled = true; $('my-position-status').textContent = '내 위치 확인 중…';
   let first = true;
-  MY_WATCH = navigator.geolocation.watchPosition(position => {
+  try { MY_WATCH = navigator.geolocation.watchPosition(position => {
     if (MAP !== map || run !== MY_LOCATION_RUN) return;
-    updateMyPosition(position, map);
-    if (first) { first = false; const selected = getAsset(MAP_SELECTED); if (selected && hasCoord(selected)) focusDistanceSelection(map, selected); else if (MY_POSITION) MAPX.panTo(map, MAPX.ll(MY_POSITION.lat, MY_POSITION.lng)); }
+    if(!updateMyPosition(position, map))return;
+    if (first&&!FINDER) { first = false; const selected = FINDER?{...getAsset(FINDER.id),...FINDER.target}:getAsset(MAP_SELECTED); if (selected && hasCoord(selected)) focusDistanceSelection(map, selected); else if (MY_POSITION) MAPX.panTo(map, MAPX.ll(MY_POSITION.lat, MY_POSITION.lng)); }
   }, error => {
     if (MAP !== map || run !== MY_LOCATION_RUN) return;
     stopMyPosition(); const message = error.code === 1 ? '위치 권한이 거부됐어요 · 브라우저 설정에서 허용해 주세요' : error.code === 3 ? '현재 위치 확인 시간이 초과됐어요 · 다시 시도해 주세요' : '현재 위치를 확인할 수 없어요 · GPS와 위치 설정을 확인해 주세요';
     if ($('my-position-status')) $('my-position-status').textContent = message; toast(message, 'warn');
-  }, { enableHighAccuracy: true, maximumAge: 10000, timeout: 20000 });
+  }, { enableHighAccuracy: true, maximumAge: forFind?0:10000, timeout: 20000 }); } catch { stopMyPosition();toast('위치를 시작하지 못했습니다. 브라우저 위치 권한을 확인해 주세요','warn');return; }
   MY_POSITION_TIMER = setInterval(drawMapDistance, 10000);
 }
 document.addEventListener('visibilitychange', () => { if (document.hidden) stopMyPosition(); });
+
+/* 선택한 한 자산 찾기. 휴대폰 위치·찾기 상태는 메모리에만 유지한다. */
+let FINDER=null;
+function finderBand(distance,previous){
+  const limits=[10,20,50,Infinity];let next=distance<=10?0:distance<=20?1:distance<=50?2:3;
+  if(previous!=null&&next<previous&&distance>limits[next]-2)return previous;
+  if(previous!=null&&next>previous&&distance<limits[previous]+3)return previous;
+  return next;
+}
+function finderDirection(a,b){
+  const rad=Math.PI/180,l1=a.lat*rad,l2=b.lat*rad,dl=(b.lng-a.lng)*rad;
+  const degree=(Math.atan2(Math.sin(dl)*Math.cos(l2),Math.cos(l1)*Math.sin(l2)-Math.sin(l1)*Math.cos(l2)*Math.cos(dl))/rad+360)%360;
+  return ['북쪽','북동쪽','동쪽','남동쪽','남쪽','남서쪽','서쪽','북서쪽'][Math.round(degree/45)%8];
+}
+function finderReading(distance,accuracy,age){
+  if(!Number.isFinite(distance)||!Number.isFinite(accuracy)||accuracy<0||age< -2000||age>10000)return {state:'waiting',message:'위치 갱신 대기 중 · 신호를 확인하세요'};
+  if(accuracy>20)return {state:'waiting',message:`GPS 정확도 확인 중 · 오차 ±${Math.round(accuracy)}m`};
+  const radius=Math.max(5,accuracy);
+  return {state:distance<=radius?'near':'moving',radius};
+}
+function finderTone(s,arrival=false){
+  if(FINDER!==s||!s.sound||s.audio?.state!=='running')return;
+  const ctx=s.audio,at=ctx.currentTime;
+  try{for(const offset of arrival?[0,.25,.5]:[0]){
+    const osc=ctx.createOscillator(),gain=ctx.createGain();osc.type='sine';osc.frequency.value=arrival?1450:1100;
+    gain.gain.setValueAtTime(0,at+offset);gain.gain.linearRampToValueAtTime(.65,at+offset+.015);gain.gain.setValueAtTime(.65,at+offset+.13);gain.gain.linearRampToValueAtTime(0,at+offset+.18);
+    osc.connect(gain);gain.connect(ctx.destination);s.tones.add(osc);osc.onended=()=>{s.tones.delete(osc);osc.disconnect();gain.disconnect();};osc.start(at+offset);osc.stop(at+offset+.19);
+  }}catch{ s.audioError=true; }
+}
+function finderSilence(s){
+  for(const osc of s?.tones||[])try{osc.stop();}catch{}s?.tones?.clear();
+  if(s?.canVibrate)try{navigator.vibrate(0);}catch{}
+}
+function finderPulse(s,arrival=false){
+  finderTone(s,arrival);
+  if(FINDER===s&&s.vibration&&s.canVibrate)try{if(navigator.vibrate(arrival?[120,100,120]:90)===false){s.canVibrate=false;s.vibration=false;updateFinderControls(s);}}catch{s.canVibrate=false;s.vibration=false;updateFinderControls(s);}
+}
+function clearAssetFinder(){
+  const s=FINDER;if(!s)return;FINDER=null;clearInterval(s.timer);finderSilence(s);
+  if(s.audio)try{Promise.resolve(s.audio.close()).catch(()=>{});}catch{}
+  if(s.wake)try{Promise.resolve(s.wake.release()).catch(()=>{});}catch{}
+  if(s.map&&MAPX.g())s.map.setOptions({maxZoom:20});
+  $('finder-panel')?.remove();document.querySelector('.map-location-tools')?.removeAttribute('hidden');
+  document.querySelectorAll('.normal-map-control').forEach(el=>el.hidden=false);
+}
+function endAssetFinder(){stopMyPosition();toast('비품 찾기를 종료했습니다');}
+function pauseFinderView(){if(FINDER){FINDER.auto=false;if(FINDER.map&&MAPX.g())FINDER.map.setOptions({maxZoom:20});updateFinderControls(FINDER);}}
+function resumeFinderView(){const s=FINDER;if(!s)return;s.auto=true;s.lastFit=0;updateFinderControls(s);fitFinderView(s,true);}
+function updateFinderControls(s){
+  if(FINDER!==s)return;
+  const auto=$('finder-auto');if(auto){auto.classList.toggle('primary',s.auto);auto.setAttribute('aria-pressed',String(s.auto));}
+  const sound=$('finder-sound');if(sound){sound.textContent=s.sound?(s.audio?.state==='running'?'소리 켜짐':'소리 켜기'):'소리 꺼짐';sound.setAttribute('aria-pressed',String(s.sound));}
+  const vibration=$('finder-vibration');if(vibration){vibration.disabled=!s.canVibrate;vibration.textContent=!s.canVibrate?'진동 미지원':s.vibration?'진동 켜짐':'진동 꺼짐';vibration.setAttribute('aria-pressed',String(s.vibration));}
+}
+async function toggleFinderSound(){
+  const s=FINDER;if(!s)return;
+  if(s.sound&&s.audio?.state==='running'){s.sound=false;finderSilence(s);}
+  else{try{const Audio=window.AudioContext||window.webkitAudioContext;if(!s.audio&&Audio)s.audio=new Audio();await s.audio?.resume();if(FINDER!==s)return;s.sound=s.audio?.state==='running';if(s.sound)finderTone(s);else toast('소리 재생을 시작하지 못했습니다. 브라우저 설정을 확인해 주세요','warn');}catch{s.sound=false;toast('소리를 켜지 못했습니다. 다시 시도해 주세요','warn');}}
+  updateFinderControls(s);
+}
+function toggleFinderVibration(){const s=FINDER;if(!s?.canVibrate)return;s.vibration=!s.vibration;if(!s.vibration)navigator.vibrate(0);else navigator.vibrate(90);updateFinderControls(s);}
+function startFindAsset(id){
+  const a=getAsset(id);if(!a||!hasCoord(a)){toast('위치 등록 후 찾기 가능합니다','warn');return;}
+  if(!navigator.geolocation){toast('이 브라우저는 위치 확인을 지원하지 않습니다','warn');return;}
+  if(document.hidden)return;
+  stopMyPosition();
+  const Audio=window.AudioContext||window.webkitAudioContext;let audio=null;
+  try{if(Audio){audio=new Audio();audio.resume().catch(()=>{});}}catch{}
+  const s={id,target:{lat:+a.lat,lng:+a.lng},phase:'pending',navigation:true,map:null,audio,tones:new Set(),sound:!!audio,canVibrate:!IS_IOS&&typeof navigator.vibrate==='function',vibration:!IS_IOS&&typeof navigator.vibrate==='function',auto:true,readings:[],nearCount:0,nearSince:0,arrived:false,announced:false,band:null,lastPulse:0,lastFit:0,lastFix:0};
+  FINDER=s;
+  if(audio)Promise.resolve(audio.resume()).then(()=>{if(FINDER===s)finderTone(s);}).catch(()=>{s.audioError=true;});
+  if(MAP&&UI.mode==='map'&&$('kmap')&&MAP_LIST.some(a=>a.id===id)){closeDrawer();beginAssetFinder(s,MAP);}
+  else showOnMap(id);
+}
+function beginAssetFinder(s,map){
+  if(FINDER!==s||!map||document.hidden)return;
+  s.map=map;s.phase='tracking';MAP_SELECTED=s.id;closeMapInfo();drawPins();
+  const panel=document.createElement('section');panel.id='finder-panel';panel.className='finder-panel';
+  panel.innerHTML=`<div class="finder-head"><div><b>${esc(s.id)} · ${esc(getAsset(s.id)?.item)}</b><small>선택한 비품 찾기</small></div><button class="btn" onclick="endAssetFinder()">찾기 종료</button></div><div class="finder-metrics"><strong id="finder-distance">위치 확인 중</strong><span id="finder-accuracy"></span><span id="finder-direction"></span></div><p id="finder-status" role="status" aria-live="polite">위치 권한을 허용해 주세요. 정확한 신호를 기다리고 있습니다.</p><div class="finder-controls"><button class="btn sm primary" id="finder-auto" onclick="resumeFinderView()" aria-pressed="true">자동 화면 맞춤</button><button class="btn sm" id="finder-sound" onclick="toggleFinderSound()" aria-pressed="${s.sound}">소리 ${s.sound?'켜짐':'꺼짐'}</button>${s.canVibrate?'<button class="btn sm" id="finder-vibration" onclick="toggleFinderVibration()" aria-pressed="true">진동 켜짐</button>':'<small>진동 미지원 · 소리와 화면으로 안내</small>'}</div><p class="finder-note">화면을 켜 두고 미디어 음량을 조절하세요. 직선거리 안내이며 안전한 이동 경로가 아닙니다. 저장된 비품 좌표에도 오차가 있을 수 있습니다.</p>`;
+  const box=$('kmap')?.parentElement;if(!box){stopMyPosition();return;}
+  box.before(panel);document.querySelector('.map-location-tools')?.setAttribute('hidden','');document.querySelectorAll('.normal-map-control').forEach(el=>el.hidden=true);
+  updateFinderControls(s);showMyPosition(true);
+  if(FINDER!==s)return;s.timer=setInterval(()=>finderTick(s,false),250);
+  if(navigator.wakeLock?.request)navigator.wakeLock.request('screen').then(lock=>{if(FINDER===s)s.wake=lock;else lock.release().catch(()=>{});}).catch(()=>{});
+  panel.scrollIntoView({block:'nearest',behavior:'smooth'});
+}
+function setFinderStatus(text){const el=$('finder-status');if(el&&el.textContent!==text)el.textContent=text;}
+function fitFinderView(s,force=false){
+  if(FINDER!==s||!s.auto||!MY_POSITION||MAP!==s.map)return;
+  const now=Date.now();if(!force&&now-s.lastFit<5000)return;
+  if(!force&&s.lastFitPosition&&distM(MY_POSITION,s.lastFitPosition)<Math.max(4,MY_POSITION.acc/2)&&s.lastFitBand===s.band)return;
+  s.lastFit=now;s.lastFitPosition={...MY_POSITION};s.lastFitBand=s.band;
+  const radius=Math.max(20,Math.min(5000,MY_POSITION.acc)),dy=radius/111320,dx=radius/(111320*Math.max(.05,Math.cos(MY_POSITION.lat*Math.PI/180)));
+  const pts=[s.target,{lat:Math.min(89.9,MY_POSITION.lat+dy),lng:Math.max(-179.9,MY_POSITION.lng-dx)},{lat:Math.max(-89.9,MY_POSITION.lat-dy),lng:Math.min(179.9,MY_POSITION.lng+dx)}];
+  if(MAPX.g())s.map.setOptions({maxZoom:MY_POSITION.acc>100?16:MY_POSITION.acc>30?17:19});
+  MAPX.fit(s.map,pts);
+  if(!MAPX.g()&&MAPX.level(s.map)<2)MAPX.setLevel(s.map,2);
+}
+function finderTick(s,newFix){
+  if(FINDER!==s||s.phase!=='tracking')return;
+  const a=getAsset(s.id);if(MAP!==s.map||document.hidden||!a||!hasCoord(a)||+a.lat!==s.target.lat||+a.lng!==s.target.lng){stopMyPosition();return;}
+  const now=Date.now(),position=MY_POSITION;
+  if(!position){setFinderStatus('GPS 정확도 확인 중 · 위치 권한과 GPS 설정을 확인하세요');finderSilence(s);return;}
+  const raw=distM(position,s.target),reading=finderReading(raw,position.acc,now-position.at);
+  if($('finder-distance'))$('finder-distance').textContent=`직선거리 약 ${formatMapDistance(raw)}`;
+  if($('finder-direction'))$('finder-direction').textContent=raw<1?'주변을 확인하세요':`비품 방향 ${finderDirection(position,s.target)} · 지도 북쪽 기준`;
+  if($('finder-accuracy'))$('finder-accuracy').textContent=`내 위치 오차 ±${formatMapDistance(position.acc)}`;
+  if(reading.state==='waiting'){
+    s.nearCount=0;s.nearSince=0;s.readings=[];s.band=null;if(newFix&&now-position.at<=10000)fitFinderView(s);if(now-position.at>10000){clearMapDistance();if($('finder-distance'))$('finder-distance').textContent='위치 갱신 대기';}finderSilence(s);setFinderStatus(reading.message);return;
+  }
+  if(newFix){
+    s.readings=s.readings.filter(v=>now-v.at<=10000);s.readings.push({d:raw,at:now});s.readings=s.readings.slice(-3);
+    const sorted=s.readings.map(v=>v.d).sort((a,b)=>a-b);s.distance=sorted[Math.floor(sorted.length/2)];
+    if(reading.state==='near'&&s.distance<=reading.radius){s.nearCount++;if(!s.nearSince)s.nearSince=now;if(s.nearCount>=3&&now-s.nearSince>=3000)s.arrived=true;}
+    else {s.nearCount=0;s.nearSince=0;if(raw>reading.radius+10)s.arrived=false;}
+    s.band=finderBand(s.distance,s.band);fitFinderView(s);
+  }
+  if(s.arrived){
+    setFinderStatus('근처에 도착했습니다. QR코드 또는 NFC로 확인하세요.');
+    if(!s.announced){s.announced=true;finderPulse(s,true);}
+    return;
+  }
+  if(reading.state==='near'){setFinderStatus('근처 위치 확인 중 · GPS 오차 범위를 확인하고 있습니다');finderSilence(s);return;}
+  setFinderStatus(s.band===3?'비품 방향으로 이동하세요 · 50m 안에서 소리 간격 안내를 시작합니다':'가까워질수록 소리·진동 간격이 짧아집니다');
+  const interval=[700,1500,3000,0][s.band??3];
+  if(interval&&now-s.lastPulse>=interval){s.lastPulse=now;finderPulse(s);}
+}
+function bindFinderMapControls(map,el){
+  const manual=()=>{if(FINDER?.map===map)pauseFinderView();};
+  if(MAPX.g())map.addListener('dragstart',manual);else kakao.maps.event.addListener(map,'dragstart',manual);
+  el.addEventListener('wheel',manual,{passive:true});el.addEventListener('dblclick',manual);el.addEventListener('touchmove',manual,{passive:true});
+  el.addEventListener('keydown',e=>{if(['+','-','=','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key))manual();});
+  el.addEventListener('click',e=>{if(e.target.closest?.('button,[role="button"]'))manual();},true);
+}
+
+addEventListener('pagehide',()=>stopMyPosition());
 
 // 위치 이동은 선택한 한 자산만 변경한다. 좌표 및 마지막 좌표 기록이 달라지면 저장/복구를 중단한다.
 function coordinateStamp(a) {
@@ -1952,7 +2098,7 @@ function setMapDestination(point) {
   MOVE.bar.querySelector('.move-coordinates').textContent = `${lat.toFixed(6)}, ${lng.toFixed(6)} · 현장 위치명 유지`;
 }
 async function beginMapMove(id) {
-  const map = MAP; if (!map || MOVE || MOVE_STARTING) return;
+  if(FINDER)stopMyPosition();const map = MAP; if (!map || MOVE || MOVE_STARTING) return;
   MOVE_STARTING = true; clearMapDistance(); closeMapInfo(); document.querySelectorAll('.undo-toast').forEach(el => el.remove());
   let a;
   try { const latest = await Store.load(); a = latest.assets.find(x => x.id === id); DOC = latest; }
@@ -2111,7 +2257,7 @@ async function saveCoord(id, pt, how) {
 /* ═══════════════════════════════════════════
    [5] 자산 상세 · 등록 패널
    ═══════════════════════════════════════════ */
-function openAsset(id) { if (!getAsset(id)) return; stopNewAssetGPS(DRAWER); closeModal(); DRAWER = { mode: 'detail', id }; renderDrawer(); }
+function openAsset(id) { if (!getAsset(id)) return;if(FINDER)stopMyPosition(); stopNewAssetGPS(DRAWER); closeModal(); DRAWER = { mode: 'detail', id }; renderDrawer(); }
 // 신규 등록: 사진과 GPS는 임시 상태로만 보관하고, 최종 등록 때 함께 저장한다.
 function stopNewAssetGPS(session) {
   if(!session)return;session.gpsStopped=true;
@@ -2206,6 +2352,7 @@ function detailHTML(a) {
     : `<div class="flabel">상태 — 누르면 바로 저장돼요</div>
     <div class="seg" style="margin-bottom:8px">${STATUSES.map(s => `<button class="${ST_KEY[s]} ${a.status === s ? 'on' : ''}" onclick="setStatus('${a.id}','${s}')" title="${ST_DESC[s]}">${s}</button>`).join('')}</div>
     <p class="hint" style="margin:0 0 18px">${ST_DESC[a.status]}</p>`}
+    <div class="asset-find-action">${hasCoord(a)?`<button class="btn primary" onclick="startFindAsset('${a.id}')">${icon('pin',16)} 이 비품 찾기</button>`:'<span class="hint">위치 등록 후 찾기 가능</span>'}</div>
     ${toolDetail(a)}
     <dl class="info">
       ${row('위치', `${esc(a.location||'위치 미등록')}${hasCoord(a) ? `<button class="link" onclick="showOnMap('${a.id}')">지도에서 보기</button>` : '<span class="muted" style="font-size:12.5px">좌표 없음</span>'}`)}
@@ -3023,7 +3170,7 @@ function applyPick() {
 }
 
 /* 모달 */
-function openModal(html, size = '') { $('modal-box').className = 'modal ' + size; $('modal-box').innerHTML = html; $('modal').classList.remove('hidden'); }
+function openModal(html, size = '') { if(FINDER)stopMyPosition(); $('modal-box').className = 'modal ' + size; $('modal-box').innerHTML = html; $('modal').classList.remove('hidden'); }
 function closeModal() { stopNFC(); $('modal').classList.add('hidden'); $('modal-box').innerHTML = ''; PMAP = null; }
 
 /* ═══════════════════════════════════════════
@@ -3332,7 +3479,7 @@ function showInstall() {
   box.innerHTML = h; box.classList.remove('hidden');
 }
 
-const BUILD = '2026-11-19l';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
+const BUILD = '2026-11-21a';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
 async function checkUpdate() {
   try {
     const t = await (await fetch(location.pathname + '?v=' + Date.now(), { cache: 'reload' })).text();
