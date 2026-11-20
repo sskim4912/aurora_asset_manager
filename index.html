@@ -594,8 +594,9 @@ details[open].more summary::before{transform:rotate(90deg)}
 @media(max-width:640px){.finder-panel{padding:10px}.finder-head .btn{font-size:12px;padding:7px 9px}.finder-metrics strong{font-size:19px}.finder-controls .btn{flex:1;min-width:100px}#finder-status{font-size:12px}.finder-panel+.map-box{height:52dvh;min-height:300px}}
 
 
-.finder-controls .finder-on-auto{background:#0b57a3;border-color:#0b57a3;color:#fff}.finder-controls .finder-on-sound{background:#166534;border-color:#166534;color:#fff}.finder-controls .finder-off{background:#eef0f3;border-color:#b8c0cc;color:#475569}.finder-controls .finder-audio-blocked{background:#fff4e5;border-color:#f59e0b;color:#92400e}.finder-controls .btn{white-space:normal}.finder-audio-help{display:flex;align-items:center;gap:8px;margin-top:8px}.finder-audio-help .btn{flex:none;min-height:36px}.finder-audio-help span{font-size:11px;color:var(--sub);line-height:1.4;overflow-wrap:anywhere}
+.finder-controls .finder-on-auto{background:#0b57a3;border-color:#0b57a3;color:#fff}.finder-controls .finder-on-sound{background:#166534;border-color:#166534;color:#fff}.finder-controls .finder-off{background:#eef0f3;border-color:#b8c0cc;color:#475569}.finder-controls .finder-audio-blocked{background:#fff4e5;border-color:#f59e0b;color:#92400e}.finder-controls .btn{white-space:normal;word-break:keep-all}.finder-audio-help{display:flex;align-items:center;gap:8px;margin-top:8px}.finder-audio-help .btn{flex:none;min-height:36px}.finder-audio-help span{font-size:11px;color:var(--sub);line-height:1.4;overflow-wrap:anywhere}
 
+.finder-panel.finder-arrived{border-color:#16a34a}.finder-head .finder-end-arrived{background:#b91c1c;border-color:#b91c1c;color:#fff;font-weight:800;box-shadow:0 0 0 2px #fee2e2}.distance-badge.finder-arrival-badge{background:#ecfdf5;border-color:#16a34a;color:#166534}
 </style>
 </head>
 <body>
@@ -1831,7 +1832,8 @@ function drawMapDistance() {
   if (stale) { if (out) out.textContent = '내 위치 갱신 대기 중 · 내 위치 버튼으로 다시 확인해 주세요'; return; }
   const target = { lat: +selected.lat, lng: +selected.lng }, distance = distM(MY_POSITION, target);
   const uncertain = MY_POSITION.acc >= distance;
-  const label = uncertain ? '가까운 위치 · 정확한 거리 확인 어려움' : `직선거리 약 ${formatMapDistance(distance)}`;
+  const arrived=!!(FINDER?.arrived&&finderReading(distance,MY_POSITION.acc,Date.now()-MY_POSITION.at).state!=='waiting');
+  const label = arrived?'근처에 도착했습니다':uncertain?'GPS 위치 확인 중':`직선거리 약 ${formatMapDistance(distance)}`;
   const accuracy = `내 위치 정확도 ±${formatMapDistance(MY_POSITION.acc)}${MY_POSITION.acc > 100 ? ' · 위치 오차가 커요' : ''}`;
   if (out) out.textContent = `${label} · ${accuracy} · 도보 경로가 아닙니다`;
   const path = [MAPX.ll(MY_POSITION.lat, MY_POSITION.lng), MAPX.ll(target.lat, target.lng)];
@@ -1842,7 +1844,7 @@ function drawMapDistance() {
     DISTANCE_LINES.push(new kakao.maps.Polyline({ map: MAP, path, strokeColor: '#fff', strokeWeight: 5, strokeOpacity: .9 }));
     DISTANCE_LINES.push(new kakao.maps.Polyline({ map: MAP, path, strokeColor: '#1677ff', strokeWeight: 3, strokeStyle: 'dash', strokeOpacity: 1 }));
   }
-  const badge = document.createElement('div'); badge.className = 'distance-badge'; badge.textContent = label; badge.title = accuracy + ' · 직선거리';
+  const badge = document.createElement('div'); badge.className = 'distance-badge'+(arrived?' finder-arrival-badge':''); badge.textContent = label; badge.title = accuracy + ' · 직선거리';
   const middle = distanceMidpoint(MY_POSITION, target);
   DISTANCE_BADGE = MAPX.overlay(MAP, MAPX.ll(middle.lat, middle.lng), badge, .5, 6);
 }
@@ -1902,7 +1904,7 @@ document.addEventListener('visibilitychange', () => { if (document.hidden) stopM
 /* 선택한 한 자산 찾기. 휴대폰 위치·찾기 상태는 메모리에만 유지한다. */
 let FINDER=null;
 function finderBand(distance,previous){
-  const limits=[10,20,50,Infinity];let next=distance<=10?0:distance<=20?1:distance<=50?2:3;
+  const limits=[10,20,30,50,Infinity];let next=distance<=10?0:distance<=20?1:distance<=30?2:distance<=50?3:4;
   if(previous!=null&&next<previous&&distance>limits[next]-2)return previous;
   if(previous!=null&&next>previous&&distance<limits[previous]+3)return previous;
   return next;
@@ -2000,7 +2002,7 @@ function startFindAsset(id){
   const Audio=window.AudioContext||window.webkitAudioContext;let audio=null,media=null,mediaURL=null;
   const previousAudioSession=navigator.audioSession?.type;finderPlaybackSession();
   try{if(IS_IOS){mediaURL=finderWavURL();media=new window.Audio(mediaURL);media.preload='auto';media.playsInline=true;media.volume=1;}else if(Audio)audio=new Audio();}catch{}
-  const s={id,target:{lat:+a.lat,lng:+a.lng},phase:'pending',navigation:true,map:null,audio,media,mediaURL,previousAudioSession,mediaReady:false,audioTimers:new Set(),tones:new Set(),sound:!!(audio||media),canVibrate:!IS_IOS&&typeof navigator.vibrate==='function',vibration:!IS_IOS&&typeof navigator.vibrate==='function',auto:true,readings:[],nearCount:0,nearSince:0,arrived:false,announced:false,band:null,lastPulse:0,lastFit:0,lastFix:0};
+  const s={id,target:{lat:+a.lat,lng:+a.lng},phase:'pending',navigation:true,map:null,audio,media,mediaURL,previousAudioSession,mediaReady:false,audioTimers:new Set(),tones:new Set(),sound:!!(audio||media),canVibrate:!IS_IOS&&typeof navigator.vibrate==='function',vibration:!IS_IOS&&typeof navigator.vibrate==='function',auto:true,readings:[],nearCount:0,nearSince:0,arrived:false,band:null,lastPulse:0,lastFit:0,lastFix:0};
   FINDER=s;
   if(media)media.onerror=()=>finderAudioFailure(s);if(audio)audio.onstatechange=()=>{if(FINDER===s){updateFinderControls(s);if(audio.state!=='running'&&s.sound)finderAudioStatus('소리가 중단됐습니다. 소리 시험을 눌러주세요.');}};
   s.soundTestUntil=Date.now()+700;activateFinderSound(s);
@@ -2011,13 +2013,17 @@ function beginAssetFinder(s,map){
   if(FINDER!==s||!map||document.hidden)return;
   s.map=map;s.phase='tracking';MAP_SELECTED=s.id;closeMapInfo();drawPins();
   const panel=document.createElement('section');panel.id='finder-panel';panel.className='finder-panel';
-  panel.innerHTML=`<div class="finder-head"><div><b>${esc(s.id)} · ${esc(getAsset(s.id)?.item)}</b><small>선택한 비품 찾기</small></div><button class="btn" onclick="endAssetFinder()">찾기 종료</button></div><div class="finder-metrics"><strong id="finder-distance">위치 확인 중</strong><span id="finder-accuracy"></span><span id="finder-direction"></span></div><p id="finder-status" role="status" aria-live="polite">위치 권한을 허용해 주세요. 정확한 신호를 기다리고 있습니다.</p><div class="finder-controls"><button class="btn sm primary" id="finder-auto" onclick="toggleFinderAuto()" title="내 위치와 비품이 함께 보이도록 화면을 조절합니다" aria-pressed="true">자동 맞춤 켜짐</button><button class="btn sm" id="finder-sound" onclick="toggleFinderSound()" aria-pressed="${s.sound}">소리 ${s.sound?'켜짐':'꺼짐'}</button>${s.canVibrate?'<button class="btn sm" id="finder-vibration" onclick="toggleFinderVibration()" aria-pressed="true">진동 켜짐</button>':'<small>진동 미지원 · 소리와 화면으로 안내</small>'}</div><div class="finder-audio-help"><button class="btn sm" onclick="testFinderSound()">소리 시험</button><span id="finder-audio-status" role="status">시작할 때 시험음이 납니다. 안 들리면 소리 시험을 눌러주세요.</span></div><p class="finder-note">화면을 켜 두고 미디어 음량을 조절하세요. 직선거리 안내이며 안전한 이동 경로가 아닙니다. 저장된 비품 좌표에도 오차가 있을 수 있습니다.</p>`;
+  panel.innerHTML=`<div class="finder-head"><div><b>${esc(s.id)} · ${esc(getAsset(s.id)?.item)}</b><small>선택한 비품 찾기</small></div><button class="btn" id="finder-end" onclick="endAssetFinder()">찾기 종료</button></div><div class="finder-metrics"><strong id="finder-distance">위치 확인 중</strong><span id="finder-accuracy"></span><span id="finder-direction"></span></div><p id="finder-status" role="status" aria-live="polite">위치 권한을 허용해 주세요. 정확한 신호를 기다리고 있습니다.</p><div class="finder-controls"><button class="btn sm primary" id="finder-auto" onclick="toggleFinderAuto()" title="내 위치와 비품이 함께 보이도록 화면을 조절합니다" aria-pressed="true">자동 맞춤 켜짐</button><button class="btn sm" id="finder-sound" onclick="toggleFinderSound()" aria-pressed="${s.sound}">소리 ${s.sound?'켜짐':'꺼짐'}</button>${s.canVibrate?'<button class="btn sm" id="finder-vibration" onclick="toggleFinderVibration()" aria-pressed="true">진동 켜짐</button>':'<small>진동 미지원 · 소리와 화면으로 안내</small>'}</div><div class="finder-audio-help"><button class="btn sm" onclick="testFinderSound()">소리 시험</button><span id="finder-audio-status" role="status">시작할 때 시험음이 납니다. 안 들리면 소리 시험을 눌러주세요.</span></div><p class="finder-note">화면을 켜 두고 미디어 음량을 조절하세요. 직선거리 안내이며 안전한 이동 경로가 아닙니다. 저장된 비품 좌표에도 오차가 있을 수 있습니다.</p>`;
   const box=$('kmap')?.parentElement;if(!box){stopMyPosition();return;}
   box.before(panel);document.querySelector('.map-location-tools')?.setAttribute('hidden','');document.querySelectorAll('.normal-map-control').forEach(el=>el.hidden=true);
   updateFinderControls(s);if(s.audioError)finderAudioStatus('소리 재생을 시작하지 못했습니다. 소리 시험을 눌러주세요.');showMyPosition(true);
   if(FINDER!==s)return;s.timer=setInterval(()=>finderTick(s,false),250);
   if(navigator.wakeLock?.request)navigator.wakeLock.request('screen').then(lock=>{if(FINDER===s)s.wake=lock;else lock.release().catch(()=>{});}).catch(()=>{});
   panel.scrollIntoView({block:'start',behavior:'smooth'});
+}
+function updateFinderArrivalUI(s){
+  if(FINDER!==s)return;const panel=$('finder-panel'),button=$('finder-end');panel?.classList.toggle('finder-arrived',s.arrived);button?.classList.toggle('finder-end-arrived',s.arrived);
+  if(s.lastArrivalUI!==s.arrived){s.lastArrivalUI=s.arrived;drawMapDistance();}
 }
 function setFinderStatus(text){const el=$('finder-status');if(el&&el.textContent!==text)el.textContent=text;}
 function fitFinderView(s,force=false){
@@ -2041,7 +2047,7 @@ function finderTick(s,newFix){
   if($('finder-direction'))$('finder-direction').textContent=raw<1?'주변을 확인하세요':`비품 방향 ${finderDirection(position,s.target)} · 지도 북쪽 기준`;
   if($('finder-accuracy'))$('finder-accuracy').textContent=`내 위치 오차 ±${formatMapDistance(position.acc)}`;
   if(reading.state==='waiting'){
-    s.nearCount=0;s.nearSince=0;s.readings=[];s.band=null;if(newFix&&now-position.at<=10000)fitFinderView(s);if(now-position.at>10000){clearMapDistance();if($('finder-distance'))$('finder-distance').textContent='위치 갱신 대기';}finderSilence(s);setFinderStatus(reading.message+' · 거리 알림 대기');updateFinderControls(s);return;
+    s.nearCount=0;s.nearSince=0;s.readings=[];s.band=null;s.arrived=false;updateFinderArrivalUI(s);if(newFix&&now-position.at<=10000)fitFinderView(s);if(now-position.at>10000){clearMapDistance();if($('finder-distance'))$('finder-distance').textContent='위치 갱신 대기';}finderSilence(s);setFinderStatus(reading.message+' · 거리 알림 대기');updateFinderControls(s);return;
   }
   if(newFix){
     s.readings=s.readings.filter(v=>now-v.at<=10000);s.readings.push({d:raw,at:now});s.readings=s.readings.slice(-3);
@@ -2050,14 +2056,15 @@ function finderTick(s,newFix){
     else {s.nearCount=0;s.nearSince=0;if(raw>reading.radius+10)s.arrived=false;}
     s.band=finderBand(s.distance,s.band);fitFinderView(s);
   }
+  updateFinderArrivalUI(s);
   if(s.arrived){
     setFinderStatus('근처에 도착했습니다. QR코드 또는 NFC로 확인하세요.');
-    if(!s.announced){s.announced=true;finderPulse(s,true);}
+    if(now-s.lastPulse>=500){s.lastPulse=now;finderPulse(s);}
     return;
   }
-  if(reading.state==='near'){setFinderStatus('근처 위치 확인 중 · GPS 오차 범위를 확인하고 있습니다');finderSilence(s);return;}
-  setFinderStatus(s.band===3?'50m 초과 · 거리 알림 대기':!s.sound&&!s.vibration?'소리·진동 꺼짐 · 지도와 거리로 확인하세요':'가까워질수록 소리·진동 간격이 짧아집니다');updateFinderControls(s);
-  const interval=[700,1500,3000,0][s.band??3];
+  if(reading.state==='near')setFinderStatus('근처 위치 확인 중 · GPS 오차 범위를 확인하고 있습니다');
+  else setFinderStatus(s.band===4?'50m 초과 · 거리 알림 대기':!s.sound&&!s.vibration?'소리·진동 꺼짐 · 지도와 거리로 확인하세요':'가까워질수록 소리·진동 간격이 짧아집니다');updateFinderControls(s);
+  const interval=[700,1200,2000,3000,0][s.band??4];
   if(interval&&now-s.lastPulse>=interval){s.lastPulse=now;finderPulse(s);}
 }
 function bindFinderMapControls(map,el){
@@ -3517,7 +3524,7 @@ function showInstall() {
   box.innerHTML = h; box.classList.remove('hidden');
 }
 
-const BUILD = '2026-11-21c';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
+const BUILD = '2026-11-21d';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
 async function checkUpdate() {
   try {
     const t = await (await fetch(location.pathname + '?v=' + Date.now(), { cache: 'reload' })).text();
