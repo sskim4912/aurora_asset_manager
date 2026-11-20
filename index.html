@@ -597,6 +597,8 @@ details[open].more summary::before{transform:rotate(90deg)}
 .finder-controls .finder-on-auto{background:#0b57a3;border-color:#0b57a3;color:#fff}.finder-controls .finder-on-sound{background:#166534;border-color:#166534;color:#fff}.finder-controls .finder-off{background:#eef0f3;border-color:#b8c0cc;color:#475569}.finder-controls .finder-audio-blocked{background:#fff4e5;border-color:#f59e0b;color:#92400e}.finder-controls .btn{white-space:normal;word-break:keep-all}.finder-audio-help{display:flex;align-items:center;gap:8px;margin-top:8px}.finder-audio-help .btn{flex:none;min-height:36px}.finder-audio-help span{font-size:11px;color:var(--sub);line-height:1.4;overflow-wrap:anywhere}
 
 .finder-panel.finder-arrived{border-color:#16a34a}.finder-head .finder-end-arrived{background:#b91c1c;border-color:#b91c1c;color:#fff;font-weight:800;box-shadow:0 0 0 2px #fee2e2}.distance-badge.finder-arrival-badge{background:#ecfdf5;border-color:#16a34a;color:#166534}
+.voice-preview .voice-sample{padding:14px;background:#eff6ff;border-radius:10px;font-size:16px;line-height:1.7;font-weight:650}.voice-preview label{display:flex;flex-direction:column;gap:6px;font-size:13px}.voice-preview select{width:100%;min-width:0}.voice-actions{display:flex;gap:8px;margin:14px 0}.voice-actions .btn{min-height:42px}
+.voice-preview-page{max-width:560px;margin:36px auto;padding:20px}.voice-preview-page h1{font-size:22px}.voice-preview-page p{font-size:14px;line-height:1.6}
 </style>
 </head>
 <body>
@@ -628,6 +630,7 @@ details[open].more summary::before{transform:rotate(90deg)}
       <div class="dd-menu" id="header-more-menu">
         <button id="hdr-install" class="hidden" type="button" onclick="closeHeaderMenu();installApp()">📲 홈 화면 추가</button>
         <button onclick="closeHeaderMenu();openSettings()">설정</button>
+        <button onclick="closeHeaderMenu();openVoicePreview()">음성 미리듣기</button>
         <button onclick="closeHeaderMenu();openTrash()">삭제 보관함</button>
         <button onclick="closeHeaderMenu();logout()">로그아웃</button>
       </div>
@@ -3214,9 +3217,48 @@ function applyPick() {
   const cb = PICK_CB, pt = { ...PICK }; closeModal(); if (cb) cb(pt);
 }
 
+/* 기기 한국어 목소리 미리듣기만 제공. 찾기 자동 음성과 연결하지 않는다. */
+let VOICE_PREVIEW=null;
+function stopVoicePreviewSpeech(){
+  const s=VOICE_PREVIEW;if(!s)return;clearTimeout(s.timer);const utterance=s.utterance;s.utterance=null;
+  if(utterance)try{speechSynthesis.cancel();}catch{}
+}
+function stopVoicePreview(){
+  const s=VOICE_PREVIEW;if(!s)return;stopVoicePreviewSpeech();VOICE_PREVIEW=null;
+  if(s.listener)window.speechSynthesis?.removeEventListener('voiceschanged',s.listener);
+  try{if(navigator.audioSession&&s.previousAudioSession)navigator.audioSession.type=s.previousAudioSession;}catch{}
+}
+function refreshPreviewVoices(s){
+  if(VOICE_PREVIEW!==s||!$('preview-voice'))return;
+  const select=$('preview-voice'),selected=s.voices?.[Number(select.value)]?.voiceURI;
+  s.voices=speechSynthesis.getVoices().filter(v=>/^ko(?:[-_]|$)/i.test(v.lang));
+  let choice=s.voices.findIndex(v=>v.voiceURI===selected);
+  if(choice<0)choice=s.voices.findIndex(v=>/유나|Yuna|선희|서연|소라/i.test(v.name));
+  if(choice<0)choice=s.voices.findIndex(v=>v.default);if(choice<0)choice=0;
+  select.innerHTML=s.voices.length?s.voices.map((v,i)=>`<option value="${i}" ${i===choice?'selected':''}>${esc(v.name)} (${esc(v.lang)})</option>`).join(''):'<option value="-1">기기 기본 한국어 음성</option>';
+}
+function openVoicePreview(){
+  const supported='speechSynthesis'in window&&'SpeechSynthesisUtterance'in window;
+  openModal(`<div class="m-head"><h2>안내 음성 미리듣기</h2><button class="icon-btn" onclick="closeModal()" aria-label="닫기">×</button></div><div class="m-body voice-preview"><p class="voice-sample">근처에 도착했습니다.<br>QR코드 또는 NFC로 확인하세요.</p>${supported?'<label for="preview-voice">한국어 목소리<select id="preview-voice" class="inp"><option value="-1">기기 기본 한국어 음성</option></select></label><p class="hint">조금 밝은 말투로 재생합니다. 여성 목소리 제공 여부와 음색은 기기에 따라 다르므로 목록에서 직접 들어보고 골라 주세요.</p><div class="voice-actions"><button class="btn primary" onclick="playVoicePreview()">▶ 음성 듣기</button><button class="btn" onclick="stopVoicePreviewSpeech();document.getElementById(\'preview-voice-status\').textContent=\'재생을 중지했습니다\'">중지</button></div>':'<p>이 브라우저는 음성 미리듣기를 지원하지 않습니다. 최신 Safari 또는 Chrome에서 열어 주세요.</p>'}<p id="preview-voice-status" role="status" class="hint">미리듣기 기능입니다. 비품 찾기의 자동 반복 음성은 아직 적용하지 않았습니다.</p><p class="hint">소리가 안 들리면 미디어 음량과 블루투스 출력을 확인해 주세요.</p></div><div class="m-foot"><span class="sp"></span><button class="btn" onclick="closeModal()">닫기</button></div>`);
+  if(!supported)return;const s={voices:[],utterance:null,previousAudioSession:navigator.audioSession?.type};VOICE_PREVIEW=s;
+  s.listener=()=>refreshPreviewVoices(s);speechSynthesis.addEventListener('voiceschanged',s.listener);refreshPreviewVoices(s);
+}
+function playVoicePreview(){
+  const s=VOICE_PREVIEW;if(!s)return;stopVoicePreviewSpeech();finderPlaybackSession();
+  const utterance=new SpeechSynthesisUtterance('근처에 도착했습니다. QR코드 또는 NFC로 확인하세요.');
+  utterance.lang='ko-KR';utterance.rate=1.03;utterance.pitch=1.1;utterance.volume=1;
+  const voice=s.voices[Number($('preview-voice').value)];if(voice)utterance.voice=voice;s.utterance=utterance;
+  utterance.onstart=()=>{if(VOICE_PREVIEW===s&&s.utterance===utterance)$('preview-voice-status').textContent='음성을 재생 중입니다.';};
+  utterance.onend=()=>{if(VOICE_PREVIEW===s&&s.utterance===utterance){clearTimeout(s.timer);s.utterance=null;$('preview-voice-status').textContent='미리듣기를 마쳤습니다. 다른 목소리도 선택해서 들어보세요.';}};
+  utterance.onerror=()=>{if(VOICE_PREVIEW===s&&s.utterance===utterance){clearTimeout(s.timer);s.utterance=null;$('preview-voice-status').textContent='음성을 재생하지 못했습니다. 한국어 음성 설정을 확인한 뒤 다시 눌러 주세요.';}};
+  try{speechSynthesis.speak(utterance);s.timer=setTimeout(()=>{if(VOICE_PREVIEW===s&&s.utterance===utterance){stopVoicePreviewSpeech();$('preview-voice-status').textContent='음성 응답이 없습니다. 한국어 음성 설정을 확인해 주세요.';}},15000);}catch{utterance.onerror();}
+}
+addEventListener('pagehide',stopVoicePreview);
+document.addEventListener('visibilitychange',()=>{if(document.hidden)stopVoicePreview();});
+
 /* 모달 */
-function openModal(html, size = '') { if(FINDER)stopMyPosition(); $('modal-box').className = 'modal ' + size; $('modal-box').innerHTML = html; $('modal').classList.remove('hidden'); }
-function closeModal() { stopNFC(); $('modal').classList.add('hidden'); $('modal-box').innerHTML = ''; PMAP = null; }
+function openModal(html, size = '') { stopVoicePreview(); if(FINDER)stopMyPosition(); $('modal-box').className = 'modal ' + size; $('modal-box').innerHTML = html; $('modal').classList.remove('hidden'); }
+function closeModal() { stopVoicePreview();stopNFC(); $('modal').classList.add('hidden'); $('modal-box').innerHTML = ''; PMAP = null; }
 
 /* ═══════════════════════════════════════════
    [6] 엑셀
@@ -3524,7 +3566,7 @@ function showInstall() {
   box.innerHTML = h; box.classList.remove('hidden');
 }
 
-const BUILD = '2026-11-21d';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
+const BUILD = '2026-11-21e';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
 async function checkUpdate() {
   try {
     const t = await (await fetch(location.pathname + '?v=' + Date.now(), { cache: 'reload' })).text();
@@ -3539,6 +3581,7 @@ let OPEN_SET = false;   // ?settings 주소로 열면 로그인 뒤 설정 바�
   showInstall();
   if (/KAKAOTALK/i.test(navigator.userAgent) && !sessionStorage.getItem('aam_ext')) { sessionStorage.setItem('aam_ext', '1'); setTimeout(openExternal, 300); }
   const p = new URLSearchParams(location.search);
+  if(p.get('voice-preview')==='1'){const page=document.createElement('main');page.className='voice-preview-page';page.innerHTML='<h1>안내 음성 미리듣기</h1><p>근처 도착 안내의 목소리를 휴대폰에서 먼저 들어보세요.</p><button class="btn primary" onclick="openVoicePreview()">음성 미리듣기 열기</button><p><a href="./">자산관리 화면으로</a></p>';document.body.append(page);openVoicePreview();return;}
   if (p.has('settings')) { OPEN_SET = true; history.replaceState(null, '', location.pathname); }
   if (p.get('id')) { PENDING_ID = p.get('id').toUpperCase(); history.replaceState(null, '', location.pathname + '#assets'); }
   if (await isAuthed()) startApp(); else { $('gate').classList.remove('hidden'); setTimeout(() => $('pw').focus(), 50); }
