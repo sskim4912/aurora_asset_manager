@@ -1941,7 +1941,7 @@ function playFinderMedia(s){
 }
 const ARRIVAL_SPEECH_TEXT='비품이 가까이에 있어요. 큐알 코드나 엔에프씨 태그로 확인해 주세요.';
 const finderVoiceActive=s=>!!(s.speech&&s.speechPurpose!=='unlock'&&s.voiceStarted);
-function finderSoundReady(s){return finderVoiceActive(s)||(s.arrived&&s.voiceReady&&!s.voiceError)||(finderAudioReady(s)&&!s.audioError);}
+function finderSoundReady(s){return finderAudioReady(s)&&!s.audioError;}
 const finderHasVoice=()=>!!(window.speechSynthesis&&window.SpeechSynthesisUtterance);
 function makeKoreanSpeech(text){
   const u=new SpeechSynthesisUtterance(text);u.lang='ko-KR';u.rate=1;u.pitch=1;u.volume=1;
@@ -1955,10 +1955,10 @@ function stopFinderVoice(s,all=false){
 function speakFinderVoice(s,purpose='arrival'){
   if(FINDER!==s||!s.sound||document.hidden||!finderHasVoice()||s.speech)return false;
   const u=makeKoreanSpeech(purpose==='unlock'?'안내':ARRIVAL_SPEECH_TEXT);
-  if(purpose==='unlock')u.volume=0;else finderSilence(s,true);
+  if(purpose==='unlock')u.volume=0;
   s.speech=u;s.speechPurpose=purpose;s.voiceError=false;finderPlaybackSession();
   const active=()=>FINDER===s&&s.speech===u;
-  u.onstart=()=>{if(!active())return;s.voiceStarted=true;if(purpose!=='unlock')s.voiceReady=true;updateFinderControls(s);if(purpose==='arrival')finderAudioStatus('도착 안내 음성을 반복합니다. 소리 끄기 또는 찾기 종료로 멈출 수 있습니다.');};
+  u.onstart=()=>{if(!active())return;s.voiceStarted=true;if(purpose!=='unlock')s.voiceReady=true;updateFinderControls(s);if(purpose==='arrival')finderAudioStatus('삐 소리를 유지하며 도착 음성도 안내합니다. 소리 끄기 또는 찾기 종료로 멈출 수 있습니다.');};
   u.onend=()=>{if(!active())return;clearTimeout(s.speechTimer);s.speech=null;s.speechPurpose=null;s.voiceStarted=false;s.voiceNextAt=purpose==='unlock'?0:Date.now()+5000;updateFinderControls(s);};
   u.onerror=()=>{if(!active())return;clearTimeout(s.speechTimer);s.speech=null;s.speechPurpose=null;s.voiceStarted=false;s.voiceReady=false;s.voiceError=true;updateFinderControls(s);finderAudioStatus('음성 재생을 시작하지 못해 삐 소리로 안내합니다. 음성 시험을 눌러주세요.');};
   try{speechSynthesis.speak(u);s.speechTimer=setTimeout(()=>{if(!active())return;stopFinderVoice(s,true);s.voiceError=true;finderAudioStatus('음성 응답이 없습니다. 음성 시험으로 다시 확인해 주세요.');},20000);return true;}catch{u.onerror();return false;}
@@ -1971,7 +1971,6 @@ function testFinderVoice(){
 }
 
 function finderTone(s,arrival=false){
-  if(s.speech&&s.speechPurpose!=='unlock')return;
   if(FINDER===s&&s.sound&&s.media){playFinderMedia(s);if(arrival)for(const delay of [270,540]){const timer=setTimeout(()=>{s.audioTimers.delete(timer);playFinderMedia(s);},delay);s.audioTimers.add(timer);}return;}
   if(FINDER!==s||!s.sound||s.audio?.state!=='running')return;
   const ctx=s.audio,at=ctx.currentTime;
@@ -2073,17 +2072,20 @@ function fitFinderView(s,force=false){
   MAPX.fit(s.map,pts);
   if(!MAPX.g()&&MAPX.level(s.map)<2)MAPX.setLevel(s.map,2);
 }
+function finderAlarmTick(s,interval){
+  if(Date.now()-s.lastPulse>=interval){s.lastPulse=Date.now();finderPulse(s);}
+}
 function finderTick(s,newFix){
   if(FINDER!==s||s.phase!=='tracking')return;
   const a=getAsset(s.id);if(MAP!==s.map||document.hidden||!a||!hasCoord(a)||+a.lat!==s.target.lat||+a.lng!==s.target.lng){stopMyPosition();return;}
   const now=Date.now(),position=MY_POSITION;
-  if(!position){stopFinderVoice(s);setFinderStatus('GPS 정확도 확인 중 · 소리·진동 안내 대기');finderSilence(s);return;}
+  if(!position){stopFinderVoice(s);setFinderStatus('GPS 확인 중 · 기본 알림 유지');finderAlarmTick(s,3000);return;}
   const raw=distM(position,s.target),reading=finderReading(raw,position.acc,now-position.at);
   if($('finder-distance'))$('finder-distance').textContent=`직선거리 약 ${formatMapDistance(raw)}`;
   if($('finder-direction'))$('finder-direction').textContent=raw<1?'주변을 확인하세요':`비품 방향 ${finderDirection(position,s.target)} · 지도 북쪽 기준`;
   if($('finder-accuracy'))$('finder-accuracy').textContent=`내 위치 오차 ±${formatMapDistance(position.acc)}`;
   if(reading.state==='waiting'){
-    stopFinderVoice(s);s.nearCount=0;s.nearSince=0;s.readings=[];s.band=null;s.arrived=false;updateFinderArrivalUI(s);if(newFix&&now-position.at<=10000)fitFinderView(s);if(now-position.at>10000){clearMapDistance();if($('finder-distance'))$('finder-distance').textContent='위치 갱신 대기';}finderSilence(s);setFinderStatus(reading.message+' · 거리 알림 대기');updateFinderControls(s);return;
+    stopFinderVoice(s);s.nearCount=0;s.nearSince=0;s.readings=[];s.band=null;s.arrived=false;updateFinderArrivalUI(s);if(newFix&&now-position.at<=10000)fitFinderView(s);if(now-position.at>10000){clearMapDistance();if($('finder-distance'))$('finder-distance').textContent='위치 갱신 대기';}finderAlarmTick(s,3000);setFinderStatus(reading.message+' · 기본 알림 유지');updateFinderControls(s);return;
   }
   if(newFix){
     s.readings=s.readings.filter(v=>now-v.at<=10000);s.readings.push({d:raw,at:now});s.readings=s.readings.slice(-3);
@@ -2097,14 +2099,14 @@ function finderTick(s,newFix){
     setFinderStatus('근처에 도착했습니다. QR코드 또는 NFC로 확인하세요.');
     const voice=s.sound&&finderHasVoice()&&!s.voiceError;
     if(voice){if(s.speechPurpose==='unlock')stopFinderVoice(s,true);if(!s.speech&&now>=(s.voiceNextAt||0))speakFinderVoice(s);}
-    if(now-s.lastPulse>=500){s.lastPulse=now;finderPulse(s,false,!voice);}
+    finderAlarmTick(s,500);
     return;
   }
   stopFinderVoice(s);
   if(reading.state==='near')setFinderStatus('근처 위치 확인 중 · GPS 오차 범위를 확인하고 있습니다');
-  else setFinderStatus(s.band===4?'50m 초과 · 거리 알림 대기':!s.sound&&!s.vibration?'소리·진동 꺼짐 · 지도와 거리로 확인하세요':'가까워질수록 소리·진동 간격이 짧아집니다');updateFinderControls(s);
-  const interval=[700,1200,2000,3000,0][s.band??4];
-  if(interval&&now-s.lastPulse>=interval){s.lastPulse=now;finderPulse(s);}
+  else setFinderStatus(s.band===4?'50m 초과 · 4초 간격으로 알림 유지':!s.sound&&!s.vibration?'소리·진동 꺼짐 · 지도와 거리로 확인하세요':'가까워질수록 소리·진동 간격이 짧아집니다');updateFinderControls(s);
+  const interval=[700,1200,2000,3000,4000][s.band??4];
+  finderAlarmTick(s,interval);
 }
 function bindFinderMapControls(map,el){
   const manual=()=>{if(FINDER?.map===map)pauseFinderView();};
@@ -3599,7 +3601,7 @@ function showInstall() {
   box.innerHTML = h; box.classList.remove('hidden');
 }
 
-const BUILD = '2026-11-21f';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
+const BUILD = '2026-11-21g';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
 async function checkUpdate() {
   try {
     const t = await (await fetch(location.pathname + '?v=' + Date.now(), { cache: 'reload' })).text();
