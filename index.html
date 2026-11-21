@@ -434,7 +434,7 @@ details[open].more summary::before{transform:rotate(90deg)}
 
 .map-location-tools{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:-2px 0 9px;font-size:12px;color:var(--sub)}
 .distance-badge{background:#fff;color:#075cb4;border:1px solid #b8cce7;border-radius:8px;padding:5px 9px;font-size:12px;font-weight:800;white-space:nowrap;box-shadow:0 2px 7px #0004;pointer-events:none;max-width:240px;white-space:normal;text-align:center}
-.asset-distance{font-size:12px;color:#075cb4;margin-top:9px;line-height:1.5}.my-position-dot{width:18px;height:18px;border-radius:50%;background:#1677ff;border:3px solid #fff;box-shadow:0 1px 5px #0004}
+.asset-distance{font-size:12px;color:#075cb4;margin-top:9px;line-height:1.5}.finder-heading-pin{position:relative;width:0;height:0;pointer-events:none}.finder-heading-rotor{position:absolute;width:0;height:0;transform-origin:0 0}.finder-heading-rotor svg{position:absolute;left:-7px;top:-26px;filter:drop-shadow(0 1px 2px #0008)}.my-position-dot{width:18px;height:18px;border-radius:50%;background:#1677ff;border:3px solid #fff;box-shadow:0 1px 5px #0004}
 
 /* 라벨 */
 .lab-layout{display:grid;grid-template-columns:330px 1fr;gap:16px;align-items:start}
@@ -1837,7 +1837,7 @@ function drawMapDistance() {
   const target = { lat: +selected.lat, lng: +selected.lng }, distance = distM(MY_POSITION, target);
   const uncertain = MY_POSITION.acc >= distance;
   const arrived=!!(FINDER?.arrived&&finderReading(distance,MY_POSITION.acc,Date.now()-MY_POSITION.at).state!=='waiting');
-  const label = arrived?'근처에 도착했습니다':uncertain?'GPS 위치 확인 중':`직선거리 약 ${formatMapDistance(distance)}`;
+  const label = arrived?(FINDER.arrivalKind==='destination'?'목적지에 도착하였습니다':'근처에 도착하였습니다'):uncertain?'GPS 위치 확인 중':`직선거리 약 ${formatMapDistance(distance)}`;
   const accuracy = `내 위치 정확도 ±${formatMapDistance(MY_POSITION.acc)}${MY_POSITION.acc > 100 ? ' · 위치 오차가 커요' : ''}`;
   if (out) out.textContent = `${label} · ${accuracy} · 도보 경로가 아닙니다`;
   const path = [MAPX.ll(MY_POSITION.lat, MY_POSITION.lng), MAPX.ll(target.lat, target.lng)];
@@ -1921,7 +1921,7 @@ function finderDirection(a,b){
 function finderReading(distance,accuracy,age){
   if(!Number.isFinite(distance)||!Number.isFinite(accuracy)||accuracy<0||age< -2000||age>10000)return {state:'waiting',message:'위치 갱신 대기 중 · 신호를 확인하세요'};
   if(accuracy>20)return {state:'waiting',message:`GPS 정확도 확인 중 · 오차 ±${Math.round(accuracy)}m`};
-  const radius=Math.max(5,accuracy);
+  const radius=Math.max(3,accuracy);
   return {state:distance<=radius?'near':'moving',radius};
 }
 function finderWavURL(){
@@ -1946,15 +1946,17 @@ function playFinderMedia(s){
   if(FINDER!==s||!s.sound||!s.media)return;
   try{try{s.media.currentTime=0;}catch{}const promise=s.media.play();Promise.resolve(promise).then(()=>{if(FINDER===s){s.mediaReady=true;s.audioError=false;if(s.soundTestState==='pending')finderTestState(s,'sound','playing');updateFinderControls(s);}}).catch(error=>{if(error?.name==='AbortError'&&(s.speech||FINDER!==s||!s.sound))return;finderAudioFailure(s);});}catch{finderAudioFailure(s);}
 }
-const ARRIVAL_SPEECH_TEXT='근처에 도착했습니다. 큐알 코드 또는 엔에프씨로 확인하세요.';
+const ARRIVAL_SPEECH_TEXT='근처에 도착하였습니다. 큐알 코드 또는 엔에프씨로 확인하세요.';
 // 안내 파일에는 0.5초 간격 경고음도 포함합니다. 기기 음성 합성/설치 음성에 의존하지 않습니다.
-const FINDER_VOICE_URL='./sounds/arrival-ko-v1.mp3';
+const FINDER_VOICE_URL='./sounds/nearby-ko-v1.mp3';
+const FINDER_DESTINATION_VOICE_URL='./sounds/destination-ko-v1.mp3';
+function finderArrivalText(s){return s.arrivalKind==='destination'?'목적지에 도착하였습니다. QR 코드 또는 NFC로 확인하세요.':'근처에 도착하였습니다. QR 코드 또는 NFC로 확인하세요.';}
 const finderVoiceActive=s=>!!(s.speech&&s.speechPurpose!=='unlock'&&s.voiceStarted);
 function finderSoundReady(s){return finderVoiceActive(s)||(finderAudioReady(s)&&!s.audioError);}
 const finderHasVoice=()=>typeof window.Audio==='function';
 function stopFinderVoice(s,all=false){
   if(!s?.speech||(!all&&s.speechPurpose!=='arrival'))return;
-  const media=s.speech;s.speech=null;s.speechPurpose=null;s.voiceStarted=false;
+  const media=s.speech;s.voiceRun=(s.voiceRun||0)+1;s.speech=null;s.speechPurpose=null;s.voiceStarted=false;
   clearTimeout(s.speechTimer);clearTimeout(s.speechStartTimer);s.voiceNextAt=0;
   media.onplaying=null;media.onended=null;media.onerror=null;try{media.pause();media.currentTime=0;media.muted=false;media.volume=1;}catch{}
   if(['playing','pending'].includes(s.voiceTestState))finderTestState(s,'voice','stopped');
@@ -1962,9 +1964,11 @@ function stopFinderVoice(s,all=false){
 function speakFinderVoice(s,purpose='arrival'){
   if(FINDER!==s||!s.sound||document.hidden||!finderHasVoice()||s.speech)return false;
   let media;try{media=s.voiceMedia||(s.voiceMedia=new window.Audio(FINDER_VOICE_URL));}catch{finderTestState(s,'voice','error');return false;}
+  const url=purpose==='arrival'&&s.arrivalKind==='destination'?FINDER_DESTINATION_VOICE_URL:FINDER_VOICE_URL;
+  if(media.getAttribute('src')!==url)media.src=url;
   media.preload='auto';media.playsInline=true;media.muted=purpose==='unlock';media.volume=purpose==='unlock'?0:1;
   s.speech=media;s.speechPurpose=purpose;s.voiceError=false;
-  const active=()=>FINDER===s&&s.speech===media;
+  const run=s.voiceRun=(s.voiceRun||0)+1;const active=()=>FINDER===s&&s.speech===media&&s.voiceRun===run;
   const failure=reason=>{if(!active())return;stopFinderVoice(s,true);s.voiceError=purpose!=='unlock';s.voiceNextAt=purpose==='unlock'?0:Date.now()+10000;
     if(purpose==='test')finderTestState(s,'voice','error');
     if(purpose!=='unlock')finderAudioStatus('음성 재생 실패 · '+reason+' · 삐 소리는 유지합니다. 음성 시험을 다시 눌러주세요.');};
@@ -2008,7 +2012,7 @@ function finderPulse(s,arrival=false,withTone=true){
   if(FINDER===s&&s.vibration&&s.canVibrate)try{if(navigator.vibrate(arrival?[120,100,120]:90)===false){s.canVibrate=false;s.vibration=false;updateFinderControls(s);}}catch{s.canVibrate=false;s.vibration=false;updateFinderControls(s);}
 }
 function clearAssetFinder(){
-  const s=FINDER;if(!s)return;FINDER=null;clearInterval(s.timer);clearTimeout(s.soundTestTimer);stopFinderVoice(s,true);finderSilence(s,true);
+  const s=FINDER;if(!s)return;stopFinderHeading(s);FINDER=null;clearInterval(s.timer);clearTimeout(s.soundTestTimer);stopFinderVoice(s,true);finderSilence(s,true);
   if(s.audio)try{Promise.resolve(s.audio.close()).catch(()=>{});}catch{}
   if(s.voiceMedia)try{s.voiceMedia.removeAttribute('src');s.voiceMedia.load();}catch{}
   if(s.media)try{s.media.onerror=null;s.media.removeAttribute('src');s.media.load();}catch{}if(s.mediaURL)URL.revokeObjectURL(s.mediaURL);
@@ -2070,17 +2074,82 @@ function beginAssetFinder(s,map){
   if(FINDER!==s||!map||document.hidden)return;
   s.map=map;s.phase='tracking';MAP_SELECTED=s.id;closeMapInfo();drawPins();
   const panel=document.createElement('section');panel.id='finder-panel';panel.className='finder-panel';
-  panel.innerHTML=`<div class="finder-head"><div><b>${esc(s.id)} · ${esc(getAsset(s.id)?.item)}</b><small>선택한 비품 찾기</small></div><button class="btn" id="finder-end" onclick="endAssetFinder()">찾기 종료</button></div><div class="finder-metrics"><strong id="finder-distance">위치 확인 중</strong><span id="finder-accuracy"></span><span id="finder-direction"></span></div><p id="finder-status" role="status" aria-live="polite">위치 권한을 허용해 주세요. 정확한 신호를 기다리고 있습니다.</p><div class="finder-controls"><button class="btn sm primary" id="finder-auto" onclick="toggleFinderAuto()" title="내 위치와 비품이 함께 보이도록 화면을 조절합니다" aria-pressed="true">자동 맞춤 켜짐</button><button class="btn sm" id="finder-sound" onclick="toggleFinderSound()" aria-pressed="${s.sound}">소리 ${s.sound?'켜짐':'꺼짐'}</button>${s.canVibrate?'<button class="btn sm" id="finder-vibration" onclick="toggleFinderVibration()" aria-pressed="true">진동 켜짐</button>':'<small>진동 미지원 · 소리와 화면으로 안내</small>'}</div><div class="finder-audio-help"><button class="btn sm finder-off" id="finder-sound-test" aria-pressed="false" onclick="testFinderSound()">소리 시험</button>${finderHasVoice()?'<button class="btn sm finder-off" id="finder-voice-test" aria-pressed="false" onclick="testFinderVoice()">음성 시험</button>':''}<span id="finder-audio-status" role="status">시작할 때 시험음이 납니다. 안 들리면 소리 시험을 눌러주세요.</span></div><p class="finder-note">화면을 켜 두고 미디어 음량을 조절하세요. 직선거리 안내이며 안전한 이동 경로가 아닙니다. 저장된 비품 좌표에도 오차가 있을 수 있습니다.</p>`;
+  panel.innerHTML=`<div class="finder-head"><div><b>${esc(s.id)} · ${esc(getAsset(s.id)?.item)}</b><small>선택한 비품 찾기</small></div><button class="btn" id="finder-end" onclick="endAssetFinder()">찾기 종료</button></div><div class="finder-metrics"><strong id="finder-distance">위치 확인 중</strong><span id="finder-accuracy"></span><span id="finder-direction"></span></div><p id="finder-status" role="status" aria-live="polite">위치 권한을 허용해 주세요. 정확한 신호를 기다리고 있습니다.</p><div class="finder-controls"><button class="btn sm primary" id="finder-auto" onclick="toggleFinderAuto()" title="내 위치와 비품이 함께 보이도록 화면을 조절합니다" aria-pressed="true">자동 맞춤 켜짐</button><button class="btn sm" id="finder-sound" onclick="toggleFinderSound()" aria-pressed="${s.sound}">소리 ${s.sound?'켜짐':'꺼짐'}</button><button class="btn sm finder-off" id="finder-heading" aria-pressed="false" onclick="toggleFinderHeading()">방향 표시 켜기</button>${s.canVibrate?'<button class="btn sm" id="finder-vibration" onclick="toggleFinderVibration()" aria-pressed="true">진동 켜짐</button>':'<small>진동 미지원 · 소리와 화면으로 안내</small>'}</div><p class="finder-note" id="finder-heading-status"></p><div class="finder-audio-help"><button class="btn sm finder-off" id="finder-sound-test" aria-pressed="false" onclick="testFinderSound()">소리 시험</button>${finderHasVoice()?'<button class="btn sm finder-off" id="finder-voice-test" aria-pressed="false" onclick="testFinderVoice()">음성 시험</button>':''}<span id="finder-audio-status" role="status">시작할 때 시험음이 납니다. 안 들리면 소리 시험을 눌러주세요.</span></div><p class="finder-note">화면을 켜 두고 미디어 음량을 조절하세요. 직선거리 안내이며 안전한 이동 경로가 아닙니다. 저장된 비품 좌표에도 오차가 있을 수 있습니다.</p>`;
   const box=$('kmap')?.parentElement;if(!box){stopMyPosition();return;}
   box.before(panel);document.querySelector('.map-location-tools')?.setAttribute('hidden','');document.querySelectorAll('.normal-map-control').forEach(el=>el.hidden=true);
-  updateFinderControls(s);if(s.audioError)finderAudioStatus('소리 재생을 시작하지 못했습니다. 소리 시험을 눌러주세요.');showMyPosition(true);
+  finderHeadingButton(s);updateFinderControls(s);if(s.audioError)finderAudioStatus('소리 재생을 시작하지 못했습니다. 소리 시험을 눌러주세요.');showMyPosition(true);
   if(FINDER!==s)return;s.timer=setInterval(()=>finderTick(s,false),250);
   if(navigator.wakeLock?.request)navigator.wakeLock.request('screen').then(lock=>{if(FINDER===s)s.wake=lock;else lock.release().catch(()=>{});}).catch(()=>{});
   panel.scrollIntoView({block:'start',behavior:'smooth'});
 }
+// 방향 센서는 사용자가 켰을 때만 사용하며 위치와 마찬가지로 저장하지 않습니다.
+function finderHeadingButton(s){
+  const el=$('finder-heading');if(FINDER!==s||!el)return;
+  const state=s.headingState||(typeof window.DeviceOrientationEvent==='function'?'off':'unsupported');
+  const names={off:'방향 표시 켜기',requesting:'방향 권한 확인 중',waiting:'방향 신호 대기',on:'✓ 방향 표시 켜짐',denied:'방향 권한 필요',error:'방향 다시 켜기',unsupported:'방향 미지원'};
+  el.textContent=names[state];el.disabled=state==='unsupported';el.setAttribute('aria-pressed',String(['on','waiting','requesting'].includes(state)));
+  el.classList.toggle('finder-on-auto',state==='on');el.classList.toggle('finder-off',['off','unsupported'].includes(state));el.classList.toggle('finder-audio-blocked',['waiting','requesting','denied','error'].includes(state));
+  const hint=$('finder-heading-status');if(hint)hint.textContent=state==='on'?'주황 화살표: 휴대폰 윗부분이 향하는 방향 · 지도 북쪽 고정':state==='waiting'?'방향 확인 중 · 휴대폰을 평평하게 들고 주변 금속에서 떨어져 확인하세요':state==='denied'?'Safari/브라우저의 동작 및 방향 접근을 허용한 후 다시 눌러주세요':state==='error'?'방향 센서에 접근하지 못했습니다. 다시 눌러주세요':state==='unsupported'?'이 브라우저에서는 바라보는 방향을 확인할 수 없습니다.':'방향 표시를 켜면 작은 주황 화살표로 안내합니다. 철골·공구 주변에서는 오차가 날 수 있습니다.';
+}
+function clearFinderHeadingOverlay(s){s.headingOverlay?.remove();s.headingOverlay=null;s.headingElement=null;}
+function stopFinderHeading(s){
+  s.headingRun=(s.headingRun||0)+1;
+  if(s.headingHandler){removeEventListener('deviceorientation',s.headingHandler);removeEventListener('deviceorientationabsolute',s.headingHandler);}
+  if(s.headingScreenHandler){removeEventListener('orientationchange',s.headingScreenHandler);screen.orientation?.removeEventListener?.('change',s.headingScreenHandler);}
+  s.headingHandler=null;s.headingScreenHandler=null;s.headingEnabled=false;s.heading=null;s.headingAt=0;s.headingState='off';clearFinderHeadingOverlay(s);finderHeadingButton(s);
+}
+function drawFinderHeading(s){
+  if(FINDER!==s)return;
+  const fresh=s.headingEnabled&&Number.isFinite(s.heading)&&Date.now()-s.headingAt<=3000&&MY_POSITION&&Date.now()-MY_POSITION.at<=10000&&MAP===s.map;
+  if(!fresh){clearFinderHeadingOverlay(s);if(s.headingEnabled&&s.headingState!=='requesting')s.headingState='waiting';finderHeadingButton(s);return;}
+  s.headingState='on';const pos=MAPX.ll(MY_POSITION.lat,MY_POSITION.lng);
+  if(!s.headingOverlay){
+    const el=document.createElement('div');el.className='finder-heading-pin';el.setAttribute('role','img');
+    el.innerHTML='<div class="finder-heading-rotor"><svg width="14" height="16" viewBox="0 0 14 16" aria-hidden="true"><path d="M7 1 L13 14 L7 11 L1 14 Z" fill="#f97316" stroke="#fff" stroke-width="2" stroke-linejoin="round"/></svg></div>';
+    s.headingElement=el;s.headingOverlay=MAPX.overlay(s.map,pos,el,.5,101);
+  }else s.headingOverlay.move(pos);
+  s.headingElement.querySelector('.finder-heading-rotor').style.transform=`rotate(${s.heading}deg)`;
+  s.headingElement.setAttribute('aria-label',`휴대폰이 향하는 방향: 북쪽 기준 ${Math.round(s.heading)}도`);finderHeadingButton(s);
+}
+async function toggleFinderHeading(){
+  const s=FINDER;if(!s)return;
+  if(s.headingEnabled||s.headingState==='requesting'){stopFinderHeading(s);return;}
+  const Sensor=window.DeviceOrientationEvent;if(!Sensor){s.headingState='unsupported';finderHeadingButton(s);return;}
+  const run=s.headingRun=(s.headingRun||0)+1;s.headingState='requesting';finderHeadingButton(s);
+  try{
+    // iOS 권한 요청은 이 버튼의 직접 클릭에서 실행해야 합니다.
+    if(typeof Sensor.requestPermission==='function'){
+      const permission=await Sensor.requestPermission(true);if(FINDER!==s||s.headingRun!==run)return;
+      if(permission!=='granted'){s.headingState='denied';finderHeadingButton(s);return;}
+    }
+    if(FINDER!==s||s.headingRun!==run||document.hidden)return;
+    s.headingEnabled=true;s.headingState='waiting';s.heading=null;
+    s.headingHandler=e=>{
+      if(FINDER!==s||!s.headingEnabled||document.hidden)return;
+      let base;
+      if(Number.isFinite(e.webkitCompassHeading)){
+        if(Number.isFinite(e.webkitCompassAccuracy)&&(e.webkitCompassAccuracy<0||e.webkitCompassAccuracy>45))return;
+        base=e.webkitCompassHeading;
+      }else if((e.absolute===true||e.type==='deviceorientationabsolute')&&Number.isFinite(e.alpha))base=360-e.alpha;
+      else return; // 북쪽 기준이 없는 상대각도나 GPS 진행 방향으로 대신하지 않습니다.
+      if(!Number.isFinite(base)||base<0||base>360)return;
+      if(Date.now()-s.headingAt>3000)s.heading=null;
+      s.headingBase=base;const angle=Number.isFinite(screen.orientation?.angle)?screen.orientation.angle:Number.isFinite(window.orientation)?window.orientation:0;
+      const next=((base+angle)%360+360)%360;
+      s.heading=Number.isFinite(s.heading)?(s.heading+(((next-s.heading+540)%360)-180)*.45+360)%360:next;
+      s.headingAt=Date.now();drawFinderHeading(s);
+    };
+    s.headingScreenHandler=()=>{s.heading=null;if(Date.now()-s.headingAt<=3000&&Number.isFinite(s.headingBase))s.headingHandler({webkitCompassHeading:s.headingBase});};
+    addEventListener('deviceorientation',s.headingHandler);addEventListener('deviceorientationabsolute',s.headingHandler);
+    addEventListener('orientationchange',s.headingScreenHandler);screen.orientation?.addEventListener?.('change',s.headingScreenHandler);
+    if(MAPX.g())s.map.setOptions({heading:0,tilt:0,rotateControl:false,headingInteractionEnabled:false,tiltInteractionEnabled:false});
+    finderHeadingButton(s);
+  }catch{if(FINDER===s&&s.headingRun===run){stopFinderHeading(s);s.headingState='error';finderHeadingButton(s);}}
+}
+
 function updateFinderArrivalUI(s){
-  if(FINDER!==s)return;if(s.lastArrivalUI===true&&!s.arrived){stopFinderVoice(s);s.voiceNextAt=0;}const panel=$('finder-panel'),button=$('finder-end');panel?.classList.toggle('finder-arrived',s.arrived);button?.classList.toggle('finder-end-arrived',s.arrived);
-  if(s.lastArrivalUI!==s.arrived){s.lastArrivalUI=s.arrived;drawMapDistance();}
+  if(FINDER!==s)return;if(s.lastArrivalKind!==s.arrivalKind){stopFinderVoice(s);s.voiceNextAt=0;s.lastArrivalKind=s.arrivalKind;}const panel=$('finder-panel'),button=$('finder-end');panel?.classList.toggle('finder-arrived',s.arrived);button?.classList.toggle('finder-end-arrived',s.arrived);
+  if(s.lastArrivalUI!==s.arrivalKind){s.lastArrivalUI=s.arrivalKind;drawMapDistance();}
 }
 function setFinderStatus(text){const el=$('finder-status');if(el&&el.textContent!==text)el.textContent=text;}
 function fitFinderView(s,force=false){
@@ -2100,34 +2169,37 @@ function finderAlarmTick(s,interval){
 function finderTick(s,newFix){
   if(FINDER!==s||s.phase!=='tracking')return;
   const a=getAsset(s.id);if(MAP!==s.map||document.hidden||!a||!hasCoord(a)||+a.lat!==s.target.lat||+a.lng!==s.target.lng){stopMyPosition();return;}
-  const now=Date.now(),position=MY_POSITION;
+  drawFinderHeading(s);const now=Date.now(),position=MY_POSITION;
   if(!position){stopFinderVoice(s);setFinderStatus('GPS 확인 중 · 기본 알림 유지');finderAlarmTick(s,3000);return;}
   const raw=distM(position,s.target),reading=finderReading(raw,position.acc,now-position.at);
   if($('finder-distance'))$('finder-distance').textContent=`직선거리 약 ${formatMapDistance(raw)}`;
   if($('finder-direction'))$('finder-direction').textContent=raw<1?'주변을 확인하세요':`비품 방향 ${finderDirection(position,s.target)} · 지도 북쪽 기준`;
   if($('finder-accuracy'))$('finder-accuracy').textContent=`내 위치 오차 ±${formatMapDistance(position.acc)}`;
   if(reading.state==='waiting'){
-    stopFinderVoice(s);s.nearCount=0;s.nearSince=0;s.readings=[];s.band=null;s.arrived=false;updateFinderArrivalUI(s);if(newFix&&now-position.at<=10000)fitFinderView(s);if(now-position.at>10000){clearMapDistance();if($('finder-distance'))$('finder-distance').textContent='위치 갱신 대기';}finderAlarmTick(s,3000);setFinderStatus(reading.message+' · 기본 알림 유지');updateFinderControls(s);return;
+    stopFinderVoice(s);s.nearCount=0;s.nearSince=0;s.readings=[];s.band=null;s.arrived=false;s.arrivalKind=null;updateFinderArrivalUI(s);if(newFix&&now-position.at<=10000)fitFinderView(s);if(now-position.at>10000){clearMapDistance();if($('finder-distance'))$('finder-distance').textContent='위치 갱신 대기';}finderAlarmTick(s,3000);setFinderStatus(reading.message+' · 기본 알림 유지');updateFinderControls(s);return;
   }
   if(newFix){
     s.readings=s.readings.filter(v=>now-v.at<=10000);s.readings.push({d:raw,at:now});s.readings=s.readings.slice(-3);
     const sorted=s.readings.map(v=>v.d).sort((a,b)=>a-b);s.distance=sorted[Math.floor(sorted.length/2)];
-    if(reading.state==='near'&&s.distance<=reading.radius){s.nearCount++;if(!s.nearSince)s.nearSince=now;if(s.nearCount>=3&&now-s.nearSince>=3000)s.arrived=true;}
-    else {s.nearCount=0;s.nearSince=0;if(raw>reading.radius+10)s.arrived=false;}
     s.band=finderBand(s.distance,s.band);fitFinderView(s);
   }
-  // 정지 상태에서는 GPS 콜백이 적을 수 있으므로 신선한 위치가 3초 유지되면 도착으로 판단합니다.
-  if((raw<=1)||(reading.state==='near'&&s.distance<=reading.radius&&s.nearSince&&now-s.nearSince>=3000))s.arrived=true;
+  // 1m 이하는 즉시 목적지 안내, 1m 초과~3m 또는 GPS 오차 범위는 3초 확인합니다.
+  if(raw<=1){s.arrivalKind='destination';s.nearSince=0;}
+  else if(reading.state==='near'){
+    if(!s.nearSince)s.nearSince=now;
+    s.arrivalKind=now-s.nearSince>=3000?'nearby':null;
+  }else{s.arrivalKind=null;s.nearSince=0;}
+  s.arrived=!!s.arrivalKind;
   updateFinderArrivalUI(s);
   if(s.arrived){
-    setFinderStatus('근처에 도착했습니다. QR코드 또는 NFC로 확인하세요.');
+    setFinderStatus(finderArrivalText(s)+(raw>3?' · GPS 오차 범위 기준':''));
     const voice=s.sound&&finderHasVoice()&&(!s.voiceError||now>=(s.voiceNextAt||0));
     if(voice){if(s.speechPurpose==='unlock')stopFinderVoice(s,true);if(!s.speech&&now>=(s.voiceNextAt||0))speakFinderVoice(s);}
     finderAlarmTick(s,500);
     return;
   }
   stopFinderVoice(s);
-  if(reading.state==='near')setFinderStatus('근처 위치 확인 중 · GPS 오차 범위를 확인하고 있습니다');
+  if(reading.state==='near')setFinderStatus(raw>3?'근처 위치 확인 중 · GPS 오차 범위 기준으로 3초 확인합니다':'근처 위치 확인 중 · 3초 유지되면 안내합니다');
   else setFinderStatus(s.band===4?'50m 초과 · 4초 간격으로 알림 유지':!s.sound&&!s.vibration?'소리·진동 꺼짐 · 지도와 거리로 확인하세요':'가까워질수록 소리·진동 간격이 짧아집니다');updateFinderControls(s);
   const interval=[700,1200,2000,3000,4000][s.band??4];
   finderAlarmTick(s,interval);
@@ -3291,7 +3363,7 @@ function stopVoicePreview(){
   try{if(navigator.audioSession&&s.previousAudioSession)navigator.audioSession.type=s.previousAudioSession;}catch{}
 }
 function openVoicePreview(){
-  openModal(`<div class="m-head"><h2>안내 음성 미리듣기</h2><button class="icon-btn" onclick="closeModal()" aria-label="닫기">×</button></div><div class="m-body voice-preview"><p class="voice-sample">근처에 도착했습니다.<br>큐알 코드 또는 엔에프씨로 확인하세요.</p><p class="hint">실제 찾기와 같은 한국어 음성과 삐 소리를 재생합니다.</p><div class="voice-actions"><button class="btn primary" onclick="playVoicePreview()">▶ 음성 듣기</button><button class="btn" onclick="stopVoicePreviewSpeech();document.getElementById('preview-voice-status').textContent='재생을 중지했습니다'">중지</button></div><p id="preview-voice-status" role="status" class="hint">음성 듣기를 눌러 확인하세요.</p><p class="hint">미디어 음량과 블루투스 출력을 확인해 주세요.</p></div><div class="m-foot"><button class="btn" onclick="closeModal()">닫기</button></div>`);
+  openModal(`<div class="m-head"><h2>안내 음성 미리듣기</h2><button class="icon-btn" onclick="closeModal()" aria-label="닫기">×</button></div><div class="m-body voice-preview"><p class="voice-sample">근처에 도착하였습니다.<br>큐알 코드 또는 엔에프씨로 확인하세요.</p><p class="hint">실제 찾기와 같은 한국어 음성과 삐 소리를 재생합니다.</p><div class="voice-actions"><button class="btn primary" onclick="playVoicePreview()">▶ 음성 듣기</button><button class="btn" onclick="stopVoicePreviewSpeech();document.getElementById('preview-voice-status').textContent='재생을 중지했습니다'">중지</button></div><p id="preview-voice-status" role="status" class="hint">음성 듣기를 눌러 확인하세요.</p><p class="hint">미디어 음량과 블루투스 출력을 확인해 주세요.</p></div><div class="m-foot"><button class="btn" onclick="closeModal()">닫기</button></div>`);
   VOICE_PREVIEW={media:new window.Audio(FINDER_VOICE_URL),previousAudioSession:navigator.audioSession?.type};
 }
 function playVoicePreview(){
@@ -3615,7 +3687,7 @@ function showInstall() {
   box.innerHTML = h; box.classList.remove('hidden');
 }
 
-const BUILD = '2026-11-21i';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
+const BUILD = '2026-11-21j';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
 async function checkUpdate() {
   try {
     const t = await (await fetch(location.pathname + '?v=' + Date.now(), { cache: 'reload' })).text();
