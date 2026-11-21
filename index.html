@@ -1946,40 +1946,48 @@ function playFinderMedia(s){
   if(FINDER!==s||!s.sound||!s.media)return;
   try{try{s.media.currentTime=0;}catch{}const promise=s.media.play();Promise.resolve(promise).then(()=>{if(FINDER===s){s.mediaReady=true;s.audioError=false;if(s.soundTestState==='pending')finderTestState(s,'sound','playing');updateFinderControls(s);}}).catch(error=>{if(error?.name==='AbortError'&&(s.speech||FINDER!==s||!s.sound))return;finderAudioFailure(s);});}catch{finderAudioFailure(s);}
 }
-const ARRIVAL_SPEECH_TEXT='비품이 가까이에 있어요. 큐알 코드나 엔에프씨 태그로 확인해 주세요.';
+const ARRIVAL_SPEECH_TEXT='근처에 도착했습니다. 큐알 코드 또는 엔에프씨로 확인하세요.';
+// 안내 파일에는 0.5초 간격 경고음도 포함합니다. 기기 음성 합성/설치 음성에 의존하지 않습니다.
+const FINDER_VOICE_URL='./sounds/arrival-ko-v1.mp3';
 const finderVoiceActive=s=>!!(s.speech&&s.speechPurpose!=='unlock'&&s.voiceStarted);
-function finderSoundReady(s){return finderAudioReady(s)&&!s.audioError;}
-const finderHasVoice=()=>!!(window.speechSynthesis&&window.SpeechSynthesisUtterance);
-function makeKoreanSpeech(text){
-  const u=new SpeechSynthesisUtterance(text);u.lang='ko-KR';u.rate=1;u.pitch=1;u.volume=1;
-  const uri=lsGet('aam_voice_uri'),voice=speechSynthesis.getVoices().find(v=>v.voiceURI===uri&&/^ko(?:[-_]|$)/i.test(v.lang));const fallback=speechSynthesis.getVoices().find(v=>/^ko(?:[-_]|$)/i.test(v.lang));if(voice||fallback)u.voice=voice||fallback;return u;
-}
+function finderSoundReady(s){return finderVoiceActive(s)||(finderAudioReady(s)&&!s.audioError);}
+const finderHasVoice=()=>typeof window.Audio==='function';
 function stopFinderVoice(s,all=false){
   if(!s?.speech||(!all&&s.speechPurpose!=='arrival'))return;
-  s.speech=null;s.speechPurpose=null;s.voiceStarted=false;clearTimeout(s.speechTimer);clearTimeout(s.speechStartTimer);s.voiceNextAt=0;if(s.voiceTestState==='playing'||s.voiceTestState==='pending')finderTestState(s,'voice','stopped');
-  try{speechSynthesis.cancel();}catch{}
+  const media=s.speech;s.speech=null;s.speechPurpose=null;s.voiceStarted=false;
+  clearTimeout(s.speechTimer);clearTimeout(s.speechStartTimer);s.voiceNextAt=0;
+  media.onplaying=null;media.onended=null;media.onerror=null;try{media.pause();media.currentTime=0;media.muted=false;media.volume=1;}catch{}
+  if(['playing','pending'].includes(s.voiceTestState))finderTestState(s,'voice','stopped');
 }
 function speakFinderVoice(s,purpose='arrival'){
   if(FINDER!==s||!s.sound||document.hidden||!finderHasVoice()||s.speech)return false;
-  const u=makeKoreanSpeech(purpose==='unlock'?'안내':ARRIVAL_SPEECH_TEXT);
-  if(purpose==='unlock')u.volume=0;
-  s.speech=u;s.speechPurpose=purpose;s.voiceError=false;finderPlaybackSession();
-  const active=()=>FINDER===s&&s.speech===u;
-  u.onstart=()=>{if(!active())return;s.voiceStarted=true;clearTimeout(s.speechStartTimer);if(purpose==='test')finderTestState(s,'voice','playing');if(purpose!=='unlock')s.voiceReady=true;updateFinderControls(s);if(purpose==='arrival')finderAudioStatus('삐 소리를 유지하며 도착 음성도 안내합니다. 소리 끄기 또는 찾기 종료로 멈출 수 있습니다.');};
-  u.onend=()=>{if(!active())return;clearTimeout(s.speechTimer);clearTimeout(s.speechStartTimer);s.speech=null;s.speechPurpose=null;s.voiceStarted=false;s.voiceNextAt=purpose==='unlock'?0:Date.now()+5000;if(purpose==='test')finderTestState(s,'voice','done');updateFinderControls(s);};
-  u.onerror=()=>{if(!active())return;clearTimeout(s.speechTimer);clearTimeout(s.speechStartTimer);s.speech=null;s.speechPurpose=null;s.voiceStarted=false;s.voiceReady=false;s.voiceError=purpose!=='unlock';s.voiceNextAt=purpose==='unlock'?0:Date.now()+30000;if(purpose==='test')finderTestState(s,'voice','error');updateFinderControls(s);if(purpose==='unlock')return;finderAudioStatus('음성 재생을 시작하지 못해 삐 소리로 안내합니다. 음성 시험을 눌러주세요.');};
-  try{speechSynthesis.resume?.();speechSynthesis.speak(u);if(!s.voiceStarted)s.speechStartTimer=setTimeout(()=>{if(!active()||s.voiceStarted)return;u.onerror();try{speechSynthesis.cancel();}catch{}},3000);s.speechTimer=setTimeout(()=>{if(!active())return;stopFinderVoice(s,true);s.voiceError=true;s.voiceNextAt=Date.now()+30000;if(purpose==='test')finderTestState(s,'voice','error');finderAudioStatus('음성 응답이 없습니다. 음성 시험으로 다시 확인해 주세요.');},20000);return true;}catch{u.onerror();return false;}
+  let media;try{media=s.voiceMedia||(s.voiceMedia=new window.Audio(FINDER_VOICE_URL));}catch{finderTestState(s,'voice','error');return false;}
+  media.preload='auto';media.playsInline=true;media.muted=purpose==='unlock';media.volume=purpose==='unlock'?0:1;
+  s.speech=media;s.speechPurpose=purpose;s.voiceError=false;
+  const active=()=>FINDER===s&&s.speech===media;
+  const failure=reason=>{if(!active())return;stopFinderVoice(s,true);s.voiceError=purpose!=='unlock';s.voiceNextAt=purpose==='unlock'?0:Date.now()+10000;
+    if(purpose==='test')finderTestState(s,'voice','error');
+    if(purpose!=='unlock')finderAudioStatus('음성 재생 실패 · '+reason+' · 삐 소리는 유지합니다. 음성 시험을 다시 눌러주세요.');};
+  const started=()=>{if(!active()||s.voiceStarted)return;clearTimeout(s.speechStartTimer);
+    if(purpose==='unlock'){stopFinderVoice(s,true);return;}
+    s.voiceStarted=true;s.voiceReady=true;if(purpose==='test')finderTestState(s,'voice','playing');updateFinderControls(s);
+    finderAudioStatus('한국어 도착 안내와 삐 소리를 함께 재생합니다.');};
+  media.onplaying=started;
+  media.onended=()=>{if(!active())return;stopFinderVoice(s,true);s.voiceNextAt=Date.now()+5000;if(purpose==='test')finderTestState(s,'voice','done');updateFinderControls(s);};
+  media.onerror=()=>failure(({1:'재생 취소',2:'음성 파일 다운로드 오류',3:'음성 파일 해석 오류',4:'음성 파일 형식 또는 주소 오류'})[media.error?.code]||'음성 파일 재생 오류');
+  s.speechStartTimer=setTimeout(()=>failure('재생 시작 응답 없음'),10000);
+  s.speechTimer=setTimeout(()=>failure('재생 종료 응답 없음'),20000);
+  try{media.currentTime=0;Promise.resolve(media.play()).then(started).catch(error=>failure(error?.name==='NotAllowedError'?'브라우저 재생 차단':error?.name||'재생 오류'));return true;}catch(error){failure(error?.name||'재생 오류');return false;}
 }
 function testFinderVoice(){
   const s=FINDER;if(!s)return;
   if(['pending','playing'].includes(s.voiceTestState)){stopFinderVoice(s,true);s.voiceNextAt=Date.now()+5000;finderAudioStatus('음성 시험을 중지했습니다. 찾기 알림은 유지합니다.');return;}
-  if(!finderHasVoice()){finderTestState(s,'voice','error');finderAudioStatus('이 브라우저는 음성을 지원하지 않아 삐 소리로 안내합니다.');return;}
   stopFinderVoice(s,true);s.sound=true;s.voiceError=false;finderTestState(s,'voice','pending');
-  try{speechSynthesis.cancel();}catch{}speakFinderVoice(s,'test');updateFinderControls(s);
-  finderAudioStatus('휴대폰 한국어 목소리로 시험합니다. 실제 소리가 들리는지 확인하세요.');
+  finderAudioStatus('한국어 안내 파일을 재생합니다. 실제 소리가 들리는지 확인하세요.');speakFinderVoice(s,'test');updateFinderControls(s);
 }
 
 function finderTone(s,arrival=false){
+  if(finderVoiceActive(s))return; // 음성 파일 자체의 경고음과 중복 재생하지 않습니다.
   if(FINDER===s&&s.sound&&s.media&&!(s.speech&&s.speechPurpose!=='unlock'&&s.audio?.state==='running')){playFinderMedia(s);if(arrival)for(const delay of [270,540]){const timer=setTimeout(()=>{s.audioTimers.delete(timer);playFinderMedia(s);},delay);s.audioTimers.add(timer);}return;}
   if(FINDER!==s||!s.sound||s.audio?.state!=='running')return;
   const ctx=s.audio,at=ctx.currentTime;
@@ -2002,6 +2010,7 @@ function finderPulse(s,arrival=false,withTone=true){
 function clearAssetFinder(){
   const s=FINDER;if(!s)return;FINDER=null;clearInterval(s.timer);clearTimeout(s.soundTestTimer);stopFinderVoice(s,true);finderSilence(s,true);
   if(s.audio)try{Promise.resolve(s.audio.close()).catch(()=>{});}catch{}
+  if(s.voiceMedia)try{s.voiceMedia.removeAttribute('src');s.voiceMedia.load();}catch{}
   if(s.media)try{s.media.onerror=null;s.media.removeAttribute('src');s.media.load();}catch{}if(s.mediaURL)URL.revokeObjectURL(s.mediaURL);
   try{if(navigator.audioSession&&s.previousAudioSession)navigator.audioSession.type=s.previousAudioSession;}catch{}
   if(s.wake)try{Promise.resolve(s.wake.release()).catch(()=>{});}catch{}
@@ -2108,7 +2117,7 @@ function finderTick(s,newFix){
     s.band=finderBand(s.distance,s.band);fitFinderView(s);
   }
   // 정지 상태에서는 GPS 콜백이 적을 수 있으므로 신선한 위치가 3초 유지되면 도착으로 판단합니다.
-  if(reading.state==='near'&&s.distance<=reading.radius&&s.nearSince&&now-s.nearSince>=3000)s.arrived=true;
+  if((raw<=1)||(reading.state==='near'&&s.distance<=reading.radius&&s.nearSince&&now-s.nearSince>=3000))s.arrived=true;
   updateFinderArrivalUI(s);
   if(s.arrived){
     setFinderStatus('근처에 도착했습니다. QR코드 또는 NFC로 확인하세요.');
@@ -3270,38 +3279,28 @@ function applyPick() {
   const cb = PICK_CB, pt = { ...PICK }; closeModal(); if (cb) cb(pt);
 }
 
-/* 휴대폰 한국어 음성 미리듣기 및 기기별 목소리 선택 */
+/* 실제 찾기에 쓰는 안내 파일 미리듣기 */
 let VOICE_PREVIEW=null;
 function stopVoicePreviewSpeech(){
-  const s=VOICE_PREVIEW;if(!s)return;clearTimeout(s.timer);const utterance=s.utterance;s.utterance=null;
-  if(utterance)try{speechSynthesis.cancel();}catch{}
+  const s=VOICE_PREVIEW;if(!s)return;clearTimeout(s.timer);
+  if(s.media){s.media.onended=null;s.media.onerror=null;try{s.media.pause();s.media.currentTime=0;}catch{}}
 }
 function stopVoicePreview(){
   const s=VOICE_PREVIEW;if(!s)return;stopVoicePreviewSpeech();VOICE_PREVIEW=null;
-  if(s.listener)window.speechSynthesis?.removeEventListener('voiceschanged',s.listener);
+  if(s.media)try{s.media.removeAttribute('src');s.media.load();}catch{}
   try{if(navigator.audioSession&&s.previousAudioSession)navigator.audioSession.type=s.previousAudioSession;}catch{}
 }
-function refreshPreviewVoices(s){
-  if(VOICE_PREVIEW!==s||!$('preview-voice'))return;
-  const select=$('preview-voice'),selected=s.voices?.[Number(select.value)]?.voiceURI;
-  s.voices=speechSynthesis.getVoices().filter(v=>/^ko(?:[-_]|$)/i.test(v.lang));
-  const uri=selected||lsGet('aam_voice_uri');const choice=s.voices.findIndex(v=>v.voiceURI===uri);
-  select.innerHTML='<option value="-1" '+(choice<0?'selected':'')+'>휴대폰 기본 한국어 음성 (추천)</option>'+s.voices.map((v,i)=>`<option value="${i}" ${i===choice?'selected':''}>${esc(v.name)} (${esc(v.lang)})</option>`).join('');
-}
 function openVoicePreview(){
-  const supported='speechSynthesis'in window&&'SpeechSynthesisUtterance'in window;
-  openModal(`<div class="m-head"><h2>안내 음성 미리듣기</h2><button class="icon-btn" onclick="closeModal()" aria-label="닫기">×</button></div><div class="m-body voice-preview"><p class="voice-sample">비품이 가까이에 있어요.<br>큐알 코드나 엔에프씨 태그로 확인해 주세요.</p>${supported?'<label for="preview-voice">한국어 목소리<select id="preview-voice" class="inp"><option value="-1">기기 기본 한국어 음성</option></select></label><p class="hint">휴대폰 기본 한국어 목소리를 자연스러운 속도와 높낮이로 재생합니다. 다른 목소리를 고르면 이 기기의 찾기 안내에도 적용됩니다.</p><div class="voice-actions"><button class="btn primary" onclick="playVoicePreview()">▶ 음성 듣기</button><button class="btn" onclick="stopVoicePreviewSpeech();document.getElementById(\'preview-voice-status\').textContent=\'재생을 중지했습니다\'">중지</button></div>':'<p>이 브라우저는 음성 미리듣기를 지원하지 않습니다. 최신 Safari 또는 Chrome에서 열어 주세요.</p>'}<p id="preview-voice-status" role="status" class="hint">도착 확인 시 이 문장으로 안내하고, 문장이 끝난 뒤 5초 쉬고 반복합니다.</p><p class="hint">소리가 안 들리면 미디어 음량과 블루투스 출력을 확인해 주세요.</p></div><div class="m-foot"><span class="sp"></span><button class="btn" onclick="closeModal()">닫기</button></div>`);
-  if(!supported)return;const s={voices:[],utterance:null,previousAudioSession:navigator.audioSession?.type};VOICE_PREVIEW=s;
-  s.listener=()=>refreshPreviewVoices(s);speechSynthesis.addEventListener('voiceschanged',s.listener);refreshPreviewVoices(s);
+  openModal(`<div class="m-head"><h2>안내 음성 미리듣기</h2><button class="icon-btn" onclick="closeModal()" aria-label="닫기">×</button></div><div class="m-body voice-preview"><p class="voice-sample">근처에 도착했습니다.<br>큐알 코드 또는 엔에프씨로 확인하세요.</p><p class="hint">실제 찾기와 같은 한국어 음성과 삐 소리를 재생합니다.</p><div class="voice-actions"><button class="btn primary" onclick="playVoicePreview()">▶ 음성 듣기</button><button class="btn" onclick="stopVoicePreviewSpeech();document.getElementById('preview-voice-status').textContent='재생을 중지했습니다'">중지</button></div><p id="preview-voice-status" role="status" class="hint">음성 듣기를 눌러 확인하세요.</p><p class="hint">미디어 음량과 블루투스 출력을 확인해 주세요.</p></div><div class="m-foot"><button class="btn" onclick="closeModal()">닫기</button></div>`);
+  VOICE_PREVIEW={media:new window.Audio(FINDER_VOICE_URL),previousAudioSession:navigator.audioSession?.type};
 }
 function playVoicePreview(){
   const s=VOICE_PREVIEW;if(!s)return;stopVoicePreviewSpeech();finderPlaybackSession();
-  const voice=s.voices[Number($('preview-voice').value)];lsSet('aam_voice_uri',voice?.voiceURI||null);
-  const utterance=makeKoreanSpeech(ARRIVAL_SPEECH_TEXT);s.utterance=utterance;
-  utterance.onstart=()=>{if(VOICE_PREVIEW===s&&s.utterance===utterance)$('preview-voice-status').textContent='음성을 재생 중입니다.';};
-  utterance.onend=()=>{if(VOICE_PREVIEW===s&&s.utterance===utterance){clearTimeout(s.timer);s.utterance=null;$('preview-voice-status').textContent='미리듣기를 마쳤습니다. 다른 목소리도 선택해서 들어보세요.';}};
-  utterance.onerror=()=>{if(VOICE_PREVIEW===s&&s.utterance===utterance){clearTimeout(s.timer);s.utterance=null;$('preview-voice-status').textContent='음성을 재생하지 못했습니다. 한국어 음성 설정을 확인한 뒤 다시 눌러 주세요.';}};
-  try{speechSynthesis.speak(utterance);s.timer=setTimeout(()=>{if(VOICE_PREVIEW===s&&s.utterance===utterance){stopVoicePreviewSpeech();$('preview-voice-status').textContent='음성 응답이 없습니다. 한국어 음성 설정을 확인해 주세요.';}},15000);}catch{utterance.onerror();}
+  const media=s.media,active=()=>VOICE_PREVIEW===s;
+  media.onended=()=>{if(active())$('preview-voice-status').textContent='미리듣기를 마쳤습니다.';};
+  media.onerror=()=>{if(active())$('preview-voice-status').textContent='음성 파일 재생 실패 · 미디어 음량과 연결을 확인해 주세요.';};
+  $('preview-voice-status').textContent='음성 재생 준비 중';
+  try{Promise.resolve(media.play()).then(()=>{if(active())$('preview-voice-status').textContent='음성과 삐 소리를 재생 중입니다.';}).catch(media.onerror);}catch{media.onerror();}
 }
 addEventListener('pagehide',stopVoicePreview);
 document.addEventListener('visibilitychange',()=>{if(document.hidden)stopVoicePreview();});
@@ -3616,7 +3615,7 @@ function showInstall() {
   box.innerHTML = h; box.classList.remove('hidden');
 }
 
-const BUILD = '2026-11-21h';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
+const BUILD = '2026-11-21i';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
 async function checkUpdate() {
   try {
     const t = await (await fetch(location.pathname + '?v=' + Date.now(), { cache: 'reload' })).text();
