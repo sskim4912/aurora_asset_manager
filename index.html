@@ -594,7 +594,7 @@ details[open].more summary::before{transform:rotate(90deg)}
 @media(max-width:640px){.finder-panel{padding:10px}.finder-head .btn{font-size:12px;padding:7px 9px}.finder-metrics strong{font-size:19px}.finder-controls .btn{flex:1;min-width:100px}#finder-status{font-size:12px}.finder-panel+.map-box{height:52dvh;min-height:300px}}
 
 
-.finder-controls .finder-on-auto{background:#0b57a3;border-color:#0b57a3;color:#fff}.finder-controls .finder-on-sound{background:#166534;border-color:#166534;color:#fff}.finder-controls .finder-off{background:#eef0f3;border-color:#b8c0cc;color:#475569}.finder-controls .finder-audio-blocked{background:#fff4e5;border-color:#f59e0b;color:#92400e}.finder-controls .btn{white-space:normal;word-break:keep-all}.finder-audio-help{display:flex;align-items:center;gap:8px;margin-top:8px}.finder-audio-help .btn{flex:none;min-height:36px}.finder-audio-help span{font-size:11px;color:var(--sub);line-height:1.4;overflow-wrap:anywhere}
+.finder-panel .finder-on-auto{background:#0b57a3;border-color:#0b57a3;color:#fff}.finder-panel .finder-on-sound{background:#166534;border-color:#166534;color:#fff}.finder-panel .finder-off{background:#eef0f3;border-color:#b8c0cc;color:#475569}.finder-panel .finder-audio-blocked{background:#fff4e5;border-color:#f59e0b;color:#92400e}.finder-controls .btn{white-space:normal;word-break:keep-all}.finder-audio-help{display:flex;align-items:center;gap:8px;margin-top:8px}.finder-audio-help .btn{flex:none;min-height:36px}.finder-audio-help span{font-size:11px;color:var(--sub);line-height:1.4;overflow-wrap:anywhere}
 
 .finder-panel.finder-arrived{border-color:#16a34a}.finder-head .finder-end-arrived{background:#b91c1c;border-color:#b91c1c;color:#fff;font-weight:800;box-shadow:0 0 0 2px #fee2e2}.distance-badge.finder-arrival-badge{background:#ecfdf5;border-color:#16a34a;color:#166534}
 .voice-preview .voice-sample{padding:14px;background:#eff6ff;border-radius:10px;font-size:16px;line-height:1.7;font-weight:650}.voice-preview label{display:flex;flex-direction:column;gap:6px;font-size:13px}.voice-preview select{width:100%;min-width:0}.voice-actions{display:flex;gap:8px;margin:14px 0}.voice-actions .btn{min-height:42px}
@@ -1932,12 +1932,19 @@ function finderWavURL(){
   return URL.createObjectURL(new Blob([buffer],{type:'audio/wav'}));
 }
 function finderAudioReady(s){return s.media?!!s.mediaReady:s.audio?.state==='running';}
+function finderTestState(s,kind,state){
+  if(FINDER!==s)return;s[kind+'TestState']=state;
+  const el=$('finder-'+kind+'-test');if(!el)return;
+  const label=kind==='sound'?'소리 시험':'음성 시험';
+  el.textContent=label+({idle:'',pending:' · 준비 중',playing:' · 재생 중 (중지)',done:' · 재생 완료',stopped:' · 중지됨',error:' · 재생 실패'}[state]||'');
+  el.classList.toggle('finder-on-auto',state==='playing'||state==='pending');el.classList.toggle('finder-on-sound',state==='done');el.classList.toggle('finder-audio-blocked',state==='error');el.classList.toggle('finder-off',['idle','stopped'].includes(state));el.setAttribute('aria-pressed',String(state==='playing'||state==='pending'));
+}
 function finderAudioStatus(text){const el=$('finder-audio-status');if(el)el.textContent=text;}
-function finderAudioFailure(s){if(FINDER!==s)return;s.mediaReady=false;s.audioError=true;updateFinderControls(s);finderAudioStatus('소리 재생이 중단됐습니다. 소리 시험을 눌러 다시 시작해 주세요.');}
+function finderAudioFailure(s){if(FINDER!==s)return;s.mediaReady=false;s.audioError=true;if(['pending','playing'].includes(s.soundTestState))finderTestState(s,'sound','error');updateFinderControls(s);finderAudioStatus('소리 재생이 중단됐습니다. 소리 시험을 눌러 다시 시작해 주세요.');}
 function finderPlaybackSession(){try{if(navigator.audioSession)navigator.audioSession.type='playback';}catch{}}
 function playFinderMedia(s){
   if(FINDER!==s||!s.sound||!s.media)return;
-  try{try{s.media.currentTime=0;}catch{}const promise=s.media.play();Promise.resolve(promise).then(()=>{if(FINDER===s){s.mediaReady=true;s.audioError=false;updateFinderControls(s);}}).catch(error=>{if(error?.name==='AbortError'&&(s.speech||FINDER!==s||!s.sound))return;finderAudioFailure(s);});}catch{finderAudioFailure(s);}
+  try{try{s.media.currentTime=0;}catch{}const promise=s.media.play();Promise.resolve(promise).then(()=>{if(FINDER===s){s.mediaReady=true;s.audioError=false;if(s.soundTestState==='pending')finderTestState(s,'sound','playing');updateFinderControls(s);}}).catch(error=>{if(error?.name==='AbortError'&&(s.speech||FINDER!==s||!s.sound))return;finderAudioFailure(s);});}catch{finderAudioFailure(s);}
 }
 const ARRIVAL_SPEECH_TEXT='비품이 가까이에 있어요. 큐알 코드나 엔에프씨 태그로 확인해 주세요.';
 const finderVoiceActive=s=>!!(s.speech&&s.speechPurpose!=='unlock'&&s.voiceStarted);
@@ -1945,11 +1952,11 @@ function finderSoundReady(s){return finderAudioReady(s)&&!s.audioError;}
 const finderHasVoice=()=>!!(window.speechSynthesis&&window.SpeechSynthesisUtterance);
 function makeKoreanSpeech(text){
   const u=new SpeechSynthesisUtterance(text);u.lang='ko-KR';u.rate=1;u.pitch=1;u.volume=1;
-  const uri=lsGet('aam_voice_uri'),voice=speechSynthesis.getVoices().find(v=>v.voiceURI===uri&&/^ko(?:[-_]|$)/i.test(v.lang));if(voice)u.voice=voice;return u;
+  const uri=lsGet('aam_voice_uri'),voice=speechSynthesis.getVoices().find(v=>v.voiceURI===uri&&/^ko(?:[-_]|$)/i.test(v.lang));const fallback=speechSynthesis.getVoices().find(v=>/^ko(?:[-_]|$)/i.test(v.lang));if(voice||fallback)u.voice=voice||fallback;return u;
 }
 function stopFinderVoice(s,all=false){
   if(!s?.speech||(!all&&s.speechPurpose!=='arrival'))return;
-  s.speech=null;s.speechPurpose=null;s.voiceStarted=false;clearTimeout(s.speechTimer);s.voiceNextAt=0;
+  s.speech=null;s.speechPurpose=null;s.voiceStarted=false;clearTimeout(s.speechTimer);clearTimeout(s.speechStartTimer);s.voiceNextAt=0;if(s.voiceTestState==='playing'||s.voiceTestState==='pending')finderTestState(s,'voice','stopped');
   try{speechSynthesis.cancel();}catch{}
 }
 function speakFinderVoice(s,purpose='arrival'){
@@ -1958,20 +1965,22 @@ function speakFinderVoice(s,purpose='arrival'){
   if(purpose==='unlock')u.volume=0;
   s.speech=u;s.speechPurpose=purpose;s.voiceError=false;finderPlaybackSession();
   const active=()=>FINDER===s&&s.speech===u;
-  u.onstart=()=>{if(!active())return;s.voiceStarted=true;if(purpose!=='unlock')s.voiceReady=true;updateFinderControls(s);if(purpose==='arrival')finderAudioStatus('삐 소리를 유지하며 도착 음성도 안내합니다. 소리 끄기 또는 찾기 종료로 멈출 수 있습니다.');};
-  u.onend=()=>{if(!active())return;clearTimeout(s.speechTimer);s.speech=null;s.speechPurpose=null;s.voiceStarted=false;s.voiceNextAt=purpose==='unlock'?0:Date.now()+5000;updateFinderControls(s);};
-  u.onerror=()=>{if(!active())return;clearTimeout(s.speechTimer);s.speech=null;s.speechPurpose=null;s.voiceStarted=false;s.voiceReady=false;s.voiceError=true;updateFinderControls(s);finderAudioStatus('음성 재생을 시작하지 못해 삐 소리로 안내합니다. 음성 시험을 눌러주세요.');};
-  try{speechSynthesis.speak(u);s.speechTimer=setTimeout(()=>{if(!active())return;stopFinderVoice(s,true);s.voiceError=true;finderAudioStatus('음성 응답이 없습니다. 음성 시험으로 다시 확인해 주세요.');},20000);return true;}catch{u.onerror();return false;}
+  u.onstart=()=>{if(!active())return;s.voiceStarted=true;clearTimeout(s.speechStartTimer);if(purpose==='test')finderTestState(s,'voice','playing');if(purpose!=='unlock')s.voiceReady=true;updateFinderControls(s);if(purpose==='arrival')finderAudioStatus('삐 소리를 유지하며 도착 음성도 안내합니다. 소리 끄기 또는 찾기 종료로 멈출 수 있습니다.');};
+  u.onend=()=>{if(!active())return;clearTimeout(s.speechTimer);clearTimeout(s.speechStartTimer);s.speech=null;s.speechPurpose=null;s.voiceStarted=false;s.voiceNextAt=purpose==='unlock'?0:Date.now()+5000;if(purpose==='test')finderTestState(s,'voice','done');updateFinderControls(s);};
+  u.onerror=()=>{if(!active())return;clearTimeout(s.speechTimer);clearTimeout(s.speechStartTimer);s.speech=null;s.speechPurpose=null;s.voiceStarted=false;s.voiceReady=false;s.voiceError=purpose!=='unlock';s.voiceNextAt=purpose==='unlock'?0:Date.now()+30000;if(purpose==='test')finderTestState(s,'voice','error');updateFinderControls(s);if(purpose==='unlock')return;finderAudioStatus('음성 재생을 시작하지 못해 삐 소리로 안내합니다. 음성 시험을 눌러주세요.');};
+  try{speechSynthesis.resume?.();speechSynthesis.speak(u);if(!s.voiceStarted)s.speechStartTimer=setTimeout(()=>{if(!active()||s.voiceStarted)return;u.onerror();try{speechSynthesis.cancel();}catch{}},3000);s.speechTimer=setTimeout(()=>{if(!active())return;stopFinderVoice(s,true);s.voiceError=true;s.voiceNextAt=Date.now()+30000;if(purpose==='test')finderTestState(s,'voice','error');finderAudioStatus('음성 응답이 없습니다. 음성 시험으로 다시 확인해 주세요.');},20000);return true;}catch{u.onerror();return false;}
 }
 function testFinderVoice(){
   const s=FINDER;if(!s)return;
-  if(!finderHasVoice()){finderAudioStatus('이 브라우저는 음성을 지원하지 않아 삐 소리로 안내합니다.');return;}
-  stopFinderVoice(s,true);s.sound=true;s.voiceError=false;speakFinderVoice(s,'test');updateFinderControls(s);
-  finderAudioStatus('휴대폰 한국어 목소리로 안내 문장을 재생합니다.');
+  if(['pending','playing'].includes(s.voiceTestState)){stopFinderVoice(s,true);s.voiceNextAt=Date.now()+5000;finderAudioStatus('음성 시험을 중지했습니다. 찾기 알림은 유지합니다.');return;}
+  if(!finderHasVoice()){finderTestState(s,'voice','error');finderAudioStatus('이 브라우저는 음성을 지원하지 않아 삐 소리로 안내합니다.');return;}
+  stopFinderVoice(s,true);s.sound=true;s.voiceError=false;finderTestState(s,'voice','pending');
+  try{speechSynthesis.cancel();}catch{}speakFinderVoice(s,'test');updateFinderControls(s);
+  finderAudioStatus('휴대폰 한국어 목소리로 시험합니다. 실제 소리가 들리는지 확인하세요.');
 }
 
 function finderTone(s,arrival=false){
-  if(FINDER===s&&s.sound&&s.media){playFinderMedia(s);if(arrival)for(const delay of [270,540]){const timer=setTimeout(()=>{s.audioTimers.delete(timer);playFinderMedia(s);},delay);s.audioTimers.add(timer);}return;}
+  if(FINDER===s&&s.sound&&s.media&&!(s.speech&&s.speechPurpose!=='unlock'&&s.audio?.state==='running')){playFinderMedia(s);if(arrival)for(const delay of [270,540]){const timer=setTimeout(()=>{s.audioTimers.delete(timer);playFinderMedia(s);},delay);s.audioTimers.add(timer);}return;}
   if(FINDER!==s||!s.sound||s.audio?.state!=='running')return;
   const ctx=s.audio,at=ctx.currentTime;
   try{for(const offset of arrival?[0,.25,.5]:[0]){
@@ -1991,7 +2000,7 @@ function finderPulse(s,arrival=false,withTone=true){
   if(FINDER===s&&s.vibration&&s.canVibrate)try{if(navigator.vibrate(arrival?[120,100,120]:90)===false){s.canVibrate=false;s.vibration=false;updateFinderControls(s);}}catch{s.canVibrate=false;s.vibration=false;updateFinderControls(s);}
 }
 function clearAssetFinder(){
-  const s=FINDER;if(!s)return;FINDER=null;clearInterval(s.timer);stopFinderVoice(s,true);finderSilence(s,true);
+  const s=FINDER;if(!s)return;FINDER=null;clearInterval(s.timer);clearTimeout(s.soundTestTimer);stopFinderVoice(s,true);finderSilence(s,true);
   if(s.audio)try{Promise.resolve(s.audio.close()).catch(()=>{});}catch{}
   if(s.media)try{s.media.onerror=null;s.media.removeAttribute('src');s.media.load();}catch{}if(s.mediaURL)URL.revokeObjectURL(s.mediaURL);
   try{if(navigator.audioSession&&s.previousAudioSession)navigator.audioSession.type=s.previousAudioSession;}catch{}
@@ -2012,9 +2021,9 @@ function updateFinderControls(s){
 }
 function activateFinderSound(s){
   if(FINDER!==s)return;s.sound=true;s.audioError=false;finderPlaybackSession();
-  if(s.media){playFinderMedia(s);return;}
+  if(s.media){if(s.audio)try{Promise.resolve(s.audio.resume()).catch(()=>{});}catch{}playFinderMedia(s);return;}
   try{const Audio=window.AudioContext||window.webkitAudioContext;if(!s.audio&&Audio){s.audio=new Audio();s.audio.onstatechange=()=>{if(FINDER===s){updateFinderControls(s);if(s.audio.state!=='running'&&s.sound&&!finderVoiceActive(s))finderAudioStatus('소리가 중단됐습니다. 소리 시험을 눌러주세요.');}};}
-    Promise.resolve(s.audio?.resume()).then(()=>{if(FINDER!==s)return;if(s.audio?.state==='running'){s.audioError=false;finderTone(s);updateFinderControls(s);}else finderAudioFailure(s);}).catch(()=>finderAudioFailure(s));
+    Promise.resolve(s.audio?.resume()).then(()=>{if(FINDER!==s)return;if(s.audio?.state==='running'){s.audioError=false;finderTone(s);if(s.soundTestState==='pending')finderTestState(s,'sound','playing');updateFinderControls(s);}else finderAudioFailure(s);}).catch(()=>finderAudioFailure(s));
   }catch{finderAudioFailure(s);}
 }
 function toggleFinderSound(){
@@ -2025,7 +2034,11 @@ function toggleFinderSound(){
 }
 function testFinderSound(){
   const s=FINDER;if(!s)return;
-  stopFinderVoice(s,true);s.voiceNextAt=Date.now()+1200;finderSilence(s,true);s.soundTestUntil=Date.now()+700;activateFinderSound(s);finderAudioStatus('시험음을 재생합니다. 안 들리면 무음 모드·미디어 음량·블루투스 출력을 확인하세요.');
+  clearTimeout(s.soundTestTimer);
+  if(['pending','playing'].includes(s.soundTestState)){finderTestState(s,'sound','stopped');finderSilence(s,true);finderAudioStatus('소리 시험을 중지했습니다. 찾기 알림은 유지합니다.');return;}
+  stopFinderVoice(s,true);s.voiceNextAt=Date.now()+1200;finderSilence(s,true);s.soundTestUntil=Date.now()+700;finderTestState(s,'sound','pending');activateFinderSound(s);
+  s.soundTestTimer=setTimeout(()=>{if(FINDER!==s||!['pending','playing'].includes(s.soundTestState))return;finderTestState(s,'sound',finderSoundReady(s)?'done':'error');},700);
+  finderAudioStatus('시험음을 재생합니다. 재생 완료 표시는 기기 재생 상태이며 실제 소리가 들리는지 확인하세요.');
 }
 
 function toggleFinderVibration(){const s=FINDER;if(!s?.canVibrate)return;s.vibration=!s.vibration;if(!s.vibration)navigator.vibrate(0);else navigator.vibrate(90);updateFinderControls(s);}
@@ -2036,7 +2049,7 @@ function startFindAsset(id){
   stopMyPosition();
   const Audio=window.AudioContext||window.webkitAudioContext;let audio=null,media=null,mediaURL=null;
   const previousAudioSession=navigator.audioSession?.type;finderPlaybackSession();
-  try{if(IS_IOS){mediaURL=finderWavURL();media=new window.Audio(mediaURL);media.preload='auto';media.playsInline=true;media.volume=1;}else if(Audio)audio=new Audio();}catch{}
+  try{if(Audio)audio=new Audio();if(IS_IOS){mediaURL=finderWavURL();media=new window.Audio(mediaURL);media.preload='auto';media.playsInline=true;media.volume=1;}}catch{}
   const s={id,target:{lat:+a.lat,lng:+a.lng},phase:'pending',navigation:true,map:null,audio,media,mediaURL,previousAudioSession,mediaReady:false,audioTimers:new Set(),tones:new Set(),sound:!!(audio||media),canVibrate:!IS_IOS&&typeof navigator.vibrate==='function',vibration:!IS_IOS&&typeof navigator.vibrate==='function',auto:true,readings:[],nearCount:0,nearSince:0,arrived:false,band:null,lastPulse:0,lastFit:0,lastFix:0};
   FINDER=s;
   if(media)media.onerror=()=>finderAudioFailure(s);if(audio)audio.onstatechange=()=>{if(FINDER===s){updateFinderControls(s);if(audio.state!=='running'&&s.sound&&!finderVoiceActive(s))finderAudioStatus('소리가 중단됐습니다. 소리 시험을 눌러주세요.');}};
@@ -2048,7 +2061,7 @@ function beginAssetFinder(s,map){
   if(FINDER!==s||!map||document.hidden)return;
   s.map=map;s.phase='tracking';MAP_SELECTED=s.id;closeMapInfo();drawPins();
   const panel=document.createElement('section');panel.id='finder-panel';panel.className='finder-panel';
-  panel.innerHTML=`<div class="finder-head"><div><b>${esc(s.id)} · ${esc(getAsset(s.id)?.item)}</b><small>선택한 비품 찾기</small></div><button class="btn" id="finder-end" onclick="endAssetFinder()">찾기 종료</button></div><div class="finder-metrics"><strong id="finder-distance">위치 확인 중</strong><span id="finder-accuracy"></span><span id="finder-direction"></span></div><p id="finder-status" role="status" aria-live="polite">위치 권한을 허용해 주세요. 정확한 신호를 기다리고 있습니다.</p><div class="finder-controls"><button class="btn sm primary" id="finder-auto" onclick="toggleFinderAuto()" title="내 위치와 비품이 함께 보이도록 화면을 조절합니다" aria-pressed="true">자동 맞춤 켜짐</button><button class="btn sm" id="finder-sound" onclick="toggleFinderSound()" aria-pressed="${s.sound}">소리 ${s.sound?'켜짐':'꺼짐'}</button>${s.canVibrate?'<button class="btn sm" id="finder-vibration" onclick="toggleFinderVibration()" aria-pressed="true">진동 켜짐</button>':'<small>진동 미지원 · 소리와 화면으로 안내</small>'}</div><div class="finder-audio-help"><button class="btn sm" onclick="testFinderSound()">소리 시험</button>${finderHasVoice()?'<button class="btn sm" onclick="testFinderVoice()">음성 시험</button>':''}<span id="finder-audio-status" role="status">시작할 때 시험음이 납니다. 안 들리면 소리 시험을 눌러주세요.</span></div><p class="finder-note">화면을 켜 두고 미디어 음량을 조절하세요. 직선거리 안내이며 안전한 이동 경로가 아닙니다. 저장된 비품 좌표에도 오차가 있을 수 있습니다.</p>`;
+  panel.innerHTML=`<div class="finder-head"><div><b>${esc(s.id)} · ${esc(getAsset(s.id)?.item)}</b><small>선택한 비품 찾기</small></div><button class="btn" id="finder-end" onclick="endAssetFinder()">찾기 종료</button></div><div class="finder-metrics"><strong id="finder-distance">위치 확인 중</strong><span id="finder-accuracy"></span><span id="finder-direction"></span></div><p id="finder-status" role="status" aria-live="polite">위치 권한을 허용해 주세요. 정확한 신호를 기다리고 있습니다.</p><div class="finder-controls"><button class="btn sm primary" id="finder-auto" onclick="toggleFinderAuto()" title="내 위치와 비품이 함께 보이도록 화면을 조절합니다" aria-pressed="true">자동 맞춤 켜짐</button><button class="btn sm" id="finder-sound" onclick="toggleFinderSound()" aria-pressed="${s.sound}">소리 ${s.sound?'켜짐':'꺼짐'}</button>${s.canVibrate?'<button class="btn sm" id="finder-vibration" onclick="toggleFinderVibration()" aria-pressed="true">진동 켜짐</button>':'<small>진동 미지원 · 소리와 화면으로 안내</small>'}</div><div class="finder-audio-help"><button class="btn sm finder-off" id="finder-sound-test" aria-pressed="false" onclick="testFinderSound()">소리 시험</button>${finderHasVoice()?'<button class="btn sm finder-off" id="finder-voice-test" aria-pressed="false" onclick="testFinderVoice()">음성 시험</button>':''}<span id="finder-audio-status" role="status">시작할 때 시험음이 납니다. 안 들리면 소리 시험을 눌러주세요.</span></div><p class="finder-note">화면을 켜 두고 미디어 음량을 조절하세요. 직선거리 안내이며 안전한 이동 경로가 아닙니다. 저장된 비품 좌표에도 오차가 있을 수 있습니다.</p>`;
   const box=$('kmap')?.parentElement;if(!box){stopMyPosition();return;}
   box.before(panel);document.querySelector('.map-location-tools')?.setAttribute('hidden','');document.querySelectorAll('.normal-map-control').forEach(el=>el.hidden=true);
   updateFinderControls(s);if(s.audioError)finderAudioStatus('소리 재생을 시작하지 못했습니다. 소리 시험을 눌러주세요.');showMyPosition(true);
@@ -2094,10 +2107,12 @@ function finderTick(s,newFix){
     else {s.nearCount=0;s.nearSince=0;if(raw>reading.radius+10)s.arrived=false;}
     s.band=finderBand(s.distance,s.band);fitFinderView(s);
   }
+  // 정지 상태에서는 GPS 콜백이 적을 수 있으므로 신선한 위치가 3초 유지되면 도착으로 판단합니다.
+  if(reading.state==='near'&&s.distance<=reading.radius&&s.nearSince&&now-s.nearSince>=3000)s.arrived=true;
   updateFinderArrivalUI(s);
   if(s.arrived){
     setFinderStatus('근처에 도착했습니다. QR코드 또는 NFC로 확인하세요.');
-    const voice=s.sound&&finderHasVoice()&&!s.voiceError;
+    const voice=s.sound&&finderHasVoice()&&(!s.voiceError||now>=(s.voiceNextAt||0));
     if(voice){if(s.speechPurpose==='unlock')stopFinderVoice(s,true);if(!s.speech&&now>=(s.voiceNextAt||0))speakFinderVoice(s);}
     finderAlarmTick(s,500);
     return;
@@ -3601,7 +3616,7 @@ function showInstall() {
   box.innerHTML = h; box.classList.remove('hidden');
 }
 
-const BUILD = '2026-11-21g';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
+const BUILD = '2026-11-21h';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
 async function checkUpdate() {
   try {
     const t = await (await fetch(location.pathname + '?v=' + Date.now(), { cache: 'reload' })).text();
