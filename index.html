@@ -22,7 +22,7 @@
   · 이 파일 하나에 화면과 기능이 모두 들어 있어요.
   · 자산 데이터·사진은 Worker 서버를 통해 GCP 비공개 버킷에 저장돼요.
   · 코드 구성
-      [1] 기본 설정 (CONFIG)      ← 비밀번호, 카카오 키, 저장소 이름 등 바꿀 값은 여기
+      [1] 기본 설정 (CONFIG)      ← 비밀번호, 구글 지도 키, 저장소 이름 등 바꿀 값은 여기
       [2] 데이터 저장소 (Store)   ← GCP 저장 API 연결
       [3] 로그인
       [4] 화면: 현황 / 자산 / 지도 / 라벨
@@ -434,7 +434,7 @@ details[open].more summary::before{transform:rotate(90deg)}
 
 .map-location-tools{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:-2px 0 9px;font-size:12px;color:var(--sub)}
 .distance-badge{background:#fff;color:#075cb4;border:1px solid #b8cce7;border-radius:8px;padding:5px 9px;font-size:12px;font-weight:800;white-space:nowrap;box-shadow:0 2px 7px #0004;pointer-events:none;max-width:240px;white-space:normal;text-align:center}
-.asset-distance{font-size:12px;color:#075cb4;margin-top:9px;line-height:1.5}.finder-heading-pin{position:relative;width:0;height:0;pointer-events:none}.finder-heading-rotor{position:absolute;width:0;height:0;transform-origin:0 0}.finder-heading-rotor svg{position:absolute;left:-7px;top:-26px;filter:drop-shadow(0 1px 2px #0008)}.my-position-dot{width:18px;height:18px;border-radius:50%;background:#1677ff;border:3px solid #fff;box-shadow:0 1px 5px #0004}
+.asset-distance{font-size:12px;color:#075cb4;margin-top:9px;line-height:1.5}.finder-heading-pin{position:relative;width:0;height:0;pointer-events:none}.finder-heading-rotor{position:absolute;width:0;height:0;transform-origin:0 0}.finder-heading-rotor svg{position:absolute;left:-7px;top:-26px;filter:drop-shadow(0 1px 2px #0008)}
 
 /* 라벨 */
 .lab-layout{display:grid;grid-template-columns:330px 1fr;gap:16px;align-items:start}
@@ -669,8 +669,7 @@ const CONFIG = {
   // 바꾸는 법: 앱을 연 브라우저 개발자도구 콘솔에서  await sha256('새비밀번호')  실행 → 나온 값을 아래에 붙여넣기
   PW_HASH: '8d129f703b9851ce74cbb41cb84db46fcb6098bea25563526bb700d4a03f8812',
   AUTH_DAYS: 30,
-  GOOGLE_MAPS_KEY: 'AIzaSyBTCCN1dnP7TVAcppodcWfDV3myzoZc8lA',   // ★ 구글 지도 브라우저용 API 키 (비어 있으면 카카오 지도로 표시). 키는 Workers 사이트 주소에서만 쓰도록 제한해 둘 것
-  KAKAO_KEY: '77c97bf1b0283e37f4ca3c548d45e5e6',
+  GOOGLE_MAPS_KEY: 'AIzaSyBTCCN1dnP7TVAcppodcWfDV3myzoZc8lA',   // ★ 구글 지도 브라우저용 API 키 (Google 지도만 사용). 키는 Workers 사이트 주소에서만 쓰도록 제한해 둘 것
   MAP_CENTER: [36.9965, 126.3789],   // 현장 컨테이너 (2026-11-11 실측)
   QR_BASE_DEFAULT: 'https://aurora-asset-manager.sskim4912.workers.dev/'
 };
@@ -1507,23 +1506,10 @@ function toggleDD(btn) { const m = btn.nextElementSibling; const open = !m.class
 document.addEventListener('click', e => { if (!e.target.closest('.dd')) document.querySelectorAll('.dd-menu.open').forEach(x => x.classList.remove('open')); });
 
 /* ── 지도 (자산 화면의 [지도] 전환: 걸러진 자산만 표시) ── */
-let KAKAO_P = null, MAP = null, MAP_INFO = null, MAP_FOCUS = null;
-function loadKakao() {
-  if (window.kakao && kakao.maps && kakao.maps.LatLng) return Promise.resolve();
-  if (KAKAO_P) return KAKAO_P;
-  KAKAO_P = new Promise((res, rej) => {
-    const s = document.createElement('script');
-    s.src = 'https://dapi.kakao.com/v2/maps/sdk.js?autoload=false&appkey=' + CONFIG.KAKAO_KEY;
-    const to = setTimeout(() => rej(new Error('timeout')), 10000);
-    s.onload = () => { try { kakao.maps.load(() => { clearTimeout(to); res(); }); } catch (e) { clearTimeout(to); rej(e); } };
-    s.onerror = () => { clearTimeout(to); rej(new Error('load')); };
-    document.head.appendChild(s);
-  });
-  KAKAO_P.catch(() => { KAKAO_P = null; });
-  return KAKAO_P;
-}
+let MAP = null, MAP_INFO = null, MAP_FOCUS = null;
 let GM_P = null, HtmlOv = null;
 function loadGoogle() {
+  if(!CONFIG.GOOGLE_MAPS_KEY?.trim())return Promise.reject(new Error('Google 지도 키가 필요합니다'));
   if (window.google && google.maps && google.maps.Map) { if (!HtmlOv) mkHtmlOv(); return Promise.resolve(); }
   if (GM_P) return GM_P;
   GM_P = new Promise((res, rej) => {
@@ -1547,48 +1533,30 @@ function mkHtmlOv() {   // 구글 지도 위에 HTML(핀·정보창)을 그리�
     setPosition(p) { this.pos = p; if (this.getProjection()) this.draw(); }
   };
 }
-/* 지도 엔진 하나로 쓰기: 구글 키가 있으면 구글(위성), 없으면 카카오(위성). 확대 정도는 카카오 '레벨'(작을수록 확대)로 통일 */
+/* Google 지도 전용. 기존 확대 단계는 21 - Google zoom으로 유지합니다. */
 const MAPX = {
-  g: () => !!CONFIG.GOOGLE_MAPS_KEY,
-  load() { return this.g() ? loadGoogle() : loadKakao(); },
-  ll(lat, lng) { return this.g() ? new google.maps.LatLng(+lat, +lng) : new kakao.maps.LatLng(+lat, +lng); },
-  create(el, c, lv, customZoom=false) {
-    if (this.g()) {
-      const m = new google.maps.Map(el, { center: { lat: +c[0], lng: +c[1] }, zoom: 21 - lv, mapTypeId: 'satellite', gestureHandling: 'greedy', clickableIcons: false,
-        mapTypeControl: true, mapTypeControlOptions: { position: google.maps.ControlPosition.TOP_LEFT, style: google.maps.MapTypeControlStyle.HORIZONTAL_BAR, mapTypeIds: ['satellite', 'roadmap'] },
-        streetViewControl: false, fullscreenControl: false, rotateControl: false, zoomControl: false, maxZoom: 20, tilt: 0 });
-      const h = new google.maps.OverlayView(); h.onAdd = () => {}; h.draw = () => {}; h.onRemove = () => {}; h.setMap(m); m.__proj = h;   // 화면 좌표 계산용
-      return m;
-    }
-    const m = new kakao.maps.Map(el, { center: new kakao.maps.LatLng(+c[0], +c[1]), level: lv });
-    m.setMapTypeId(kakao.maps.MapTypeId.HYBRID);
-    m.addControl(new kakao.maps.MapTypeControl(), kakao.maps.ControlPosition.TOPLEFT);
-    if(!customZoom)m.addControl(new kakao.maps.ZoomControl(), kakao.maps.ControlPosition.RIGHT);
+  load() { return loadGoogle(); },
+  ll(lat, lng) { return new google.maps.LatLng(+lat, +lng); },
+  create(el, c, lv) {
+    const m = new google.maps.Map(el, { center: { lat: +c[0], lng: +c[1] }, zoom: 21 - lv, mapTypeId: 'satellite', gestureHandling: 'greedy', clickableIcons: false,
+      mapTypeControl: true, mapTypeControlOptions: { position: google.maps.ControlPosition.TOP_LEFT, style: google.maps.MapTypeControlStyle.HORIZONTAL_BAR, mapTypeIds: ['satellite', 'roadmap'] },
+      streetViewControl: false, fullscreenControl: false, rotateControl: false, zoomControl: false, maxZoom: 20, tilt: 0 });
+    const h = new google.maps.OverlayView(); h.onAdd = () => {}; h.draw = () => {}; h.onRemove = () => {}; h.setMap(m); m.__proj = h;
     return m;
   },
-  level(m) { return this.g() ? 21 - m.getZoom() : m.getLevel(); },
-  setLevel(m, lv, anchor) { if (this.g()) { m.setZoom(21 - lv); if (anchor) m.panTo(anchor); } else m.setLevel(lv, anchor ? { anchor } : undefined); },
-  px(m, p) {
-    if (this.g()) { const pr = m.__proj && m.__proj.getProjection(); if (!pr) return null; const pt = pr.fromLatLngToContainerPixel(this.ll(p.lat, p.lng)); return pt && { x: pt.x, y: pt.y }; }
-    const pr = m.getProjection && m.getProjection(); if (!pr) return null; const pt = pr.containerPointFromCoords(this.ll(p.lat, p.lng)); return { x: pt.x, y: pt.y };
-  },
-  overlay(m, pos, el, ya, z, top) {   // HTML 올리기 → { remove(), move(pos) }
-    if (this.g()) { const o = new HtmlOv(pos, el, ya, z, top ? 'floatPane' : 'overlayMouseTarget'); o.setMap(m); return { remove: () => o.setMap(null), move: p => o.setPosition(p) }; }
-    const o = new kakao.maps.CustomOverlay({ position: pos, content: el, xAnchor: .5, yAnchor: ya, zIndex: z }); o.setMap(m);
+  level(m) { return 21 - m.getZoom(); },
+  setLevel(m, lv, anchor) { m.setZoom(21 - lv); if (anchor) m.panTo(anchor); },
+  px(m, p) { const pr = m.__proj && m.__proj.getProjection(); if (!pr) return null; const pt = pr.fromLatLngToContainerPixel(this.ll(p.lat, p.lng)); return pt && { x: pt.x, y: pt.y }; },
+  overlay(m, pos, el, ya, z, top) {
+    const o = new HtmlOv(pos, el, ya, z, top ? 'floatPane' : 'overlayMouseTarget'); o.setMap(m);
     return { remove: () => o.setMap(null), move: p => o.setPosition(p) };
   },
   panTo(m, p) { m.panTo(p); },
-  fit(m, pts) {
-    if (this.g()) { const b = new google.maps.LatLngBounds(); pts.forEach(x => b.extend({ lat: +x.lat, lng: +x.lng })); m.fitBounds(b, 60); return; }
-    const b = new kakao.maps.LatLngBounds(); pts.forEach(x => b.extend(this.ll(x.lat, x.lng))); m.setBounds(b, 60, 60, 60, 60);
-  },
-  on(m, ev, fn) {   // ev: 'zoom' | 'click'(fn에 {lat,lng})
-    if (this.g()) return m.addListener(ev === 'zoom' ? 'zoom_changed' : 'click', e => fn(e && e.latLng ? { lat: e.latLng.lat(), lng: e.latLng.lng() } : null));
-    kakao.maps.event.addListener(m, ev === 'zoom' ? 'zoom_changed' : 'click', e => fn(e && e.latLng ? { lat: e.latLng.getLat(), lng: e.latLng.getLng() } : null));
-  },
-  relayout(m) { if (!this.g() && m.relayout) m.relayout(); },
+  fit(m, pts) { const b = new google.maps.LatLngBounds(); pts.forEach(x => b.extend({ lat: +x.lat, lng: +x.lng })); m.fitBounds(b, 60); },
+  on(m, ev, fn) { return m.addListener(ev === 'zoom' ? 'zoom_changed' : 'click', e => fn(e && e.latLng ? { lat: e.latLng.lat(), lng: e.latLng.lng() } : null)); },
+  relayout() { /* Google 지도는 컨테이너 크기 변경을 자체 처리합니다. */ },
 };
-const mapFail = () => `<div class="map-fail">${icon('map', 30)}<b>지도를 불러오지 못했어요</b>인터넷 연결을 확인해 주세요.<br>${MAPX.g() ? '구글 지도 키가 맞는지, 이 사이트 주소에서 쓸 수 있게 되어 있는지' : '카카오 개발자 콘솔에 이 사이트 주소(도메인)가 등록되어 있는지'} 확인해 주세요.</div>`;
+const mapFail = () => `<div class="map-fail">${icon('map', 30)}<b>Google 지도를 불러오지 못했어요</b>인터넷 연결과 Google 지도 API 키·허용된 사이트 주소를 확인해 주세요.</div>`;
 /* 지도 자동 표시: 축소하면 묶음 숫자 · 확대하면 이름표 · 1건이면 정보창 자동 · 같은 자리는 목록 */
 const LABEL_LEVEL = 3;              // 이 레벨 이하(확대)에서 이름표 표시
 const SAME_SPOT = 3;                // m: 이 안쪽은 같은 자리로 묶음
@@ -1713,8 +1681,7 @@ function drawPins() {
 }
 function mapZoomBy(delta) {
   if(!MAP)return;pauseFinderView();
-  if(MAPX.g())MAP.setZoom(Math.max(3,Math.min(20,MAP.getZoom()+delta)));
-  else MAPX.setLevel(MAP,Math.max(1,Math.min(14,MAPX.level(MAP)-delta)));
+  MAP.setZoom(Math.max(3,Math.min(20,MAP.getZoom()+delta)));
 }
 function mapShowAll() {
   if(!MAP||!MAP_LIST.length)return toast('표시할 좌표가 없어요','warn');
@@ -1727,7 +1694,7 @@ function mapRestoreInitial() {
 }
 function rememberInitialMap(map) {
   if(MAP!==map)return;
-  const c=map.getCenter();MAP_INITIAL_VIEW={lat:MAPX.g()?c.lat():c.getLat(),lng:MAPX.g()?c.lng():c.getLng(),level:MAPX.level(map)};
+  const c=map.getCenter();MAP_INITIAL_VIEW={lat:c.lat(),lng:c.lng(),level:MAPX.level(map)};
 }
 function spotGroups(list) {         // 거의 같은 자리(3m) 자산끼리 묶기
   const groups = [];
@@ -1748,13 +1715,13 @@ async function initMainMap() {
   if (!list.length) { el.parentElement.insertAdjacentHTML('beforeend', `<div class="map-fail">${icon('pin', 30)}<b>지도에 표시할 자산이 없어요</b>좌표가 등록된 자산만 지도에 나와요.<br>휴대폰으로 [QR 스캔]을 하면 위치가 들어가요.</div>`); }
   try { await MAPX.load(); } catch (e) { if(FINDER?.mount===el)stopMyPosition();el.parentElement.insertAdjacentHTML('beforeend', mapFail()); return; }
   if (!document.body.contains(el)) return;
-  MAP = MAPX.create(el, CONFIG.MAP_CENTER, 3, true);
+  MAP = MAPX.create(el, CONFIG.MAP_CENTER, 3);
   MAP_INFO = null; MAP_SELECTED = null;
   MAP_LIST = list;
   const ownMap = MAP;bindFinderMapControls(ownMap,el);
   let drawFrame=0;
   const labelToggle=()=>{if(drawFrame)return;drawFrame=requestAnimationFrame(()=>{drawFrame=0;if(MAP!==ownMap||!document.body.contains(el))return;drawPins();el.classList.remove('map-zooming');});};
-  if(MAPX.g())MAP.addListener('idle',labelToggle);else kakao.maps.event.addListener(MAP,'idle',labelToggle);
+  MAP.addListener('idle',labelToggle);
   MAPX.on(MAP,'zoom',()=>{if(MAP===ownMap)el.classList.add('map-zooming');});
   MAPX.on(MAP, 'click', p => { if (MOVE && p) setMapDestination(p); else closeMapInfo(); });
   setTimeout(() => {
@@ -1763,8 +1730,7 @@ async function initMainMap() {
     else if (MAP_FOCUS) { const f = MAP_FOCUS; MAP_FOCUS = null; mapSelect(f, 2); }
     else if (list.length === 1) mapSelect(list[0].id, 2);                       // 1건이면 정보창 자동
     else if (list.length > 1) MAPX.fit(MAP, list);
-    if(MAPX.g())google.maps.event.addListenerOnce(ownMap,'idle',()=>rememberInitialMap(ownMap));
-    else kakao.maps.event.addListener(ownMap,'idle',()=>{if(!MAP_INITIAL_VIEW)rememberInitialMap(ownMap);});
+    google.maps.event.addListenerOnce(ownMap,'idle',()=>rememberInitialMap(ownMap));
     labelToggle(); setTimeout(labelToggle, 400);   // 구글은 화면 좌표가 조금 늦게 준비됨
   }, 80);
 }
@@ -1821,12 +1787,12 @@ function clearMapDistance() {
 function focusDistanceSelection(map, asset) {
   if(FINDER)return;
   if (MY_POSITION && Date.now() - MY_POSITION.at <= 60000 && distM(MY_POSITION, asset) > 30) {
-    if (MAPX.g()) {
+    {
       map.setOptions({ maxZoom: 20 });
       const bounds = new google.maps.LatLngBounds(); [MY_POSITION, asset].forEach(p => bounds.extend({ lat: +p.lat, lng: +p.lng }));
       const mobile = matchMedia('(max-width:640px)').matches, height = $('kmap')?.clientHeight || 500;
       map.fitBounds(bounds, { top: mobile ? 50 : Math.min(280, height * .55), bottom: mobile ? Math.min(280, height * .55) : 55, left: 45, right: 45 });
-    } else MAPX.fit(map, [MY_POSITION, asset]);
+    }
   } else MAPX.panTo(map, MAPX.ll(asset.lat, asset.lng));
 }
 function drawMapDistance() {
@@ -1843,12 +1809,9 @@ function drawMapDistance() {
   const accuracy = `내 위치 정확도 ±${formatMapDistance(MY_POSITION.acc)}${MY_POSITION.acc > 100 ? ' · 위치 오차가 커요' : ''}`;
   if (out) out.textContent = `${label} · ${accuracy} · 도보 경로가 아닙니다`;
   const path = [MAPX.ll(MY_POSITION.lat, MY_POSITION.lng), MAPX.ll(target.lat, target.lng)];
-  if (MAPX.g()) {
+  {
     DISTANCE_LINES.push(new google.maps.Polyline({ map: MAP, path, geodesic: true, strokeColor: '#fff', strokeOpacity: .9, strokeWeight: 5, clickable: false, zIndex: 3 }));
     DISTANCE_LINES.push(new google.maps.Polyline({ map: MAP, path, geodesic: true, strokeOpacity: 0, clickable: false, zIndex: 4, icons: [{ icon: { path: 'M 0,-1 0,1', strokeColor: '#1677ff', strokeOpacity: 1, strokeWeight: 3, scale: 2 }, offset: '0', repeat: '12px' }] }));
-  } else {
-    DISTANCE_LINES.push(new kakao.maps.Polyline({ map: MAP, path, strokeColor: '#fff', strokeWeight: 5, strokeOpacity: .9 }));
-    DISTANCE_LINES.push(new kakao.maps.Polyline({ map: MAP, path, strokeColor: '#1677ff', strokeWeight: 3, strokeStyle: 'dash', strokeOpacity: 1 }));
   }
   const badge = document.createElement('div'); badge.className = 'distance-badge'+(arrived?' finder-arrival-badge':''); badge.textContent = label; badge.title = accuracy + ' · 직선거리';
   const middle = distanceMidpoint(MY_POSITION, target);
@@ -1861,15 +1824,11 @@ function updateMyPosition(position, map) {
   if(FINDER){const timestamp=Number.isFinite(position.timestamp)?position.timestamp:Date.now();if(Date.now()-timestamp>10000||timestamp>Date.now()+2000||timestamp<=FINDER.lastFix)return;FINDER.lastFix=timestamp;}
   MY_POSITION = { lat: c.latitude, lng: c.longitude, acc: c.accuracy, at: Number.isFinite(position.timestamp) ? position.timestamp : Date.now() };
   const point = MAPX.ll(c.latitude, c.longitude);
-  if (MAPX.g()) {
+  {
     if (!MY_DOT) MY_DOT = new google.maps.Marker({ map, position: point, clickable: false, zIndex: 100, title: '내 위치', icon: { path: google.maps.SymbolPath.CIRCLE, scale: 7, fillColor: '#1677ff', fillOpacity: 1, strokeColor: '#fff', strokeWeight: 3 } });
     else MY_DOT.setPosition(point);
     if (!MY_ACCURACY) MY_ACCURACY = new google.maps.Circle({ map, center: point, radius: c.accuracy, strokeColor: '#1677ff', strokeOpacity: .3, strokeWeight: 1, fillColor: '#1677ff', fillOpacity: .12, clickable: false });
     else { MY_ACCURACY.setCenter(point); MY_ACCURACY.setRadius(c.accuracy); }
-  } else {
-    if (!MY_DOT) { const dot = document.createElement('div'); dot.className = 'my-position-dot'; MY_DOT = MAPX.overlay(map, point, dot, .5, 8); } else MY_DOT.move(point);
-    if (!MY_ACCURACY) MY_ACCURACY = new kakao.maps.Circle({ map, center: point, radius: c.accuracy, strokeColor: '#1677ff', strokeOpacity: .3, fillColor: '#1677ff', fillOpacity: .12 });
-    else { MY_ACCURACY.setPosition(point); MY_ACCURACY.setRadius(c.accuracy); }
   }
   const hint = $('my-position-status'); if (hint) hint.textContent = `내 위치 정확도 ±${formatMapDistance(c.accuracy)}`;
   const stop = $('stop-my-position'); if (stop) stop.hidden = false;
@@ -2024,12 +1983,12 @@ function clearAssetFinder(){
   if(s.media)try{s.media.onerror=null;s.media.removeAttribute('src');s.media.load();}catch{}if(s.mediaURL)URL.revokeObjectURL(s.mediaURL);
   try{if(navigator.audioSession&&s.previousAudioSession)navigator.audioSession.type=s.previousAudioSession;}catch{}
   if(s.wake)try{Promise.resolve(s.wake.release()).catch(()=>{});}catch{}
-  if(s.map&&MAPX.g())s.map.setOptions({maxZoom:20});
+  if(s.map)s.map.setOptions({maxZoom:20});
   $('finder-panel')?.remove();document.querySelector('.map-location-tools')?.removeAttribute('hidden');
   document.querySelectorAll('.normal-map-control').forEach(el=>el.hidden=false);
 }
 function endAssetFinder(){stopMyPosition();toast('비품 찾기를 종료했습니다');}
-function pauseFinderView(){if(FINDER){FINDER.auto=false;if(FINDER.map&&MAPX.g())FINDER.map.setOptions({maxZoom:20});updateFinderControls(FINDER);}}
+function pauseFinderView(){if(FINDER){FINDER.auto=false;if(FINDER.map)FINDER.map.setOptions({maxZoom:20});updateFinderControls(FINDER);}}
 function resumeFinderView(){const s=FINDER;if(!s)return;s.auto=true;s.lastFit=0;updateFinderControls(s);fitFinderView(s,true);}
 function toggleFinderAuto(){if(FINDER?.auto)pauseFinderView();else resumeFinderView();}
 function updateFinderControls(s){
@@ -2084,7 +2043,7 @@ function beginAssetFinder(s,map){
   const box=$('kmap')?.parentElement;if(!box){stopMyPosition();return;}
   box.before(panel);document.querySelector('.map-location-tools')?.setAttribute('hidden','');document.querySelectorAll('.normal-map-control').forEach(el=>el.hidden=true);
   finderHeadingButton(s);updateFinderControls(s);if(s.audioMessage)finderAudioStatus(s.audioMessage,s.audioHelpError);if(s.audioError)finderAudioStatus('소리 재생을 시작하지 못했습니다. 소리 시험을 눌러주세요.',true);
-  if(s.headingEnabled&&MAPX.g())map.setOptions({heading:0,tilt:0,rotateControl:false,headingInteractionEnabled:false,tiltInteractionEnabled:false});
+  if(s.headingEnabled)map.setOptions({heading:0,tilt:0,rotateControl:false,headingInteractionEnabled:false,tiltInteractionEnabled:false});
   showMyPosition(true);
   if(FINDER!==s)return;s.timer=setInterval(()=>finderTick(s,false),250);
   if(navigator.wakeLock?.request)navigator.wakeLock.request('screen').then(lock=>{if(FINDER===s)s.wake=lock;else lock.release().catch(()=>{});}).catch(()=>{});
@@ -2154,7 +2113,7 @@ async function toggleFinderHeading(){
     s.headingScreenHandler=()=>{s.heading=null;if(Date.now()-s.headingAt<=3000&&Number.isFinite(s.headingBase))s.headingHandler({webkitCompassHeading:s.headingBase});};
     addEventListener('deviceorientation',s.headingHandler);addEventListener('deviceorientationabsolute',s.headingHandler);
     addEventListener('orientationchange',s.headingScreenHandler);screen.orientation?.addEventListener?.('change',s.headingScreenHandler);
-    if(s.map&&MAPX.g())s.map.setOptions({heading:0,tilt:0,rotateControl:false,headingInteractionEnabled:false,tiltInteractionEnabled:false});
+    if(s.map)s.map.setOptions({heading:0,tilt:0,rotateControl:false,headingInteractionEnabled:false,tiltInteractionEnabled:false});
     finderHeadingButton(s);
   }catch{if(FINDER===s&&s.headingRun===run){stopFinderHeading(s);s.headingState='error';finderHeadingButton(s);}}
 }
@@ -2171,9 +2130,8 @@ function fitFinderView(s,force=false){
   s.lastFit=now;s.lastFitPosition={...MY_POSITION};s.lastFitBand=s.band;
   const radius=Math.max(20,Math.min(5000,MY_POSITION.acc)),dy=radius/111320,dx=radius/(111320*Math.max(.05,Math.cos(MY_POSITION.lat*Math.PI/180)));
   const pts=[s.target,{lat:Math.min(89.9,MY_POSITION.lat+dy),lng:Math.max(-179.9,MY_POSITION.lng-dx)},{lat:Math.max(-89.9,MY_POSITION.lat-dy),lng:Math.min(179.9,MY_POSITION.lng+dx)}];
-  if(MAPX.g())s.map.setOptions({maxZoom:MY_POSITION.acc>100?16:MY_POSITION.acc>30?17:19});
+  s.map.setOptions({maxZoom:MY_POSITION.acc>100?16:MY_POSITION.acc>30?17:19});
   MAPX.fit(s.map,pts);
-  if(!MAPX.g()&&MAPX.level(s.map)<2)MAPX.setLevel(s.map,2);
 }
 function finderAlarmTick(s,interval){
   if(Date.now()-s.lastPulse>=interval){s.lastPulse=Date.now();finderPulse(s);}
@@ -2218,7 +2176,7 @@ function finderTick(s,newFix){
 }
 function bindFinderMapControls(map,el){
   const manual=()=>{if(FINDER?.map===map)pauseFinderView();};
-  if(MAPX.g())map.addListener('dragstart',manual);else kakao.maps.event.addListener(map,'dragstart',manual);
+  map.addListener('dragstart',manual);
   el.addEventListener('wheel',manual,{passive:true});el.addEventListener('dblclick',manual);el.addEventListener('touchmove',manual,{passive:true});
   el.addEventListener('keydown',e=>{if(['+','-','=','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key))manual();});
   el.addEventListener('click',e=>{if(e.target.closest?.('button,[role="button"]'))manual();},true);
@@ -2280,7 +2238,7 @@ async function restoreMapMove(id, recordId) {
 }
 function cancelMapMove() {
   if (!MOVE) return;
-  MOVE.listeners.forEach(l => { if (MAPX.g()) l.remove(); else kakao.maps.event.removeListener(l.map, l.type, l.fn); });
+  MOVE.listeners.forEach(l => l.remove());
   MOVE.marker.setMap(null); MOVE.bar.remove(); MOVE = null;
   if (MAP) { drawPins(); drawMapDistance(); }
 }
@@ -2305,14 +2263,11 @@ async function beginMapMove(id) {
   bar.querySelector('b').textContent = `${a.id} ${dispName(a)} · 한 개만 이동`;
   ['pointerdown', 'click', 'dblclick', 'contextmenu', 'touchstart'].forEach(t => bar.addEventListener(t, e => e.stopPropagation()));
   $('kmap').parentElement.append(bar);
-  const marker = MAPX.g() ? new google.maps.Marker({ map, position: MAPX.ll(a.lat, a.lng), draggable: true, zIndex: 9999, title: `${a.id} 이동할 위치` }) : new kakao.maps.Marker({ map, position: MAPX.ll(a.lat, a.lng), draggable: true });
+  const marker = new google.maps.Marker({ map, position: MAPX.ll(a.lat, a.lng), draggable: true, zIndex: 9999, title: `${a.id} 이동할 위치` });
   MOVE = { id, marker, bar, map, expected: coordinateSnapshot(a), point: { lat: +a.lat, lng: +a.lng }, listeners: [], busy: false };
-  if (MAPX.g()) {
+  {
     MOVE.listeners.push(marker.addListener('dragend', e => setMapDestination({ lat: e.latLng.lat(), lng: e.latLng.lng() })));
     MOVE.listeners.push(map.addListener('contextmenu', e => { e.domEvent?.preventDefault(); if (e.latLng) setMapDestination({ lat: e.latLng.lat(), lng: e.latLng.lng() }); }));
-  } else {
-    const fn = () => { const p = marker.getPosition(); setMapDestination({ lat: p.getLat(), lng: p.getLng() }); };
-    kakao.maps.event.addListener(marker, 'dragend', fn); MOVE.listeners.push({ map: marker, type: 'dragend', fn });
   }
   bar.querySelector('.cancel-move').onclick = () => { if (!MOVE?.busy) cancelMapMove(); };
   bar.querySelector('.save-move').onclick = async () => {
@@ -3345,10 +3300,12 @@ async function openPicker(cb, init) {   // cb 없으면 등록·수정 화면의
   const box = $('pmap');
   try { await MAPX.load(); } catch (e) { box.style.position = 'relative'; box.innerHTML = mapFail(); return; }
   const c = PICK ? [PICK.lat, PICK.lng] : CONFIG.MAP_CENTER;
+  if(!box.isConnected||$('pmap')!==box)return;
   PMAP = MAPX.create(box, c, 3); PMARK = null;
   if (PICK) setPick(PICK.lat, PICK.lng);
   MAPX.on(PMAP, 'click', p => p && setPick(p.lat, p.lng));
-  setTimeout(() => { MAPX.relayout(PMAP); PMAP.setCenter(MAPX.ll(c[0], c[1])); }, 60);
+  const ownMap=PMAP;
+  setTimeout(() => { if(PMAP!==ownMap||!box.isConnected)return;MAPX.relayout(ownMap);ownMap.setCenter(MAPX.ll(c[0], c[1])); }, 60);
 }
 function setPick(lat, lng) {
   PICK = { lat: +lat.toFixed(6), lng: +lng.toFixed(6) };
@@ -3699,7 +3656,7 @@ function showInstall() {
   box.innerHTML = h; box.classList.remove('hidden');
 }
 
-const BUILD = '2026-11-21k';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
+const BUILD = '2026-11-21l';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
 async function checkUpdate() {
   try {
     const t = await (await fetch(location.pathname + '?v=' + Date.now(), { cache: 'reload' })).text();
