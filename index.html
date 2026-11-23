@@ -14,6 +14,7 @@
 <meta name="apple-mobile-web-app-title" content="비품관리">
 <title>Aurora Asset Manager · 충남 현장</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+<script src="./material-core.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <!--
@@ -602,6 +603,8 @@ details[open].more summary::before{transform:rotate(90deg)}
 .finder-audio-help{flex-wrap:wrap}.finder-audio-help span{flex:1;min-width:120px}
 
 .finder-panel .finder-controls{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.finder-panel .finder-controls .btn{min-width:0;min-height:38px;padding:6px;font-size:12px;line-height:1.3}.finder-end{color:#b91c1c;border-color:#dc2626}.finder-panel .finder-end-arrived{background:#b91c1c;border-color:#b91c1c;color:#fff}.finder-panel .finder-head b{font-size:13px}.finder-panel #finder-status{margin:6px 0}.finder-panel .finder-metrics{margin-top:5px;gap:8px}.finder-panel .finder-metrics span{font-size:11px}.finder-bottom{display:flex;flex-wrap:wrap;align-items:flex-start;gap:5px 10px;margin-top:7px;font-size:11px;color:var(--sub)}.finder-bottom details{flex:1;min-width:135px}.finder-bottom summary{cursor:pointer;color:#475569;font-size:11px;line-height:1.6}.finder-screen-note{font-size:10px;line-height:1.8;margin-left:auto}.finder-bottom details[open]{flex-basis:100%}.finder-bottom details[open]+.finder-screen-note{display:none}.finder-panel .finder-audio-help{margin-top:5px;padding:7px;background:#f4f6f8;border-radius:7px;gap:6px}.finder-panel .finder-audio-help .btn{font-size:11px;min-height:28px;padding:4px 7px;line-height:1.3;white-space:normal}.finder-panel .finder-audio-help span{flex-basis:100%;font-size:10px;min-width:0}.finder-heading-help{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--sub);margin-top:6px}.finder-heading-help .btn{font-size:11px;min-height:28px;padding:4px 7px}.finder-panel [hidden]{display:none!important}
+
+.due.green{color:#166534;background:#dcfce7}.material-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.material-field{display:flex;flex-direction:column;gap:5px;font-size:12px;min-width:0;margin:7px 0}.material-field .inp{width:100%;min-width:0}.material-field em{color:#dc2626;font-style:normal}.material-field small{color:var(--sub)}.material-line{border:1px solid var(--line,#dce2eb);border-radius:10px;margin:14px 0;padding:10px;min-width:0}.material-component{border-top:1px dashed #ccd5e3;padding-top:8px;display:grid;grid-template-columns:1fr 1fr;gap:6px}.material-totals{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:12px 0}.material-totals>div{padding:10px 7px;border-radius:10px;background:#eef5ff;min-width:0}.material-totals>div:nth-child(2){background:#fff3df}.material-totals b{display:block;font-size:18px;overflow-wrap:anywhere}.material-totals small{font-size:11px}.material-parts{width:100%;font-size:12px;border-collapse:collapse;margin-bottom:14px}.material-parts td,.material-parts th{padding:7px 3px;border-bottom:1px solid #e4e9f0;text-align:left}.material-parts small{display:block;color:var(--sub)}.material-actions{display:flex;flex-wrap:wrap;gap:6px;margin:14px 0}.material-actions .btn{font-size:12px}.material-event{padding:10px;border:1px solid #e1e6ee;border-radius:9px;margin:9px 0;font-size:12px}.material-event .btn{margin:3px}.material-event p{margin:5px 0}.material-proof{display:block;max-width:100%;max-height:60vh;object-fit:contain;margin:10px auto}.material-error{color:#b91c1c;font-size:12px;overflow-wrap:anywhere}.material-count{display:block;font-size:18px;margin:7px 0}.material-stats>.stat:last-child{grid-column:auto}.material-stats{grid-template-columns:repeat(4,minmax(0,1fr))}.material-check{display:flex;align-items:flex-start;gap:8px;font-size:12px;margin:12px 0}.material-check input{width:18px;flex:none}.material-quantities{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}@media(max-width:640px){.material-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.material-totals b{font-size:16px}.material-grid,.material-quantities{gap:8px}.material-line{padding:8px}}
 </style>
 </head>
 <body>
@@ -686,8 +689,8 @@ const LEASE = '임대/임차';
 const ACQ_TYPES = ['계약', '계약외(온라인구매)', '계약외(견적)', '구자산', LEASE];
 const isLease = a => a && a.acq === LEASE;
 const ID_PREFIX = 'AURORA-';
-// 분류(대분류) 6개 고정 · 품목(중분류)은 설정에서 추가할 수 있어요
-const CATEGORIES = ['사무/가전/생활', '냉난방용품', '가설비품', '환경/위생/의료', '시험/측정기', '공기구'];
+// 기존 비품 분류와 자재 분류 · 품목(중분류)은 설정에서 추가할 수 있어요
+const CATEGORIES = ['사무/가전/생활', '냉난방용품', '가설비품', '환경/위생/의료', '시험/측정기', '공기구', '자재'];
 const BASE_CATALOG = {
   '사무/가전/생활': ['공기청정기', '냉장고', 'TV', '무전기', '제빙기', '금고', 'CCTV', '세단기', '앰프', '세탁기', '기타'],
   '냉난방용품': ['냉온풍기', '에어컨'],
@@ -699,7 +702,7 @@ const BASE_CATALOG = {
 
 const LOG_MAX = 15;     // 자산별 변경 이력 보관 개수 (B5)
 function addLog(x, t, at) { x.log = [{ at: at || new Date().toISOString(), t }, ...(x.log || [])].slice(0, LOG_MAX); }
-const DATA_VERSION = 9;   // 데이터 구조 버전: 더 새 버전 데이터를 만나면 저장을 막아 덮어쓰기 사고를 방지
+const DATA_VERSION = 10;   // 데이터 구조 버전: 더 새 버전 데이터를 만나면 저장을 막아 덮어쓰기 사고를 방지
 function seedDoc() { return { version: 3, updatedAt: '', catalog: {}, assets: [] }; }
 
 /* ═══════════════════════════════════════════
@@ -796,6 +799,8 @@ function normStatus(v) { v = String(v || '').trim(); return STATUSES.includes(v)
 function normalizeDoc(d) {
   const doc = d && Array.isArray(d.assets) ? d : seedDoc();
   doc.version = DATA_VERSION;
+  doc.materialOps = Array.isArray(doc.materialOps) ? doc.materialOps : [];
+  doc.materialOrders = Array.isArray(doc.materialOrders) ? doc.materialOrders : [];
   doc.catalog = doc.catalog && typeof doc.catalog === 'object' ? doc.catalog : {};
   doc.audit = doc.audit && doc.audit.checked ? doc.audit : null;          // 진행 중인 실사 {startedAt, checked:{id: 시각}}
   doc.auditLog = Array.isArray(doc.auditLog) ? doc.auditLog : [];          // 지난 실사 기록
@@ -811,6 +816,7 @@ function normalizeDoc(d) {
       location: a.location || '', locInit: a.locInit || a.location || '', manager: a.manager || '',
       status: normStatus(a.status) || '상', lat: num(a.lat), lng: num(a.lng),
       nextCheck: a.nextCheck || '', rentalDue: a.rentalDue || '', leaseVendor: a.leaseVendor || '', leaseStart: a.leaseStart || '', leaseTel: a.leaseTel || '', leaseContact: a.leaseContact || '',
+      material: a.material || null,
       toolKit: Array.isArray(a.toolKit) ? a.toolKit : [],
       tool: a.tool && typeof a.tool === 'object' ? a.tool : null, toolHistory: Array.isArray(a.toolHistory) ? a.toolHistory : [], nfc: a.nfc || null, nfcHistory: Array.isArray(a.nfcHistory) ? a.nfcHistory : [],
       note: a.note || '', out, updatedAt: a.updatedAt || '',
@@ -819,6 +825,7 @@ function normalizeDoc(d) {
       photos: Array.isArray(a.photos) ? a.photos : (a.photoAt ? [{ path: `photos/${a.id}.jpg`, at: a.photoAt }] : [])
     };
   });
+  doc.assets.filter(isMaterial).forEach(a=>MaterialCore.refresh(a));
   // 위치 목록: 저장된 목록 + 자산에 쓰인 위치 (B2)
   const locs = new Set((Array.isArray(doc.locations) ? doc.locations : []).filter(Boolean));
   doc.assets.forEach(a => { if (a.location) locs.add(a.location); });
@@ -863,17 +870,67 @@ function qrBase() {
 }
 const qrUrl = id => qrBase() + '?id=' + encodeURIComponent(id);
 
+/* 자재: 기존 목록·상세 패널·사진·지도·QR 구조를 사용합니다. */
+const isMaterial=a=>MaterialCore.mat(a), matState=a=>MaterialCore.state(a), matSummary=a=>MaterialCore.summary(a);
+const MAT_NAMES={orderLink:'PO 품목 연결',coordinates:'좌표 변경',receive:'입고',issue:'반출 등록',confirm:'반출 완료',cancel:'잘못 등록 정정',amend:'반출수량 정정',return:'돌아온 자재',use:'사용',splitOut:'일부 분할',splitIn:'분할 입고',move:'보관 구역 이동',adjust:'수량 조정',documents:'서류 보완',metadata:'정보 정정',archive:'보관함',restore:'복원'};
+const matNum=n=>(n/1000).toLocaleString('ko-KR',{maximumFractionDigits:3});
+function matAvailable(a){const s=matState(a);return a.material.parts.length===1?`${matNum(s.available[a.material.parts[0].key])} ${esc(a.material.parts[0].unit)}`:'구성품별 보기';}
+function matPending(a){const s=matState(a);return Object.values(s.issues).filter(i=>!i.confirmed&&!i.cancelled).length;}
+function matBadge(a){const n=matPending(a),s=matState(a);return n?`<span class="due amber">반출중 · 확인 대기 ${a.material.parts.length===1?matNum(s.pending[a.material.parts[0].key])+' '+esc(a.material.parts[0].unit):n+'건'}</span>`:a.material.archived?'<span class="due gray">보관함</span>':Object.values(matState(a).available).some(Boolean)?'<span class="due green">보관중</span>':Object.values(s.damage).some(Boolean)?'<span class="due amber">파손 보관</span>':'<span class="due gray">재고 소진</span>';}
+function matMatches(a){const f=UI.materialFilter||'all';return (f==='archive'?a.material.archived:!a.material.archived)&&({pending:()=>matPending(a)>0,nocoord:()=>!hasCoord(a),docs:()=>a.material.common.docState==='pending',empty:()=>!Object.values(matState(a).book).some(Boolean)}[f]?.()??true);}
+function materialFiltersHTML(){const list=DOC.assets.filter(isMaterial),btn=(f,t)=>`<button class="chip ${UI.materialFilter===f?'on':''}" onclick="UI.materialFilter='${f}';render()">${t}</button>`;return `<div class="tool-filters">${btn('all','전체 '+list.filter(a=>!a.material.archived).length)}${btn('pending','반출중 '+list.filter(a=>!a.material.archived&&matPending(a)).length)}${btn('nocoord','위치 미등록 '+list.filter(a=>!a.material.archived&&!hasCoord(a)).length)}<details class="more"><summary>더보기</summary>${btn('docs','서류 미수령')}${btn('empty','재고 소진')}${btn('archive','보관함')}</details></div>`;}
+function materialCardsHTML(){const a=DOC.assets.filter(x=>isMaterial(x)&&!x.material.archived),n=(t,num,f)=>`<button class="stat" onclick="UI.materialFilter='${f}';render()">${cardBody(t,`${num}<small>${f==='all'||f==='nocoord'?'로트':'건'}</small>`,'','','')}</button>`;return `<div class="stats material-stats">${n('전체 자재 로트',a.length,'all')}${n('반출 확인 대기',a.reduce((n,x)=>n+matPending(x),0),'pending')}${n('위치 미등록',a.filter(x=>!hasCoord(x)).length,'nocoord')}${n('서류 미수령',a.filter(x=>x.material.common.docState==='pending').length,'docs')}</div>`;}
+function materialListHTML(list){return `<div class="tbl-wrap"><table class="tbl"><thead><tr><th class="ck"><input type="checkbox" aria-label="전체 선택" onclick="selAll(this.checked)"></th><th onclick="setSort('id')">관리번호</th><th>사진</th><th onclick="setSort('name')">품명 · 규격</th><th>PL · PO</th><th>보관 구역</th><th onclick="setSort('qty')">사용 가능</th><th>반출 상태</th><th>최종 변경</th></tr></thead><tbody>${list.map(a=>`<tr onclick="openAsset('${a.id}')"><td onclick="event.stopPropagation()"><input type="checkbox" aria-label="${a.id} 선택" ${UI.sel.has(a.id)?'checked':''} onchange="selOne('${a.id}',this.checked)"></td><td class="mono">${a.id}</td><td onclick="event.stopPropagation()">${photoCell(a)}</td><td><b>${esc(a.item)}</b><div class="ri-sub">${esc(a.model)}</div></td><td>${esc(a.material.common.pl||'서류 '+(a.material.common.docState==='pending'?'미수령':'해당 없음'))}<div class="ri-sub">${esc(a.material.common.po||'—')}</div></td><td>${esc(a.location)}${hasCoord(a)?'':' <span class="no-coord">●</span>'}</td><td class="qty">${matAvailable(a)}</td><td>${matBadge(a)}</td><td>${relTime(a.updatedAt)}</td></tr>`).join('')}</tbody></table></div><div class="mlist">${list.map(a=>`<div class="mcard has-thumb" onclick="openAsset('${a.id}')"><div class="mc-top"><span class="mono sub">${a.id}</span>${matBadge(a)}</div><div class="mc-name">${esc(a.item)}</div><div class="mc-sub">${esc(a.model)}</div><b class="material-count">${matAvailable(a)}</b><div class="mc-sub">${esc(a.material.common.pl||'서류 미수령')} · ${esc(a.material.common.po||'—')}</div><div class="mc-sub">${esc(a.location)}</div><div class="mc-photo" onclick="event.stopPropagation()">${photoCell(a)}</div></div>`).join('')}</div>`;}
+function materialEventText(a,e){if(e.kind==='coordinates')return `GPS ${Number(e.to.lat).toFixed(6)}, ${Number(e.to.lng).toFixed(6)}`;if(e.kind==='move')return esc(e.from)+' → '+esc(e.to);if(e.kind==='documents')return esc(e.common.po||'—')+' / '+esc(e.common.pl||'—');if(e.kind==='metadata')return esc(e.item)+' · '+esc(e.model);return matVectorText(a,e.q||e.delta)+(typeof e.to==='string'?' → '+esc(e.to):'');}
+function matVectorText(a,v){return a.material.parts.filter(p=>v?.[p.key]).map(p=>`${esc(p.name)} ${matNum(v[p.key])} ${esc(p.unit)}`).join(' / ')||'—';}
+function materialDetailHTML(a){const m=a.material,c=m.common,s=matState(a),one=m.parts.length===1,p=m.parts[0],row=(k,v)=>`<div><dt>${k}</dt><dd>${v}</dd></div>`,qr=qrData(a.id);
+ const stat=(t,k)=>`<div><small>${t}</small><b>${one?matNum(s[k][p.key])+' '+esc(p.unit):'구성품별'}</b></div>`;
+ const issues=Object.values(s.issues).reverse().map(i=>`<div class="material-event"><b>${i.cancelled?'등록 정정됨':i.confirmed?'반출 완료':'🟠 반출중 · 사무실 확인 대기'}</b><p>${matVectorText(a,i.q)}<br>${esc(i.person)} · ${esc(i.place)} · ${fmtAt(i.at)}${i.docNo?' · 반출증 '+esc(i.docNo):''}</p>${Object.values(i.returned).some(Boolean)?`<p>돌아온 수량: ${matVectorText(a,i.returned)}</p>`:''}${i.photo?`<button class="btn sm" onclick="materialProof('${a.id}','${i.id}')">반출증 보기</button>`:''}${!i.confirmed&&!i.cancelled?`<button class="btn sm primary" onclick="materialAction('${a.id}','confirm','${i.id}')">반출 확정</button><button class="btn sm" onclick="materialAction('${a.id}','amend','${i.id}')">등록 수정</button><button class="btn sm" onclick="materialAction('${a.id}','cancel','${i.id}')">잘못 등록했어요</button>`:''}${!i.cancelled&&m.parts.some(p=>i.q[p.key]>i.returned[p.key])?`<button class="btn sm" onclick="materialAction('${a.id}','return','${i.id}')">돌아온 자재 등록</button>`:''}</div>`).join('');
+ const order=(DOC.materialOrders||[]).find(o=>o.id===m.orderId);const received=order?DOC.assets.filter(x=>isMaterial(x)&&x.material.orderId===order.id).reduce((n,x)=>n+x.material.ledger.filter(e=>e.kind==='receive').reduce((t,e)=>t+(e.orderQuantity??Object.values(e.delta).reduce((t,v)=>t+v,0)),0),0):0;
+ return `<div class="p-head"><div><div class="mono sub">${a.id} · 자재</div><h2>${esc(a.item)}</h2><div>${esc(a.model)}</div></div><button class="icon-btn" onclick="closeDrawer()" aria-label="닫기">${icon('x',20)}</button></div><div class="p-body">${photoUrl(a)?`<div class="asset-photo" onclick="showPhoto('${a.id}')"><img src="${photoUrl(a)}" alt="자재 사진"></div>`:''}<div class="material-totals">${stat('장부 재고','book')}${stat('반출중','pending')}${stat('사용 가능','available')}</div>${Object.values(s.damage).some(Boolean)?`<p class="due amber">파손 보관 ${matVectorText(a,s.damage)} · 사용 가능 수량에서 제외</p>`:''}${!one?`<table class="material-parts"><thead><tr><th>구성품</th><th>장부</th><th>반출중</th><th>사용 가능</th></tr></thead><tbody>${m.parts.map(p=>`<tr><td>${esc(p.name)}<small>${esc(p.spec)} · ${esc(p.unit)}</small></td><td>${matNum(s.book[p.key])}</td><td>${matNum(s.pending[p.key])}</td><td><b>${matNum(s.available[p.key])}</b></td></tr>`).join('')}</tbody></table><p class="hint">구성상 완성 가능 ${Math.min(...m.parts.map(p=>Math.floor(s.available[p.key]/p.perSet)))}세트 · 실제 포장 수와 다를 수 있습니다</p>`:''}
+ <dl class="info">${row('위치',esc(a.location)+(hasCoord(a)?` <button class="link" onclick="showOnMap('${a.id}')">지도에서 보기</button>`:' · 좌표 없음'))}${row('PL번호',esc(c.pl||'—')+(c.plPhoto?` <button class="link" onclick="materialProof('${a.id}','PL')">PL 사진</button>`:''))}${row('PO번호',esc(c.po||'—'))}${row('서류',esc(c.docState==='complete'?'등록 완료':c.docState==='pending'?'미수령 · '+c.docReason:'해당 없음 · '+c.docReason))}${row('업체명',esc(c.vendor))}${m.serial?row('개체 번호',esc(m.serial)):''}${row('입고',esc(c.arrivedAt)+' · '+esc(c.receivedBy))}${c.orderDate?row('발주일',esc(c.orderDate)):''}${c.expectedDate?row('도착 예정',esc(c.expectedDate)):''}${order?row('PO 발주·입고',`${matNum(order.quantity)} / ${matNum(received)} ${esc(order.unit)} · 미입고 ${matNum(order.quantity-received)}`):''}${row('입고 포장',m.packCount!=null?`${m.packCount} ${esc(m.packLabel)} · ${m.parts.map(p=>`${esc(p.name)} ${matNum(p.perSet)} ${esc(p.unit)}`).join(' / ')}`:'분할 보관 묶음')}${m.parent?row('분할 원본',`<button class="link" onclick="openAsset('${m.parent}')">${m.parent}</button>`):''}${a.note?row('비고',esc(a.note)):''}</dl>
+ ${m.archived?`<button class="btn" onclick="materialAction('${a.id}','restore')">보관함에서 복원</button>`:`<div class="material-actions"><button class="btn" onclick="openMaterialForm('${a.id}')">같은 자재로 입고</button><button class="btn" onclick="materialAction('${a.id}','use')">사용 등록</button><button class="btn primary" onclick="materialAction('${a.id}','issue')">현장 반출</button><details class="more"><summary>더보기</summary>${[['move','위치 이동'],['split','일부 수량 분할'],['adjust','수량 조정'],['documents','서류 보완'],['metadata','정보 정정'],['archive','보관함으로']].map(([k,t])=>`<button class="btn sm" onclick="materialAction('${a.id}','${k}')">${t}</button>`).join('')}</details></div>`}
+ <div class="qr-box">${qr?`<img src="${qr}" alt="자재 QR">`:''}<div><b>자재 QR</b><p class="sub">현재 수량은 QR 화면에서 확인하세요.</p><button class="btn sm desktop-only" onclick="printOne('${a.id}')">라벨 인쇄</button></div></div><button class="photo-pick" onclick="photoInput('${a.id}')">${icon('camera',16)} ${photoUrl(a)?'사진 바꾸기':'사진 넣기'}</button>${hasCoord(a)?`<button class="btn" onclick="startFindAsset('${a.id}')">${icon('pin',16)} 이 자재 찾기</button>`:`<button class="btn" onclick="quickLocate('${a.id}')">지금 위치로 넣기</button>`}<h3 class="flabel">반출 내역</h3>${issues||'<p class="hint">반출 기록 없음</p>'}<h3 class="flabel">전체 수량·처리 이력</h3><div class="hist">${m.ledger.slice().reverse().map(e=>`<div><span>${esc(MAT_NAMES[e.kind]||e.kind)} · ${materialEventText(a,e)}${e.reason?' · '+esc(e.reason):''}</span><span>${esc(e.operator)} · ${fmtAt(e.at)}</span></div>`).join('')}</div></div><div class="p-foot"><button class="btn" onclick="closeDrawer()">닫기</button></div>`;
+}
+function materialProof(id,eventId){const a=getAsset(id),p=eventId==='PL'?a.material.common.plPhoto:a.material.ledger.find(e=>e.id===eventId)?.photo;if(!p)return;openModal(`<div class="m-head"><h2>${eventId==='PL'?'PL 사진':'반출증'} · ${esc(id)}</h2><button class="icon-btn" onclick="closeModal()">×</button></div><div class="m-body"><img class="material-proof" src="${photoUrl(a,p)}" alt="반출증"></div><div class="m-foot"><button class="btn" onclick="closeModal()">닫기</button></div>`);}
+function materialInput(label,name,value='',type='text',required=false){return `<label class="material-field"><span>${label}${required?'<em>*</em>':''}</span><input class="inp" name="${name}" value="${esc(value)}" type="${type}" ${required?'required':''} ${type==='number'?'min="0" step="0.001"':''}></label>`;}
+function materialSelect(label,name,values,value){return `<label class="material-field"><span>${label}${label.includes('단위')?'<em>*</em>':''}</span><select class="inp" name="${name}">${values.map(([k,t])=>`<option value="${k}" ${value===k?'selected':''}>${t}</option>`).join('')}</select></label>`;}
+const materialUnits=()=>MaterialCore.UNITS.map(u=>[u,u]);
+function materialLineHTML(l={},i=0){return `<fieldset class="material-line" data-line="${i}" oninput="materialCalc(this,event)"><legend>자재 ${i+1}</legend><div class="material-grid">${materialInput('품명','item',l.item,'text',true)}${materialInput('규격 (없으면 해당 없음)','model',l.model,'text',true)}${materialSelect('재고 단위','unit',materialUnits(),l.unit||'EA')}${materialInput('입고수량 (세트는 세트 수)','quantity',l.quantity||'','number',true)}${materialInput('보관 구역','location',l.location||DRAWER.draft.location,'text',true)}</div><details class="more"><summary>묶음·세트로 입고</summary><div class="material-grid">${materialInput('입고 묶음 수 (세트 필수)','packCount',l.packCount||'','number')}${materialInput('묶음 표기 (BOX·SET 등)','packLabel',l.packLabel||'묶음')}${materialInput('묶음당 낱개 수량','perSet',l.perSet||'','number')}</div><p class="hint">다른 구성품이 들어 있는 세트는 아래에 구성품을 줄별로 입력하세요.</p><div class="material-components">${(l.parts||[]).map(materialPartHTML).join('')}</div><button class="btn sm" type="button" onclick="this.previousElementSibling.insertAdjacentHTML('beforeend',materialPartHTML())">구성품 추가</button></details><div class="material-grid">${materialInput('발주수량 (세트는 SET 기준·선택)','ordered',l.ordered||'','number')}${materialInput('PO 품목 줄 번호 (선택)','poLine',l.poLine||'')}${materialInput('개체·Spool 번호 (선택)','serial',l.serial||'')}${materialInput('비고','note',l.note||'')}</div><p class="hint">재고 단위는 실제 반출할 단위로 선택하세요. 묶음 입력 시 입고수량을 자동 계산합니다.</p><button class="link" type="button" onclick="if(this.closest('form').querySelectorAll('.material-line').length>1)this.closest('fieldset').remove()">이 줄 지우기</button></fieldset>`;}
+function materialCalc(el,event){if(!['packCount','perSet'].includes(event.target.name))return;const c=el.querySelector('[name=packCount]').value,p=el.querySelector('[name=perSet]').value;if(c&&p)el.querySelector('[name=quantity]').value=Number(c)*Number(p);}
+function materialPartHTML(p={}){return `<div class="material-component">${materialInput('구성품명','partName',p.name,'text',true)}${materialInput('규격','partSpec',p.spec,'text',true)}${materialSelect('단위','partUnit',materialUnits(),p.unit||'EA')}${materialInput('세트당 수량','partPer',p.perSet||'1','number',true)}<button class="link" type="button" onclick="this.parentElement.remove()">삭제</button></div>`;}
+function materialDocFields(f){if(!f)return;const complete=f.elements.docState.value==='complete';for(const [name,required] of [['po',complete],['pl',complete],['docReason',!complete]]){const input=f.elements[name];if(!input)continue;input.required=required;const title=input.parentElement.querySelector('span');let star=title.querySelector('em');if(!star){star=document.createElement('em');star.textContent='*';title.append(star);}star.hidden=!required;}}
+function openRegistration(){if(UI.cat!=='전체')return openForm();openModal(`<div class="m-head"><h2>신규 등록</h2><button class="icon-btn" onclick="closeModal()">×</button></div><div class="m-body material-actions"><button class="btn primary" onclick="closeModal();openForm()">비품·공기구 등록</button><button class="btn primary" onclick="closeModal();openMaterialForm()">자재 등록</button></div>`);}
+function openMaterialForm(templateId){if(DRAWER?.saving)return;stopNewAssetGPS(DRAWER);const a=getAsset(templateId),c=a?.material.common||{};DRAWER={mode:'materialForm',registrationId:crypto.randomUUID(),draft:{lat:'',lng:'',location:a?.location||''},template:a||null,common:{po:c.po||'',vendor:c.vendor||''},saving:false,uploads:new Map()};renderDrawer();materialDocFields($('material-create-form'));}
+function materialFormHTML(){const s=DRAWER,t=s.template,l=t?{item:t.item,model:t.model,unit:t.material.parts[0].unit,location:t.location,parts:t.material.parts.length>1?t.material.parts.map(p=>({...p,perSet:p.perSet/1000})):[],poLine:'',perSet:'1'}:{};return `<div class="p-head"><h2>신규 자재 등록</h2><button class="icon-btn" onclick="closeDrawer()">×</button></div><div class="p-body"><form id="material-create-form" onchange="materialDocFields(this)" onsubmit="event.preventDefault();submitMaterialCreate()"><div class="material-grid">${materialInput('입고자','operator',lsGet('aam_material_operator')||'','text',true)}${materialInput('업체명','vendor',s.common.vendor,'text',true)}${materialInput('PO번호','po',s.common.po)}${materialInput('PL번호','pl','')}${materialInput('발주일 (선택)','orderDate','','date')}${materialInput('도착 예정일 (선택)','expectedDate','','date')}${materialInput('실제 입고일','arrivedAt',todayStr(),'date',true)}${materialSelect('서류 상태','docState',[['complete','PO·PL 등록'],['pending','서류 미수령'],['none','해당 없음']],'complete')}</div>${materialInput('서류 미수령·해당 없음 사유','docReason','')}<div class="new-asset-photo" id="new-asset-photo"><p class="photo-pending">사진 미등록 · 나중에 촬영할 수 있어요</p></div><button type="button" class="photo-pick" onclick="chooseNewAssetPhoto()">사진 촬영·선택</button><p class="hint" id="new-asset-gps">사진 촬영·선택 시 GPS도 확인합니다.</p><input type="file" name="plPhoto" accept="image/*" aria-label="PL 사진 첨부"><p class="hint">PL 사진 첨부 (선택) · 자재 사진과 별도 보관</p><div id="material-lines">${materialLineHTML(l,0)}</div><button class="btn" type="button" onclick="document.getElementById('material-lines').insertAdjacentHTML('beforeend',materialLineHTML({},document.querySelectorAll('.material-line').length))">＋ 같은 PL에 자재 추가</button><p class="material-error" id="material-form-error" role="alert"></p></form></div><div class="p-foot"><button class="btn" onclick="closeDrawer()">취소</button><button class="btn primary" id="f-save" onclick="document.getElementById('material-create-form').requestSubmit()">등록·QR 생성</button></div>`;}
+async function materialUpload(file,opId,name){if(!file)return null;const img=new Image(),url=URL.createObjectURL(file);try{img.src=url;await img.decode();const shot=makePhoto(img,{id:'MAT',item:name});shot.path=`photos/material/${opId}/${name}_${crypto.randomUUID()}.jpg`;await Store.putFile(shot.path,shot.full.split(',')[1]);return {path:shot.path,at:shot.at};}finally{URL.revokeObjectURL(url);}}
+async function submitMaterialCreate(){const s=DRAWER,f=$('material-create-form');if(s?.saving||!f.reportValidity())return;const value=(el,n)=>el.querySelector(`[name="${n}"]`).value.trim();const fields=Object.fromEntries(new FormData(f));const command={id:s.registrationId,kind:'create',at:s.at||(s.at=new Date().toISOString()),operator:fields.operator,common:{po:fields.po,pl:fields.pl,vendor:fields.vendor,orderDate:fields.orderDate,expectedDate:fields.expectedDate,arrivedAt:fields.arrivedAt,docState:fields.docState,docReason:fields.docReason},lines:[...f.querySelectorAll('.material-line')].map((el,index)=>({quantity:value(el,'quantity'),item:value(el,'item'),model:value(el,'model'),unit:value(el,'unit'),location:value(el,'location'),packCount:value(el,'packCount'),packLabel:value(el,'packLabel'),perSet:value(el,'perSet'),ordered:value(el,'ordered'),poLine:value(el,'poLine'),serial:value(el,'serial'),note:value(el,'note'),parts:[...el.querySelectorAll('.material-component')].map(p=>({name:value(p,'partName'),spec:value(p,'partSpec'),unit:value(p,'partUnit'),perSet:value(p,'partPer')})),lat:index===0?s.draft.lat:'',lng:index===0?s.draft.lng:''}))};
+ s.saving=true;stopNewAssetGPS(s);$('f-save').disabled=true;try{if(fields.plPhoto?.size){const key=fields.plPhoto.name+fields.plPhoto.size+fields.plPhoto.lastModified;if(s.plFileKey!==key){s.plUploaded=await materialUpload(fields.plPhoto,command.id,'PL');s.plFileKey=key;}command.common.plPhoto=s.plUploaded;}if(s.image){if(s.coverAt!==s.capturedAt){s.coverUploaded=null;s.coverAt=s.capturedAt;}s.coverUploaded??=await(async()=>{const shot=makePhoto(s.image,{id:'MAT',item:command.lines[0].item});shot.path=`photos/material/${command.id}/cover_${crypto.randomUUID()}.jpg`;await Store.putFile(shot.path,shot.full.split(',')[1]);return {photo:{path:shot.path,at:shot.at},thumb:shot.thumb};})();Object.assign(command.lines[0],s.coverUploaded);}
+ const preview=structuredClone(DOC);MaterialCore.apply(preview,command);const {doc,result}=await Store.commit(d=>MaterialCore.apply(d,command));DOC=doc;s.saving=false;lsSet('aam_material_operator',command.operator);UI.cat='자재';UI.filter='all';UI.item='전체';UI.materialFilter='all';closeDrawer();render();openAsset(result.ids[0]);toast(`자재 ${result.ids.length}로트 등록 완료`);
+ }catch(e){s.saving=false;$('material-form-error').textContent=e.message;$('f-save').disabled=false;setSync('err',e.message);}}
+let MATERIAL_EDIT=null;
+function materialAction(id,kind,target){const a=getAsset(id);if(!isMaterial(a))return;const s=matState(a),i=s.issues[target],labels={issue:'현장 반출',use:'사용 등록',confirm:'반출 내역 확인·확정',return:'돌아온 자재 등록',amend:'반출 등록 수정',cancel:'잘못 등록했어요',split:'일부 수량 분할',move:'보관 구역 이동',adjust:'수량 조정',documents:'서류 보완',metadata:'정보 정정',archive:'보관함으로',restore:'보관함에서 복원'};MATERIAL_EDIT={id:crypto.randomUUID(),kind,asset:id,target,at:new Date().toISOString(),photo:i?.photo||null};const edit=MATERIAL_EDIT;
+ const quantities=['issue','use','split','return','adjust','amend'].includes(kind)?`<div class="material-quantities">${a.material.parts.map(p=>{const max=kind==='return'?(i.q[p.key]-i.returned[p.key]):s.available[p.key];return `<label class="material-field">${esc(p.name)} · ${esc(p.spec)} (${esc(p.unit)})<small>${kind==='return'?'돌아올 수 있는 수량':'사용 가능'} ${matNum(max)}</small><input class="inp" name="q_${p.key}" type="number" min="0" step="${['EA','BOX','SET','ROLL'].includes(p.unit)?'1':'0.001'}" value="${kind==='adjust'?s.book[p.key]/1000:kind==='amend'?(i.q[p.key]||0)/1000:'0'}" required>${kind==='adjust'?`<span>그중 파손 수량</span><input class="inp" name="d_${p.key}" type="number" min="0" step="0.001" value="${s.damage[p.key]/1000}" required>`:''}</label>`;}).join('')}</div>${['issue','use','split','return'].includes(kind)?`<button class="btn sm" type="button" onclick="materialAll()">${kind==='return'?'돌아올 수량 전부':'사용 가능 전량'}</button>`:''}${a.material.parts.length>1&&kind==='issue'?`<label class="material-field">세트로 반출 (구성품 자동 계산)<input class="inp" type="number" min="0" step="1" value="0" oninput="materialSets(this.value)"></label>`:''}`:'';
+ openModal(`<div class="m-head"><h2>${esc(id)} · ${labels[kind]}</h2><button class="icon-btn" onclick="closeModal()">×</button></div><div class="m-body"><form id="material-action-form" onsubmit="event.preventDefault();submitMaterialAction()">${materialInput('입력·확인 담당자','operator',lsGet('aam_material_operator')||'','text',true)}${quantities}${kind==='issue'?`${materialInput('반출자','person','','text',true)}${materialInput('사용처·반출처','place','','text',true)}${materialInput('반출증 번호 (선택)','docNo')}<label class="material-field"><span>반출증 사진<em>*</em></span><input class="inp" type="file" name="proof" accept="image/*" required></label>`:''}${kind==='use'?materialInput('사용처','place','','text',true):''}${['move','return','split'].includes(kind)?materialInput('보관 구역','location',kind==='split'?'':a.location,'text',true):''}${kind==='move'?'<p class="hint">보관 구역을 바꾸면 이전 GPS를 비웁니다. 상세의 사진 촬영에서 새 위치를 확인할 수 있습니다.</p>':''}${kind==='return'?'<label class="material-check"><input type="checkbox" name="damaged">파손되어 사용할 수 없는 자재 (정상분과 나누어 등록)</label>':''}${kind==='cancel'?'<label class="material-check"><input type="checkbox" name="neverLeft" required>실물이 나가지 않은 입력 오류입니다. 실제 돌아온 물건은 돌아온 자재 등록을 사용합니다.</label>':''}${['cancel','amend','adjust','archive','restore','metadata'].includes(kind)?materialInput('처리 사유','reason','','text',true):materialInput('비고','note','')}${kind==='metadata'?`${materialInput('품명','item',a.item,'text',true)}${materialInput('규격','model',a.model,'text',true)}<p class="hint">오타 정정에만 사용하세요. 다른 자재로 바꾸거나 단위·세트 구성을 변경할 수 없습니다.</p>`:''}${kind==='documents'?`${materialInput('업체명','vendor',a.material.common.vendor,'text',true)}${materialInput('PO번호','po',a.material.common.po)}${materialInput('PL번호','pl',a.material.common.pl)}${materialSelect('서류 상태','docState',[['complete','PO·PL 등록'],['pending','서류 미수령'],['none','해당 없음']],a.material.common.docState)}${materialInput('서류 예외 사유','reason',a.material.common.docReason)}<label class="material-field">PL 사진 (선택)<input class="inp" name="proof" type="file" accept="image/*"></label>`:''}${kind==='amend'?`<p>원래 반출수량: ${matVectorText(a,i.q)} · ${esc(i.person)} · ${esc(i.place)}</p>`:''}${kind==='confirm'?`<p>${matVectorText(a,i.q)} · ${esc(i.person)} · ${esc(i.place)}</p><img class="material-proof" src="${photoUrl(a,i.photo)}" alt="반출증"><p class="hint">이미 돌아온 수량은 제외하고 반출 내역을 최종 반영합니다.</p>`:''}<p class="material-error" id="material-action-error" role="alert"></p></form></div><div class="m-foot"><button class="btn" onclick="closeModal()">취소</button><button class="btn primary" id="material-action-save" onclick="document.getElementById('material-action-form').requestSubmit()">${kind==='confirm'?'반출 확정':'확인·저장'}</button></div>`);
+}
+function materialAll(){const e=MATERIAL_EDIT,a=getAsset(e.asset),s=matState(a),i=s.issues[e.target];for(const p of a.material.parts)$('material-action-form').elements['q_'+p.key].value=(e.kind==='return'?i.q[p.key]-i.returned[p.key]:s.available[p.key])/1000;}
+function materialSets(n){const a=getAsset(MATERIAL_EDIT.asset);for(const p of a.material.parts)$('material-action-form').elements['q_'+p.key].value=Number(n)*p.perSet/1000;}
+async function submitMaterialAction(){const e=MATERIAL_EDIT,f=$('material-action-form');if(!e||e.saving||!f.reportValidity())return;const fields=Object.fromEntries(new FormData(f)),a=getAsset(e.asset),cmd={...e,...fields};delete cmd.saving;delete cmd.proof;delete cmd.proofKey;cmd.quantities=Object.fromEntries(a.material.parts.map(p=>[p.key,fields['q_'+p.key]||'0']));cmd.damagedQuantities=Object.fromEntries(a.material.parts.map(p=>[p.key,fields['d_'+p.key]||'0']));cmd.damaged=fields.damaged==='on';cmd.neverLeft=fields.neverLeft==='on';e.saving=true;$('material-action-save').disabled=true;
+ try{if(fields.proof?.size){const key=fields.proof.name+fields.proof.size+fields.proof.lastModified;if(e.proofKey!==key){e.photo=await materialUpload(fields.proof,e.id,e.kind==='documents'?'PL':'반출증');e.proofKey=key;}cmd.photo=e.photo;}MaterialCore.apply(structuredClone(DOC),cmd);const {doc,result}=await Store.commit(d=>MaterialCore.apply(d,cmd));DOC=doc;e.saving=false;lsSet('aam_material_operator',cmd.operator);closeModal();render();openAsset(result.ids?.[0]||e.asset);toast('자재 처리를 저장했습니다');}catch(error){e.saving=false;$('material-action-error').textContent=error.message;$('material-action-save').disabled=false;setSync('err',error.message);}}
+function materialCoordinate(doc,id,point,method,eventId,at,restores=null){return MaterialCore.apply(doc,{id:eventId,kind:'coordinates',asset:id,at,operator:lsGet('aam_material_operator')||doc.assets.find(x=>x.id===id).manager||'관리 담당',lat:+point.lat,lng:+point.lng,method,restores});}
+function exportMaterials(){if(!needXLSX())return;const list=sortList(filteredAssets()).filter(isMaterial),rows=list.flatMap(a=>{const s=matState(a),c=a.material.common;return a.material.parts.map(p=>({'관리번호':a.id,'품명':a.item,'규격':a.model,'구성품':p.name,'단위':p.unit,'PO번호':c.po,'PL번호':c.pl,'업체':c.vendor,'위치':a.location,'장부 재고':s.book[p.key]/1000,'반출중':s.pending[p.key]/1000,'사용 가능':s.available[p.key]/1000,'파손':s.damage[p.key]/1000,'입고일':c.arrivedAt,'서류 상태':c.docState}));});const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows),'자재 재고');const history=list.flatMap(a=>a.material.ledger.map(e=>({'관리번호':a.id,'일시':e.at,'종류':MAT_NAMES[e.kind],'담당자':e.operator,'수량':matVectorText(a,e.q||e.delta).replace(/&[^;]+;/g,''),'연결 반출':e.target||'','반출증':e.photo?.path||'','사유':e.reason||''})));XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(history),'처리 이력');XLSX.writeFile(wb,`Aurora_자재_${todayStr()}.xlsx`);}
+
 /* 앱 상태 */
 let DOC = null;
 let DRAWER = null;          // {mode:'detail'|'form', id, draft}
 let PENDING_ID = null;      // QR로 들어온 자산번호
-const UI = { toolFilter: 'all', q: '', filter: 'all', cat: '전체', item: '전체', loc: '전체', mode: 'list', sel: new Set(),
+const UI = { materialFilter: 'all', toolFilter: 'all', q: '', filter: 'all', cat: '전체', item: '전체', loc: '전체', mode: 'list', sel: new Set(),
   sort: (lsGet('aam_sort') && lsGet('aam_sort').k) ? lsGet('aam_sort') : { k: 'id', d: 1 }, paper: ['A4_20','A4','A3'].includes(lsGet('aam_paper')) ? lsGet('aam_paper') : 'A4' };
 const getAsset = id => DOC.assets.find(a => a.id === id);
-const activeAssets = () => DOC.assets.filter(a => !a.out);
+const activeAssets = () => DOC.assets.filter(a => !a.out && !isMaterial(a));
 // 품목 목록 = 기본 목록 + 설정에서 추가한 품목(doc.catalog: {품목: 분류})
 function catalog() {
-  const c = {}; CATEGORIES.forEach(k => c[k] = [...BASE_CATALOG[k]]);
+  const c = {}; CATEGORIES.forEach(k => c[k] = [...(BASE_CATALOG[k]||[])]);
   Object.entries(DOC.catalog || {}).forEach(([it, cat]) => { if (c[cat] && !c[cat].includes(it)) c[cat].push(it); });
   return c;
 }
@@ -1001,6 +1058,7 @@ function todoSummaryHTML(list){
   return `<div class="todo-counts">${Object.entries(TODO_GROUPS).filter(([key])=>counts[key]).map(([key,label])=>`<span>${label} <b>${counts[key]}</b></span>`).join('')}</div>`;
 }
 function cardsHTML() {
+  if(UI.cat==='자재')return materialCardsHTML();
   const act = activeAssets(); const cnt = s => act.filter(a => a.status === s).length;
   const todoList = todos(), td = todoList.length, ym = todayStr().slice(0, 7);
   const outs = DOC.assets.filter(a => a.out && !isGone(a)), disp = DOC.assets.filter(isGone);
@@ -1010,7 +1068,7 @@ function cardsHTML() {
   const card = (key, label, num, l1, l2, badge, cls = '') => `<button class="stat ${cls} ${UI.filter === key ? 'on' : ''}" onclick="setFilter('${key}')" ${key==='todo'?'title="확인할 자산 수입니다. 한 자산에 여러 사유가 있으면 사유별 건수 합계는 더 클 수 있습니다."':''}>${cardBody(label, num, l1, l2, badge)}</button>`;
   const st = s => `<span class="st-link ${UI.filter === 'st:' + s ? 'on' : ''}" onclick="event.stopPropagation();setFilter('st:${s}')">${s} ${cnt(s)}</span>`;
   return `<div class="stats">
-    ${card('all', '전체 자산', `${act.length}<small>건</small>`, STATUSES.map(st).join(' · '), '', `<span class="lease-link ${UI.filter === 'lease' ? 'on' : ''}" onclick="event.stopPropagation();setFilter('lease')">임대/임차 ${lease + leaseOut}건 · 사용 중 ${lease} ›</span>`)}
+    ${card('all', '전체 자산', `${act.length}<small>건</small>`, STATUSES.map(st).join(' · '), DOC.assets.some(isMaterial)?'자재 '+DOC.assets.filter(a=>isMaterial(a)&&!a.material.archived).length+'로트 별도 관리':'', `<span class="lease-link ${UI.filter === 'lease' ? 'on' : ''}" onclick="event.stopPropagation();setFilter('lease')">임대/임차 ${lease + leaseOut}건 · 사용 중 ${lease} ›</span>`)}
     ${card('todo', '할 일', `${td}<small>건</small>`, todoSummaryHTML(todoList), '', '', 'todo-card'+(td?' alert':''))}
     ${card('out', '현장 종료', `${outs.length}<small>건</small>`, outs.length?`창고 반납 ${by('GS 자재창고 반납')} · 타현장 전출 ${by('타현장 전용')}`:'현장 종료 내역이 없습니다', outs.length?`이번 달 처리 ${month(outs)}건`:'', `<span class="lease-link ${UI.filter === 'leaseOut' ? 'on' : ''}" onclick="event.stopPropagation();setFilter('leaseOut')">임대/임차 반납 ${leaseOut}건 ›</span>`, 'gray')}
     ${card('disposed', '폐기 · 분실', `${disp.length}<small>건</small>`, disp.length?`폐기 ${disp.filter(a => a.out.type === '폐기').length} · 분실/망실 ${disp.filter(a => a.out.type === LOSS).length}`:'폐기·분실 내역이 없습니다', disp.length?`이번 달 처리 ${month(disp)}건`:'', '', 'gray')}
@@ -1049,28 +1107,28 @@ function auditCardHTML(noCoord) {
 
 /* ── 자산 화면 ── */
 function renderAssets() {
-  const c = catalog(); const items = UI.cat === '전체' ? [] : c[UI.cat];
-  const sel = (key, all, list) => `<select class="sel" onchange="UI.${key}=this.value;${key === 'cat' ? "UI.item='전체';render()" : 'refreshList()'}">${['전체', ...list].map(k => `<option ${UI[key] === k ? 'selected' : ''} value="${esc(k)}">${k === '전체' ? all : esc(k)}</option>`).join('')}</select>`;
+  const c = catalog(); const items = UI.cat === '전체' ? [] : UI.cat==='자재'?[...new Set(DOC.assets.filter(isMaterial).map(a=>a.item))]:c[UI.cat];
+  const sel = (key, all, list) => `<select class="sel" onchange="UI.${key}=this.value;${key === 'cat' ? "UI.item='전체';UI.filter='all';UI.sel.clear();render()" : 'refreshList()'}">${['전체', ...list].map(k => `<option ${UI[key] === k ? 'selected' : ''} value="${esc(k)}">${k === '전체' ? all : esc(k)}</option>`).join('')}</select>`;
   const fk = FILTER_KO[UI.filter];
   return `
   ${cardsHTML()}
   <div class="toolbar">
-    <div class="search-row"><label class="search">${icon('search', 16)}<input id="q" placeholder="품목·위치·관리번호 검색" aria-label="자산 검색" value="${esc(UI.q)}" oninput="UI.q=this.value;refreshList()"></label><button class="btn mobile-only filter-toggle" onclick="openAssetFilters()" aria-label="필터 및 정렬">${icon('settings',16)} 필터</button></div>
+    <div class="search-row"><label class="search">${icon('search', 16)}<input id="q" placeholder="${UI.cat==='자재'?'품명·규격·관리번호·PL·PO 검색':'품목·위치·관리번호 검색'}" aria-label="자산 검색" value="${esc(UI.q)}" oninput="UI.q=this.value;refreshList()"></label><button class="btn mobile-only filter-toggle" onclick="openAssetFilters()" aria-label="필터 및 정렬">${icon('settings',16)} 필터</button></div>
     <div class="quick-filters">${sel('cat', '분류 전체', CATEGORIES)}${items.length ? sel('item', '품목 전체', items) : ''}${sel('loc', '위치 전체', DOC.locations)}</div>
   </div>
   <div class="asset-actions">
     <div class="primary-actions">
       <button class="btn scan-action" onclick="openScanner()" aria-label="QR 스캔 열기" title="스캔 후 사진·위치 저장">${icon('qr',18)}<span>QR 스캔</span></button>
-      <button class="btn primary" onclick="openForm()" aria-label="신규 비품 등록" title="기본 정보 입력 · QR 생성">${icon('plus',18)}<span>신규 비품 등록</span></button>
+      <button class="btn primary" onclick="openRegistration()" aria-label="${UI.cat==='자재'?'신규 자재 등록':UI.cat==='전체'?'신규 등록':'신규 비품 등록'}" title="기본 정보 입력 · QR 생성">${icon('plus',18)}<span>${UI.cat==='자재'?'신규 자재 등록':UI.cat==='전체'?'신규 등록 ▾':'신규 비품 등록'}</span></button>
     </div>
     <div class="secondary-actions">
       <div class="paper-seg">${[['list', '목록'], ['map', '지도']].map(([k, l]) => `<button class="${UI.mode === k ? 'on' : ''}" onclick="UI.mode='${k}';render()">${icon(k === 'map' ? 'map' : 'list', 15)} ${l}</button>`).join('')}</div>
       <div class="dd desktop-only"><button class="btn" onclick="toggleDD(this)">${icon('file', 16)} 엑셀 ${icon('down', 14)}</button>
-        <div class="dd-menu"><button onclick="downloadTemplate()">${icon('file', 16)} 엑셀 양식 받기</button><button onclick="$('xl-file').click()">${icon('upload', 16)} 엑셀 올리기</button><button onclick="exportExcel()">${icon('download', 16)} 내보내기 (전체)</button></div></div>
+        <div class="dd-menu">${UI.cat==='자재'?'':`<button onclick="downloadTemplate()">${icon('file', 16)} 엑셀 양식 받기</button><button onclick="$('xl-file').click()">${icon('upload', 16)} 엑셀 올리기</button>`}<button onclick="exportExcel()">${icon('download', 16)} ${UI.cat==='자재'?'자재·이력 내보내기':'내보내기 (전체)'}</button></div></div>
     </div>
     <div class="list-head"><span id="asset-count"></span>${fk ? `<span class="chip on" onclick="setFilter('all')">${fk} ✕</span>` : ''}</div>
   </div>
-  <div id="tool-filters">${toolFiltersHTML()}</div>
+  <div id="tool-filters">${UI.cat==='자재'?materialFiltersHTML():toolFiltersHTML()}</div>
   <div id="sel-bar"></div>
   <div id="asset-list"></div>`;
 }
@@ -1086,16 +1144,18 @@ function openAssetFilters() {
 }
 function applyAssetFilters() {
   const category = $('filter-category').value;
-  if (UI.cat !== category) UI.item = '전체'; UI.cat = category; UI.loc = $('filter-location').value;
+  if (UI.cat !== category){UI.item='전체';UI.filter='all';} UI.cat = category; UI.loc = $('filter-location').value;
   UI.sort = { k: $('filter-sort').value, d: Number($('filter-direction').value) };
   lsSet('aam_sort', UI.sort); UI.sel.clear(); closeModal(); render();
 }
 function afterAssets() { if (UI.mode === 'map') initMainMap(); else updateAssetList(); }
-function refreshList() { UI.sel.clear(); const el=$('tool-filters');if(el)el.innerHTML=toolFiltersHTML(); afterAssets(); }
+function refreshList() { UI.sel.clear(); const el=$('tool-filters');if(el)el.innerHTML=UI.cat==='자재'?materialFiltersHTML():toolFiltersHTML(); afterAssets(); }
 function filteredAssets() {
   const q = UI.q.trim().toLowerCase(), f = UI.filter;
   const todo = f === 'todo' ? new Set(todos().map(t => t.a.id)) : null;
   return DOC.assets.filter(a => {
+    if(UI.cat==='자재'&&!isMaterial(a))return false;
+    if(isMaterial(a)){if(UI.cat==='자재'){if(!matMatches(a))return false;}else if(a.material.archived||f!=='all')return false;}
     if (f === 'lease') { if (!isLease(a)) return false; }
     else if (f === 'leaseOut') { if (!isLease(a) || !a.out) return false; }
     else if (f === 'out') { if (!a.out || isGone(a)) return false; }
@@ -1109,7 +1169,7 @@ function filteredAssets() {
     }
     if (UI.cat === '공기구' && !toolMatches(a,UI.toolFilter)) return false;
     return (UI.cat === '전체' || a.category === UI.cat) && (UI.item === '전체' || a.item === UI.item) && (UI.loc === '전체' || a.location === UI.loc) &&
-      (!q || [a.id, a.item, a.model, a.contract, a.location, a.category, a.note, a.manager, kitText(a.toolKit), a.tool?.borrower, a.tool?.place, a.leaseVendor, a.out && a.out.type, a.out && a.out.to, a.out && a.out.docNo].some(v => String(v || '').toLowerCase().includes(q)));
+      (!q || [a.id, a.item, a.model, a.contract, a.location, a.category, a.note, a.manager, kitText(a.toolKit), a.tool?.borrower, a.tool?.place, a.material?.common?.po, a.material?.common?.pl, a.material?.common?.vendor, a.material?.serial, a.material?.parts?.map(p=>p.name+' '+p.spec).join(' '), a.leaseVendor, a.out && a.out.type, a.out && a.out.to, a.out && a.out.docNo].some(v => String(v || '').toLowerCase().includes(q)));
   });
 }
 function schedOf(a) {
@@ -1123,7 +1183,7 @@ function schedOf(a) {
 /* ── 정렬: 제목줄을 누르면 ▲(오름) / ▼(내림) ── */
 const SORTS = [['id', '관리번호'], ['name', '품목'], ['category', '분류'], ['location', '위치'], ['qty', '수량'], ['status', '상태'], ['sched', '일정'], ['updated', '최근 변경']];
 const SORT_VAL = {
-  id: a => a.id, name: a => dispName(a), category: a => a.category, location: a => a.location, qty: a => a.qty,
+  id: a => a.id, name: a => dispName(a), category: a => a.category, location: a => a.location, qty: a => isMaterial(a)?(matSummary(a).available??0):a.qty,
   status: a => a.out ? 9 : STATUSES.indexOf(a.status), sched: a => { const s = schedOf(a); return s ? s.d : 99999; }, updated: a => a.updatedAt || ''
 };
 function setSort(k) { UI.sort = UI.sort.k === k ? { k, d: -UI.sort.d } : { k, d: k === 'updated' ? -1 : 1 }; lsSet('aam_sort', UI.sort); updateAssetList(); }
@@ -1138,9 +1198,10 @@ function toggleLocGrp(i) { const l = LOC_GRP[i]; UI.loc = UI.loc === l ? '전체
 function updateAssetList() {
   let list = sortList(filteredAssets());
   if (UI.filter === 'lease') list = [...list.filter(a => !a.out), ...list.filter(a => a.out)];
-  const cntEl = $('asset-count'); if (cntEl) cntEl.textContent = `${list.length}건`;
+  const cntEl = $('asset-count'); if (cntEl) cntEl.textContent = UI.cat==='자재'?`${list.length}로트`:`${list.length}건`;
   updateSelBar();
   const box = $('asset-list'); if (!box) return;
+  if(UI.cat==='자재'){box.innerHTML=list.length?materialListHTML(list):'<div class="card empty"><b>해당하는 자재가 없습니다</b>신규 자재를 등록하거나 필터를 확인하세요.</div>';return;}
   const leaseEmpty = !list.length && !UI.q && { lease: `<b>임대/임차 장비가 아직 없어요</b>비품을 눌러 [정보 수정] → 추가 정보 → 취득 구분에서 '임대/임차'를 고르면 여기에 모여요.`, leaseOut: '<b>반납한 임대/임차 장비가 없어요</b>' }[UI.filter];
   if (!list.length && !leaseEmpty) { box.innerHTML = `<div class="card empty"><b>해당하는 자산이 없어요</b>검색어나 필터를 바꿔 보세요</div>`; return; }
   const TV = UI.cat === '공기구';
@@ -1163,12 +1224,12 @@ function updateAssetList() {
     <tbody>${list.map(a => `<tr class="${UI.sel.has(a.id) ? 'picked' : ''} ${toolDays(a)<0?'tool-overdue':''}" onclick="openAsset('${a.id}')">
       <td class="ck" onclick="event.stopPropagation()"><input type="checkbox" ${UI.sel.has(a.id) ? 'checked' : ''} onclick="selOne('${a.id}',this.checked)"></td>
       <td class="mono">${a.id}</td><td onclick="event.stopPropagation()">${photoCell(a)}</td><td onclick="event.stopPropagation()">${nfcButton(a)}</td><td class="nm">${esc(a.item)}${isLease(a) ? ' <span class="tag-lease">임대</span>' : ''}<div class="ri-sub" style="font-weight:400">${esc(shortModel(a.model))}</div>${toolSummary(a)}${reasonsHTML(a)}</td>${TV?'':`<td>${esc(a.category)}</td>`}<td>${esc(a.location||'위치 미등록')}${hasCoord(a) ? '' : ' <span class="no-coord" title="좌표 없음">●</span>'}</td>
-      <td class="qty">${a.qty} ${a.unit}</td><td>${stBadge(a)}</td><td>${sch(a)}</td>${TV?'':`<td class="muted" style="font-size:12.5px">${relTime(a.updatedAt)}</td>`}</tr>`).join('')}</tbody>`}
+      <td class="qty">${isMaterial(a)?matAvailable(a):a.qty+' '+a.unit}</td><td>${stBadge(a)}</td><td>${sch(a)}</td>${TV?'':`<td class="muted" style="font-size:12.5px">${relTime(a.updatedAt)}</td>`}</tr>`).join('')}</tbody>`}
   </table></div>
   <div class="mlist">${list.map(a => { const s = schedOf(a); return `
     <div class="mcard has-thumb ${toolDays(a)<0?'tool-overdue':''}" onclick="openAsset('${a.id}')">
       <div class="mc-top"><span class="mono sub" style="margin:0">${a.id} · ${esc(a.category)}</span>${stBadge(a)}</div>
-      <div class="mc-name">${esc(a.item)}${isLease(a) ? ' <span class="tag-lease">임대</span>' : ''} <span class="qty" style="font-size:13px;color:var(--sub)">${a.qty} ${a.unit}</span></div>
+      <div class="mc-name">${esc(a.item)}${isLease(a) ? ' <span class="tag-lease">임대</span>' : ''} <span class="qty" style="font-size:13px;color:var(--sub)">${isMaterial(a)?matAvailable(a):a.qty+' '+a.unit}</span></div>
       ${shortModel(a.model) ? `<div class="mc-sub" style="margin-bottom:3px">${esc(shortModel(a.model))}</div>` : ''}
       ${toolSummary(a)}${reasonsHTML(a)}
       <div class="mc-sub">${icon('pin', 14)}${esc(a.location||'위치 미등록')}${hasCoord(a) ? '' : ' <span class="no-coord">● 좌표 없음</span>'}</div>
@@ -1376,13 +1437,13 @@ async function cancelTool(id){
 
 /* NFC 단건 등록: 읽기 검사 → 비어 있거나 동일 URL인 태그에만 쓰기 → 재접촉 검증 */
 let NFC_SESSION=null;
-function nfcButton(a,full=false){
+function nfcButton(a,full=false){if(isMaterial(a))return '';
   const image='<svg class="i" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 7a7 7 0 0 0 0 10M5 4a11 11 0 0 0 0 16M16 7a7 7 0 0 1 0 10M19 4a11 11 0 0 1 0 16M10 15V9l4 6V9" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   return `<button class="${full?'btn sm nfc-btn':'thumb-btn add nfc-tile'}${a.nfc?.at?' nfc-registered':''}" onclick="openNFC('${a.id}')" title="${esc(a.id)} NFC 등록${a.nfc?.at?' · '+nfcMethodText(a.nfc)+' '+fmtAt(a.nfc.at):''}" aria-label="${esc(a.id)} NFC ${a.nfc?.at?'등록 완료':'등록'}">${image}<span>${a.nfc?.at?'NFC 완료':'NFC 등록'}</span></button>`;
 }
 function nfcMethodText(nfc){return nfc?.method==='external_user'?'외부 앱 기록·사용자 확인':'카드 주소 읽기 확인';}
 function stopNFC(){if(NFC_SESSION){NFC_SESSION.controller.abort();clearTimeout(NFC_SESSION.timer);NFC_SESSION=null;}}
-function openNFC(id){
+function openNFC(id){if(isMaterial(getAsset(id)))return;
   stopNFC();if(!getAsset(id))return;
   const supported=window.isSecureContext&&'NDEFReader'in window;
   openModal(`<div class="m-head"><h2>${esc(id)} · NFC 등록</h2><button class="icon-btn" onclick="closeModal()">×</button></div><div class="m-body"><p>기존 QR과 같은 자산 주소를 기록합니다. 자산·사진·GPS는 새로 만들거나 변경하지 않습니다.</p><p>카드 등록은 처음 한 번만 합니다. 이후 사진·위치·반출입 정보가 바뀌어도 다시 기록할 필요가 없습니다.</p><p class="nfc-url">${esc(qrUrl(id))}</p><button class="btn sm" onclick="copyNFCURL('${id}')">자산 주소 복사</button><p>${supported?'카드 한 장만 준비하세요. 기존 내용이 다른 카드는 덮어쓰지 않습니다.':'카드 기록은 안드로이드 Chrome 또는 아이폰의 별도 NFC 기록 앱에서 할 수 있습니다. 아이폰 웹브라우저에서는 카드에 직접 기록할 수 없습니다. 외부 앱으로 기록했다면 카드를 접촉해 올바른 자산 화면이 열리는지 확인한 뒤 아래 확인 버튼을 누르세요.'}</p><p id="nfc-progress" role="status">${getAsset(id).nfc?.at?esc(nfcMethodText(getAsset(id).nfc))+': '+esc(fmtAt(getAsset(id).nfc.at))+' (현재 카드 부착 여부는 확인하지 않음)':'등록 확인 기록 없음'}</p>${!getAsset(id).nfc?.at?`<div class="nfc-external"><b>외부 앱에서 카드를 등록하셨나요?</b><p class="hint">QR과 NFC는 같은 주소를 사용하므로 접속만으로는 NFC 등록을 자동 확인할 수 없습니다.</p><button class="btn" onclick="openExternalNFC('${id}')">외부 앱에서 등록한 카드 확인</button></div>`:''}${getAsset(id).nfc?.at?`<div class="nfc-external"><b>카드가 제거되거나 다른 용도로 바뀌었나요?</b><p class="hint">등록 상태만 해제합니다. 고정 자산 주소·QR·자산 자료는 유지되며 카드 안의 주소는 지워지지 않습니다.</p><button class="btn" onclick="openNFCRelease('${id}')">NFC 등록 해제</button></div>`:''}${nfcHistoryHTML(getAsset(id))}</div><div class="m-foot"><button class="btn" onclick="closeModal()">닫기·취소</button>${supported?`<button class="btn primary" id="nfc-start" onclick="startNFC('${id}')">카드 확인 시작</button><button class="btn primary hidden" id="nfc-write" onclick="writeNFC()">이 카드에 기록</button>`:''}</div>`);
@@ -1404,7 +1465,7 @@ function nfcHistoryHTML(a){
   return `<details class="nfc-history"><summary>NFC 등록·해제 이력 ${history.length}건</summary>${history.map(e=>`<div><b>${e.kind==='release'?'등록 해제':'등록 확인'}</b> · ${esc(fmtAt(e.at))}<p>${e.kind==='release'?esc(e.reason)+(e.note?' · '+esc(e.note):''):esc(nfcMethodText(e))}${e.kind==='release'&&e.previous?.at?'<br>이전 확인: '+esc(fmtAt(e.previous.at))+' · '+esc(nfcMethodText(e.previous)):''}</p></div>`).join('')}</details>`;
 }
 let NFC_RELEASE=null;
-function openNFCRelease(id){
+function openNFCRelease(id){if(isMaterial(getAsset(id)))return;
   stopNFC();const a=getAsset(id);if(!a?.nfc?.at)return;
   NFC_RELEASE={id,eventId:crypto.randomUUID(),expected:nfcStamp(a)};
   openModal(`<form class="external-nfc-form" onsubmit="event.preventDefault();saveNFCRelease(this)"><div class="m-head"><h2>NFC 등록 해제</h2><button type="button" class="icon-btn" onclick="closeModal()" aria-label="닫기">×</button></div><div class="m-body"><p><b>${esc(a.id)} · ${esc(a.item)}</b></p><p>이 자산의 NFC 표시를 회색 ‘NFC 등록’으로 되돌립니다.</p><label class="nfc-release-field" for="nfc-release-reason">해제 사유<select class="inp" id="nfc-release-reason" required onchange="$('nfc-release-note').required=this.value==='기타'"><option value="">사유를 선택하세요</option>${NFC_RELEASE_REASONS.map(r=>`<option>${r}</option>`).join('')}</select></label><label class="nfc-release-field" for="nfc-release-note">메모 (기타 선택 시 필수)<input class="inp" id="nfc-release-note" maxlength="300" placeholder="필요할 때만 입력"></label><label class="nfc-user-check"><input id="nfc-release-check" type="checkbox" required><span>등록 상태만 해제되며, <b>카드 안의 주소는 삭제되지 않음</b>을 확인했습니다.</span></label><p class="hint">고정 자산 주소·QR·위치·사진·반출입 자료는 유지됩니다. 새 카드는 기존 주소로 다시 등록할 수 있습니다.</p><p class="hint" id="nfc-release-error" role="alert"></p></div><div class="m-foot"><button type="button" class="btn" onclick="openNFC('${id}')">취소</button><button type="submit" class="btn primary">등록 해제</button></div></form>`);
@@ -1484,7 +1545,7 @@ function selOne(id, on) { on ? UI.sel.add(id) : UI.sel.delete(id); updateAssetLi
 function selAll(on) { filteredAssets().forEach(a => on ? UI.sel.add(a.id) : UI.sel.delete(a.id)); updateAssetList(); }
 function updateSelBar() {
   const bar = $('sel-bar'); if (!bar) return;
-  const ids = [...UI.sel]; const anyActive = ids.some(id => { const a = getAsset(id); return a && !a.out; });
+  const ids = [...UI.sel]; const anyActive = ids.some(id => { const a = getAsset(id); return a && !a.out && !isMaterial(a); });
   bar.innerHTML = ids.length ? `<div class="sel-bar desktop-only">
     <b>☑ ${ids.length}개 선택</b>
     ${anyActive ? `<span class="muted">상태</span>${STATUSES.map(s => `<button class="btn sm" onclick="bulkStatus('${s}')">${s}</button>`).join('')}<span class="vsep"></span>` : ''}
@@ -1494,10 +1555,10 @@ function updateSelBar() {
     <span class="sp"></span><button class="link" onclick="UI.sel.clear();updateAssetList()">선택 해제</button></div>` : '';
 }
 async function bulkStatus(s) {
-  const ids = [...UI.sel].filter(id => { const a = getAsset(id); return a && !a.out && a.status !== s; });
+  const ids = [...UI.sel].filter(id => { const a = getAsset(id); return a && !a.out && !isMaterial(a) && a.status !== s; });
   if (!ids.length) return toast(`이미 모두 '${s}'예요`, 'warn');
   if (!confirm(`${ids.length}개 자산의 상태를 '${s}'(으)로 바꿀까요?`)) return;
-  await saveChange(doc => { const now = new Date().toISOString(); ids.forEach(id => { const x = doc.assets.find(y => y.id === id); if (x && !x.out) { addLog(x, `상태 ${x.status} → ${s}`, now); x.status = s; x.updatedAt = now; } }); },
+  await saveChange(doc => { const now = new Date().toISOString(); ids.forEach(id => { const x = doc.assets.find(y => y.id === id); if (x && !x.out && !isMaterial(x)) { addLog(x, `상태 ${x.status} → ${s}`, now); x.status = s; x.updatedAt = now; } }); },
     `상태 일괄 변경: ${ids.length}건 → ${s}`, `${ids.length}건을 '${s}'(으)로 바꿨어요`);
 }
 
@@ -2219,6 +2280,7 @@ async function saveMapPosition(id, target, expected, restoring = null) {
       const original = (a.log || []).find(l => l.id === restoring);
       if (!original || !canRestoreMove(a, original)) throw new Error('이후 위치가 바뀌어 이 기록을 바로 복구할 수 없어요');
     }
+    if(isMaterial(a)){materialCoordinate(doc,id,to,restoring?'복구':'지도에서 이동',recordId,new Date().toISOString(),restoring);return recordId;}
     const from = { lat: +a.lat, lng: +a.lng }, at = new Date().toISOString();
     const t = restoring ? '좌표 복구 (이전 위치로 복구)' : '좌표 변경 (지도에서 이동)';
     a.lat = to.lat; a.lng = to.lng; a.updatedAt = at;
@@ -2317,6 +2379,7 @@ function qrData(id) {
   return (QR_CACHE[key] = cv ? cv.toDataURL('image/png') : (im ? im.src : ''));
 }
 function labelHTML(a) {
+  if(isMaterial(a)){const src=qrData(a.id);return `<div class="label"><div class="lb-top"><span>AURORA</span><span>자재</span></div>${src?`<img class="lb-qr" src="${src}" alt="QR">`:''}<div class="lb-id">${a.id}</div><div class="lb-name">${esc(a.item+' · '+a.model+' · '+a.unit)}</div></div>`;}
   const src = qrData(a.id);
   return `<div class="label"><div class="lb-top"><span>AURORA</span><span>${esc(CONFIG.SITE.replace(/ v[\d.]+$/, ''))}</span></div>
     ${src ? `<img class="lb-qr" src="${src}" alt="">` : `<div class="lb-qr none">QR 생성 불가</div>`}
@@ -2365,7 +2428,7 @@ async function startAudit() {
 }
 function closeAuditDoc(doc, now) {   // 실사 마감 (직접 [마치기] 또는 모두 확인되면 자동)
   if (!doc.audit) return;
-  const act = doc.assets.filter(a => !a.out);
+  const act = doc.assets.filter(a => !a.out && !isMaterial(a));
   doc.auditLog.unshift({ startedAt: doc.audit.startedAt, endedAt: now || new Date().toISOString(), total: act.length,
     checked: act.filter(a => doc.audit.checked[a.id]).length, missing: act.filter(a => !doc.audit.checked[a.id]).map(a => a.id) });
   doc.auditLog = doc.auditLog.slice(0, 20); doc.audit = null;
@@ -2399,6 +2462,7 @@ async function quickLocate(id) {   // 상세 화면 '지금 위치로 넣기' (�
   } catch (e) { if (!e.silent) toast(e.message, 'warn'); }
 }
 async function saveCoord(id, pt, how) {
+  if(isMaterial(getAsset(id))){const eventId=crypto.randomUUID();const ok=await saveChange(doc=>materialCoordinate(doc,id,pt,how,eventId,new Date().toISOString()),'자재 좌표','좌표를 저장했습니다');if(ok&&DRAWER)renderDrawer();return ok;}
   await saveChange(doc => { const x = doc.assets.find(y => y.id === id); if (x) { const now = new Date().toISOString(); const had = hasCoord(x); x.lat = pt.lat; x.lng = pt.lng; x.updatedAt = now; addLog(x, `${had ? '위치 갱신' : '좌표 입력'} (${how})`, now); } },
     `위치 저장: ${id}`, '위치를 저장했어요');
   renderDrawer();
@@ -2470,6 +2534,7 @@ async function saveNewAssetWithPhoto(session,fields) {
 }
 
 function openForm(id) {
+  if(isMaterial(getAsset(id))||(!id&&UI.cat==='자재'))return openMaterialForm(id);
   stopNewAssetGPS(DRAWER);
   const a = id ? getAsset(id) : null;
   const lastLoc = (lsGet('aam_recent_loc') || [])[0] || '';
@@ -2482,9 +2547,10 @@ function renderDrawer() {
   if (!DRAWER) return;
   if (DRAWER.mode === 'detail' && !getAsset(DRAWER.id)) return closeDrawer();
   $('drawer').classList.remove('hidden');
-  $('panel').innerHTML = DRAWER.mode === 'detail' ? detailHTML(getAsset(DRAWER.id)) : formHTML();
+  $('panel').innerHTML = DRAWER.mode === 'detail' ? detailHTML(getAsset(DRAWER.id)) : DRAWER.mode==='materialForm'?materialFormHTML():formHTML();
 }
 function detailHTML(a) {
+  if(isMaterial(a))return materialDetailHTML(a);
   const row = (k, v) => `<div><dt>${k}</dt><dd>${v}</dd></div>`;
   const dateRow = (k, s, warnDays) => { const n = dday(s); return row(k, `${s}${a.out ? '' : `<span class="due ${n < 0 ? 'red' : n <= warnDays ? 'amber' : 'gray'}">${ddText(n)}</span>`}`); };
   const qr = qrData(a.id);
@@ -2506,7 +2572,7 @@ function detailHTML(a) {
     <dl class="info">
       ${row('위치', `${esc(a.location||'위치 미등록')}${hasCoord(a) ? `<button class="link" onclick="showOnMap('${a.id}')">지도에서 보기</button>` : '<span class="muted" style="font-size:12.5px">좌표 없음</span>'}`)}
       ${hasCoord(a) ? row('GPS 좌표', `<span class="mono" style="font-size:12.5px">${(+a.lat).toFixed(6)}, ${(+a.lng).toFixed(6)}</span>${(c => c ? `<div class="muted" style="font-size:12px">${fmtAt(c.at)} 기록${c.how ? ' · ' + esc(c.how) : ''}</div>` : '')(coordLog(a))}`) : ''}
-      ${row('수량', `<span class="qty">${a.qty} ${a.unit}</span>`)}
+      ${row('수량', `<span class="qty">${isMaterial(a)?matAvailable(a):a.qty+' '+a.unit}</span>`)}
       ${a.model && a.model.replace(/^\s*\((계약외|계약|구자산)\)\s*/, '') !== sm ? row('모델·상세', `<span class="full-model">${esc(a.model)}</span>`) : ''}
       ${acq ? row('취득 구분', esc(acq)) : ''}
       ${a.contract && a.contract !== a.model && !/^\((계약외|계약|구자산)\)[^/]{0,8}$/.test(a.contract) ? row('품명/계약명', `<span class="full-model">${esc(a.contract)}</span>`) : ''}
@@ -2534,6 +2600,7 @@ function coordLog(a) {   // 마지막 좌표 기록 (기록 목록에서) → { 
 }
 function fmtAt(iso) { if (!iso) return ''; const d = new Date(iso); return `${d.getMonth() + 1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`; }
 async function setStatus(id, s) {
+  if(isMaterial(getAsset(id)))return;
   const a = getAsset(id); if (!a || a.status === s) return;
   document.querySelectorAll('.seg button').forEach(b => b.disabled = true);
   await saveChange(doc => { const x = doc.assets.find(y => y.id === id); if (x) { addLog(x, `상태 ${x.status} → ${s}`); x.status = s; x.updatedAt = new Date().toISOString(); } }, `상태 변경: ${id} → ${s}`, `상태를 '${s}'(으)로 바꿨어요`);
@@ -2548,7 +2615,7 @@ function outDefaultTo(t) {
   if (t === '임대/임차 반납') { const v = [...new Set(OUT.ids.map(id => (getAsset(id) || {}).leaseVendor).filter(Boolean))]; return v.length === 1 ? v[0] : ''; }
   return '';
 }
-function openOut(ids) {
+function openOut(ids) {if(ids.some(id=>isMaterial(getAsset(id)))){toast('자재는 상세의 현장 반출을 사용해 주세요','warn');return;}
   ids = (Array.isArray(ids) ? ids : [ids]).filter(id => { const a = getAsset(id); return a && !a.out; });
   if (!ids.length) return toast('현장 종료할 자산이 없어요 (이미 처리됨)', 'warn');
   OUT = { ids, type: '', gone: false, date: todayStr(), to: '', docNo: '', note: '' };
@@ -2883,7 +2950,7 @@ async function saveLocation(id, pos, how) {
   if (hasCoord(a) && distM({ lat: +a.lat, lng: +a.lng }, pos) < GPS_SAME) loc = 'same';
   else {
     const ok = await saveChange(doc => { const x = doc.assets.find(y => y.id === id); if (!x) return false; const now = new Date().toISOString();
-      const had = hasCoord(x); x.lat = +pos.lat.toFixed(6); x.lng = +pos.lng.toFixed(6); x.updatedAt = now;
+      const had = hasCoord(x); if(!isMaterial(x)){x.lat = +pos.lat.toFixed(6); x.lng = +pos.lng.toFixed(6);} x.updatedAt = now;
       addLog(x, `${had ? '위치 갱신' : '좌표 입력'} (${how}, 오차 약 ${Math.round(pos.acc)}m)`, now); return true; }, `위치 저장: ${id} (오차 ${Math.round(pos.acc)}m)`, null);
     if (!ok) loc = 'wait';
   }
@@ -2940,18 +3007,19 @@ async function takePhoto() {
 const UPQ = []; let UPQ_BUSY = false;
 function enqueueUpload(job) { job.tries = 0; job.fileDone = false; UPQ.push(job); PHOTO_LOCAL[job.id] = job.shot.full; updUpq(); runUploads(); }
 function photoMutator(j) {
-  const { id, shot, pos } = j;
+  const { id, shot, pos } = j;const materialEvent=j.materialEvent||(j.materialEvent=crypto.randomUUID());
   return doc => {
     const x = doc.assets.find(y => y.id === id); if (!x) return null; const now = new Date().toISOString(); const r = { audit: false, found: false, done: false };
     if (pos && !(hasCoord(x) && distM({ lat: +x.lat, lng: +x.lng }, pos) < GPS_SAME)) {
-      const had = hasCoord(x); x.lat = +pos.lat.toFixed(6); x.lng = +pos.lng.toFixed(6);
+      const had = hasCoord(x); if(!isMaterial(x)){x.lat = +pos.lat.toFixed(6); x.lng = +pos.lng.toFixed(6);}
       addLog(x, `${had ? '위치 갱신' : '좌표 입력'} (QR, 오차 약 ${Math.round(pos.acc)}m)`, now);
     }
     x.photo = { path: shot.path, at: shot.at }; x.photos = [{ path: shot.path, at: shot.at }, ...(x.photos || []).filter(p => p.path !== shot.path)].slice(0, PHOTO_KEEP);
     x.thumb = shot.thumb; x.updatedAt = now; addLog(x, '사진 등록 · ' + shot.path.split('/').pop(), now);
-    if (!x.out) {
+    if(isMaterial(x)&&pos)materialCoordinate(doc,id,pos,'QR 사진',materialEvent,now);
+    if (!x.out && !isMaterial(x)) {
       if (doc.audit && !doc.audit.checked[id]) { doc.audit.checked[id] = now; addLog(x, '실사 확인 (QR + 사진)', now); r.audit = true;
-        if (doc.assets.filter(y => !y.out).every(y => doc.audit.checked[y.id])) { closeAuditDoc(doc, now); r.done = true; } }
+        if (doc.assets.filter(y => !y.out&&!isMaterial(y)).every(y => doc.audit.checked[y.id])) { closeAuditDoc(doc, now); r.done = true; } }
       const lm = doc.auditLog[0];
       if (lm && lm.missing.includes(id)) { lm.missing = lm.missing.filter(z => z !== id); addLog(x, '실사 미발견 → 찾음', now); r.found = true; }
     }
@@ -3020,6 +3088,7 @@ function makePhoto(src, a, capturedAt) {
 }
 /* 사진 저장: 파일 올리기 → 데이터에 기록 (confirm이면 실사 확인 + 미발견 해제) */
 async function savePhoto(id, shot, opt = {}) {
+  const materialEvent=crypto.randomUUID();
   if (!(await ensureToken())) { toast('저장 연결이 안 돼 사진을 올리지 못했어요', 'warn'); return null; }
   try { await Store.putFile(shot.path, shot.full.split(',')[1], `사진: ${shot.path.split('/').pop()}`); }
   catch (e) { toast('사진을 올리지 못했어요 · ' + e.message, 'err'); return null; }
@@ -3027,10 +3096,10 @@ async function savePhoto(id, shot, opt = {}) {
     const x = doc.assets.find(y => y.id === id); if (!x) return null; const now = new Date().toISOString(); const r = { audit: false, found: false, done: false };
     x.photo = { path: shot.path, at: shot.at }; x.photos = [{ path: shot.path, at: shot.at }, ...(x.photos || []).filter(p => p.path !== shot.path)].slice(0, PHOTO_KEEP);
     x.thumb = shot.thumb; x.updatedAt = now; addLog(x, '사진 등록 · ' + shot.path.split('/').pop(), now);
-    if(!hasCoord(x)&&opt.coords&&validLat(opt.coords.latitude)&&validLng(opt.coords.longitude)&&Number.isFinite(opt.coords.accuracy)&&opt.coords.accuracy<=50){x.lat=+opt.coords.latitude.toFixed(6);x.lng=+opt.coords.longitude.toFixed(6);addLog(x,`좌표 입력 (사진 촬영 · 자동 GPS · 오차 약 ${Math.round(opt.coords.accuracy)}m)`,now);}
-    if (opt.confirm && !x.out) {
+    if(!hasCoord(x)&&opt.coords&&validLat(opt.coords.latitude)&&validLng(opt.coords.longitude)&&Number.isFinite(opt.coords.accuracy)&&opt.coords.accuracy<=50){if(isMaterial(x))materialCoordinate(doc,id,{lat:opt.coords.latitude,lng:opt.coords.longitude},'사진 촬영 · 자동 GPS',materialEvent,now);else{x.lat=+opt.coords.latitude.toFixed(6);x.lng=+opt.coords.longitude.toFixed(6);addLog(x,`좌표 입력 (사진 촬영 · 자동 GPS · 오차 약 ${Math.round(opt.coords.accuracy)}m)`,now);}}
+    if (opt.confirm && !x.out && !isMaterial(x)) {
       if (doc.audit && !doc.audit.checked[id]) { doc.audit.checked[id] = now; addLog(x, '실사 확인 (QR + 사진)', now); r.audit = true;
-        if (doc.assets.filter(y => !y.out).every(y => doc.audit.checked[y.id])) { closeAuditDoc(doc, now); r.done = true; } }
+        if (doc.assets.filter(y => !y.out&&!isMaterial(y)).every(y => doc.audit.checked[y.id])) { closeAuditDoc(doc, now); r.done = true; } }
       const lm = doc.auditLog[0];
       if (lm && lm.missing.includes(id)) { lm.missing = lm.missing.filter(z => z !== id); addLog(x, '실사 미발견 → 찾음', now); r.found = true; }
     }
@@ -3156,6 +3225,7 @@ async function delPhotos(id, ps) {
 const trashedAsset = id => (DOC.trash || []).find(t => t.kind === 'asset' && t.id === id && !t.restoredAt);
 const DEL_REASONS = ['중복 등록', '잘못 입력', '시험 등록'];
 function openRemoveAsset(id) {
+  if(isMaterial(getAsset(id)))return materialAction(id,'archive');
   const a = getAsset(id); if (!a) return; const pn = photoList(a).length;
   openModal(`<div class="m-head"><h2>${esc(a.id)} · ${esc(a.item)}을(를) 지울까요?</h2><button class="icon-btn" onclick="closeModal()">${icon('x', 20)}</button></div>
     <div class="m-body"><p class="sub" style="margin:0 0 12px">목록·지도·엑셀·실사에서 빠지고 <b>삭제 보관함</b>으로 가요. 언제든 되살릴 수 있어요.</p>
@@ -3166,6 +3236,7 @@ function openRemoveAsset(id) {
     <div class="m-foot"><span class="sp"></span><button class="btn" onclick="closeModal()">취소</button><button class="btn danger" onclick="removeAsset('${a.id}')">삭제 보관함으로</button></div>`, 'sm');
 }
 async function removeAsset(id) {
+  if(isMaterial(getAsset(id)))return materialAction(id,'archive');
   const r = (document.querySelector('input[name=rm-r]:checked') || {}).value; if (!r) return toast('이유를 골라 주세요', 'warn');
   const memo = ($('rm-memo').value || '').trim();
   if (!(await ensureToken())) return;
@@ -3179,6 +3250,7 @@ function restoreAssetById(id) { const i = DOC.trash.findIndex(t => t.kind === 'a
 function openTrash() {
   const T = DOC.trash;
   const rows = T.map((t, i) => { const a = getAsset(t.id) || { id: t.id };
+    if(t.kind==='material')return `<div class="trash-row ${t.restoredAt?'done':''}"><div><b>${esc(t.id)} · ${esc(a.item||'자재')}</b><p>${esc(t.reason)} · ${fmtAt(t.at)}${t.restoredAt?' · 복원됨':''}</p><p class="hint">수량 원장과 사진은 유지됩니다.</p></div>${t.restoredAt?'':`<button class="btn sm" onclick="materialAction('${t.id}','restore')">되살리기</button>`}</div>`;
     return `<div class="trash-row ${t.restoredAt ? 'done' : ''}"><div class="info">
       <b>${esc(t.id)} · ${esc(t.snap.item || '')}</b> <span class="${t.kind === 'asset' ? 'trash-kind asset' : 'trash-kind'}">${t.kind === 'asset' ? '자산 전체 · ' + esc(t.reason || '') : '사진'}</span> <span class="muted">${fmtAt(t.at)} 삭제${t.restoredAt ? ` · ${fmtAt(t.restoredAt)} 되살림` : ''}</span><br>
       ${esc(t.snap.category || '')} · ${esc(t.snap.location || '')} · ${esc(String(t.snap.qty ?? ''))}${esc(t.snap.unit || '')} · 상태 ${esc(t.snap.status || '')} · 사진 ${t.photos.length}장${t.memo ? ' · 메모: ' + esc(t.memo) : ''}
@@ -3189,6 +3261,7 @@ function openTrash() {
     <div class="m-foot"><span class="sp"></span><button class="btn" onclick="closeModal()">닫기</button></div>`, 'wide');
 }
 async function restoreTrash(i) {
+  if(DOC.trash[i]?.kind==='material')return materialAction(DOC.trash[i].id,'restore');
   const t = DOC.trash[i]; if (!t || t.restoredAt) return;
   if (!confirm(t.kind === 'asset' ? `${t.id} · ${t.snap.item} 자산을 지우기 전 모습 그대로 되살릴까요?` : `${t.id} 사진 ${t.photos.length}장을 되살릴까요?`)) return;
   if (!(await ensureToken())) return;
@@ -3224,7 +3297,7 @@ function showPhoto(id, idx = 0) {
 /* ── 스캐너 화면 ── */
 function auditProgressHTML() {
   if (!DOC.audit) return '';
-  const st = auditStats(); const groups = missingByLoc(DOC.assets.filter(a => !a.out && !DOC.audit.checked[a.id]));
+  const st = auditStats(); const groups = missingByLoc(DOC.assets.filter(a => !a.out && !isMaterial(a) && !DOC.audit.checked[a.id]));
   return `<div class="scan-prog"><b>실사 확인 ${st.done} / ${st.total}</b><div class="progress"><i style="width:${st.total ? st.done / st.total * 100 : 0}%"></i></div>
     ${groups.length ? `<div class="scan-left">남은 곳: ${groups.slice(0, 4).map(([l, n]) => `${esc(l)} ${n}`).join(' · ')}${groups.length > 4 ? ' …' : ''}</div>` : ''}</div>`;
 }
@@ -3348,7 +3421,7 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden)stopVoicePr
 
 /* 모달 */
 function openModal(html, size = '') { stopVoicePreview(); if(FINDER)stopMyPosition(); $('modal-box').className = 'modal ' + size; $('modal-box').innerHTML = html; $('modal').classList.remove('hidden'); }
-function closeModal() { stopVoicePreview();stopNFC(); $('modal').classList.add('hidden'); $('modal-box').innerHTML = ''; PMAP = null; }
+function closeModal() { if(MATERIAL_EDIT?.saving){toast('자재 처리를 저장 중입니다. 잠시 기다려 주세요');return;}stopVoicePreview();stopNFC(); $('modal').classList.add('hidden'); $('modal-box').innerHTML = ''; PMAP = null; }
 
 /* ═══════════════════════════════════════════
    [6] 엑셀
@@ -3369,6 +3442,7 @@ function xlSheet(rows) {
   ws['!cols'] = XL_WIDTH.map(w => ({ wch: w })); return ws;
 }
 function downloadTemplate() {
+  if(UI.cat==='자재')return toast('자재는 신규 자재 등록에서 PL별로 여러 줄 입력해 주세요','warn');
   if (!needXLSX()) return;
   const c = catalog();
   const guide = XLSX.utils.aoa_to_sheet([
@@ -3400,10 +3474,11 @@ function downloadTemplate() {
   XLSX.writeFile(wb, 'Aurora_자산등록양식.xlsx');
 }
 function exportExcel() {
+  if(UI.cat==='자재')return exportMaterials();
   if (!needXLSX()) return;
   if (UI.filter === 'lease' || UI.filter === 'leaseOut') return exportLease();
   const c = Store.cfg();
-  const rows = DOC.assets.map(a => XL_COLS.map(([, k]) => ({
+  const rows = DOC.assets.filter(a=>!isMaterial(a)).map(a => XL_COLS.map(([, k]) => ({
     _dept: c.deptCode || '', _deptName: c.deptName || 'Aurora Project(충남)',
     _coordLog: (l => { if (!l) return ''; const d = new Date(l.at); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}${l.how ? ' · ' + l.how : ''}`; })(hasCoord(a) && coordLog(a)),
     status: a.out ? (a.out.type === LOSS ? a.out.to || LOSS : a.out.type) : a.status, outType: a.out ? a.out.type : '', outDate: a.out ? a.out.date : '', outTo: a.out ? a.out.to : '', outDoc: a.out ? a.out.docNo : ''
@@ -3428,6 +3503,7 @@ function cellDate(v) {
 }
 let PLAN = [];
 async function handleExcel(inp) {
+  if(UI.cat==='자재'){inp.value='';toast('자재는 신규 자재 등록에서 PL별로 입력해 주세요','warn');return;}
   const f = inp.files[0]; inp.value = ''; if (!f || !needXLSX()) return;
   let rows;
   try {
@@ -3552,7 +3628,7 @@ function openSettings() {
       </div>
       <div class="set-block">
         <h3>품목 추가</h3>
-        <p class="hint" style="margin:2px 0 10px">새 품목은 모든 기기에 바로 적용돼요. 분류(대분류)는 6개 중에서 골라요.</p>
+        <p class="hint" style="margin:2px 0 10px">새 품목은 모든 기기에 바로 적용돼요. 분류를 선택해 주세요. 자재는 별도 등록 화면에서 입력합니다.</p>
         <div class="coord-row"><input class="inp" id="s-item" placeholder="예: 정수기"><select class="inp" id="s-item-cat">${CATEGORIES.map(k => `<option>${esc(k)}</option>`).join('')}</select></div>
         <button class="btn" style="margin-top:8px;width:100%" onclick="addItem()">${icon('plus', 16)} 품목 추가</button>
         ${Object.keys(DOC.catalog || {}).length ? `<p class="hint">추가한 품목: ${Object.entries(DOC.catalog).map(([it, k]) => `${esc(it)} (${esc(k)})`).join(', ')}</p>` : ''}
@@ -3656,7 +3732,7 @@ function showInstall() {
   box.innerHTML = h; box.classList.remove('hidden');
 }
 
-const BUILD = '2026-11-21l';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
+const BUILD = '2026-11-23a';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
 async function checkUpdate() {
   try {
     const t = await (await fetch(location.pathname + '?v=' + Date.now(), { cache: 'reload' })).text();

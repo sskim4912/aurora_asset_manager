@@ -1,3 +1,4 @@
+import './material-core.js';
 // GCP 비공개 버킷 API. 서비스 계정 JSON은 Worker Secret에만 보관한다.
 const BUCKET = 'aurora_asset_manager';
 const PW_HASH = '8d129f703b9851ce74cbb41cb84db46fcb6098bea25563526bb700d4a03f8812';
@@ -75,7 +76,15 @@ async function data(request, env) {
   if (enc.encode(body).length > 10 * 1024 * 1024) fail(413, '데이터가 너무 커요');
   let doc; try { doc = JSON.parse(body); } catch { fail(400, '데이터 형식을 확인해 주세요'); }
   if (!doc || !Array.isArray(doc.assets) || !Number.isInteger(doc.version)) fail(400, '자산 데이터 형식을 확인해 주세요');
-  if (doc.version < 9) fail(409, '앱이 업데이트되었습니다. 새로고침 후 저장해 주세요');
+  if (doc.version < 10) fail(409, '앱이 업데이트되었습니다. 새로고침 후 저장해 주세요');
+  // 원장 삭제·변조 및 브라우저 검증 우회를 막고, 동일 세대 데이터로 서버에서 재계산합니다.
+  let previous={assets:[]};
+  if(generation!=='0'){
+    const current=await gcs(env,'/o/assets.json?alt=media&generation='+generation);
+    if(current.status===404)fail(409,'다른 기기에서 먼저 저장했어요. 다시 시도해 주세요');
+    previous=await (await checked(current)).json();
+  }
+  try{globalThis.MaterialCore.validateTransition(previous,doc);}catch(error){fail(400,error.message);}
   // 현재 세대를 백업한 뒤 조건부 쓰기: 다른 기기의 변경을 덮어쓰지 않는다.
   if (generation !== '0') {
     const dst = encodeURIComponent('backups/assets-' + generation + '.json');

@@ -9,3 +9,5 @@ assets.json
 key.json
 photos
 .wrangler
+
+tests
