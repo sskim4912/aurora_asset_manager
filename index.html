@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-title" content="비품관리">
 <title>Aurora Asset Manager · 충남 현장</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
-<script src="./material-core.js?v=2026-11-23d"></script>
+<script src="./material-core.js?v=2026-11-23g"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <!--
@@ -605,6 +605,8 @@ details[open].more summary::before{transform:rotate(90deg)}
 .finder-panel .finder-controls{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.finder-panel .finder-controls .btn{min-width:0;min-height:38px;padding:6px;font-size:12px;line-height:1.3}.finder-end{color:#b91c1c;border-color:#dc2626}.finder-panel .finder-end-arrived{background:#b91c1c;border-color:#b91c1c;color:#fff}.finder-panel .finder-head b{font-size:13px}.finder-panel #finder-status{margin:6px 0}.finder-panel .finder-metrics{margin-top:5px;gap:8px}.finder-panel .finder-metrics span{font-size:11px}.finder-bottom{display:flex;flex-wrap:wrap;align-items:flex-start;gap:5px 10px;margin-top:7px;font-size:11px;color:var(--sub)}.finder-bottom details{flex:1;min-width:135px}.finder-bottom summary{cursor:pointer;color:#475569;font-size:11px;line-height:1.6}.finder-screen-note{font-size:10px;line-height:1.8;margin-left:auto}.finder-bottom details[open]{flex-basis:100%}.finder-bottom details[open]+.finder-screen-note{display:none}.finder-panel .finder-audio-help{margin-top:5px;padding:7px;background:#f4f6f8;border-radius:7px;gap:6px}.finder-panel .finder-audio-help .btn{font-size:11px;min-height:28px;padding:4px 7px;line-height:1.3;white-space:normal}.finder-panel .finder-audio-help span{flex-basis:100%;font-size:10px;min-width:0}.finder-heading-help{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--sub);margin-top:6px}.finder-heading-help .btn{font-size:11px;min-height:28px;padding:4px 7px}.finder-panel [hidden]{display:none!important}
 
 .due.green{color:#166534;background:#dcfce7}.material-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.material-field{display:flex;flex-direction:column;gap:5px;font-size:12px;min-width:0;margin:7px 0}.material-field .inp{width:100%;min-width:0}.material-field em{color:#dc2626;font-style:normal}.material-field small{color:var(--sub)}.material-line{border:1px solid var(--line,#dce2eb);border-radius:10px;margin:14px 0;padding:10px;min-width:0}.material-component{border-top:1px dashed #ccd5e3;padding-top:8px;display:grid;grid-template-columns:1fr 1fr;gap:6px}.material-totals{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:12px 0}.material-totals>div{padding:10px 7px;border-radius:10px;background:#eef5ff;min-width:0}.material-totals>div:nth-child(2){background:#fff3df}.material-totals b{display:block;font-size:18px;overflow-wrap:anywhere}.material-totals small{font-size:11px}.material-parts{width:100%;font-size:12px;border-collapse:collapse;margin-bottom:14px}.material-parts td,.material-parts th{padding:7px 3px;border-bottom:1px solid #e4e9f0;text-align:left}.material-parts small{display:block;color:var(--sub)}.material-actions{display:flex;flex-wrap:wrap;gap:6px;margin:14px 0}.material-actions .btn{font-size:12px}.material-event{padding:10px;border:1px solid #e1e6ee;border-radius:9px;margin:9px 0;font-size:12px}.material-event .btn{margin:3px}.material-event p{margin:5px 0}.material-proof{display:block;max-width:100%;max-height:60vh;object-fit:contain;margin:10px auto}.material-error{color:#b91c1c;font-size:12px;overflow-wrap:anywhere}.material-count{display:block;font-size:18px;margin:7px 0}.material-stats>.stat:last-child{grid-column:auto}.material-stats{grid-template-columns:repeat(4,minmax(0,1fr))}.material-check{display:flex;align-items:flex-start;gap:8px;font-size:12px;margin:12px 0}.material-check input{width:18px;flex:none}.material-quantities{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}@media(max-width:640px){.material-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.material-totals b{font-size:16px}.material-grid,.material-quantities{gap:8px}.material-line{padding:8px}}
+
+.material-xl-table{display:block!important;overflow:auto;max-height:48vh;margin:12px 0;border:1px solid #dce2eb;border-radius:8px}.material-xl-table .tbl{min-width:620px}.material-xl-table .tbl thead th{top:0}.material-xl-table td{white-space:normal;overflow-wrap:anywhere}.material-xl-warning{background:#fff6e5;border:1px solid #f5d8a2;border-radius:8px;padding:10px;font-size:12px}.material-xl-warning p{margin:4px 0}
 </style>
 </head>
 <body>
@@ -920,6 +922,63 @@ async function submitMaterialAction(){const e=MATERIAL_EDIT,f=$('material-action
 function materialCoordinate(doc,id,point,method,eventId,at,restores=null){return MaterialCore.apply(doc,{id:eventId,kind:'coordinates',asset:id,at,operator:lsGet('aam_material_operator')||doc.assets.find(x=>x.id===id).manager||'관리 담당',lat:+point.lat,lng:+point.lng,method,restores});}
 function exportMaterials(){if(!needXLSX())return;const list=sortList(filteredAssets()).filter(isMaterial),rows=list.flatMap(a=>{const s=matState(a),c=a.material.common;return a.material.parts.map(p=>({'관리번호':a.id,'품명':a.item,'규격':a.model,'구성품':p.name,'단위':p.unit,'PO번호':c.po,'PL번호':c.pl,'업체':c.vendor,'위치':a.location,'장부 재고':s.book[p.key]/1000,'반출중':s.pending[p.key]/1000,'사용 가능':s.available[p.key]/1000,'파손':s.damage[p.key]/1000,'입고일':c.arrivedAt,'서류 상태':c.docState}));});const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows),'자재 재고');const history=list.flatMap(a=>a.material.ledger.map(e=>({'관리번호':a.id,'일시':e.at,'종류':MAT_NAMES[e.kind],'담당자':e.operator,'수량':matVectorText(a,e.q||e.delta).replace(/&[^;]+;/g,''),'연결 반출':e.target||'','반출증':e.photo?.path||'','사유':e.reason||''})));XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(history),'처리 이력');XLSX.writeFile(wb,`Aurora_자재_${todayStr()}.xlsx`);}
 
+/* 자재 Excel: 기존 SheetJS를 재사용하며 새 입고만 등록합니다. */
+const MAT_XL_COLUMNS=[['묶음 식별번호','bundleKey'],['PO No.','po'],['PL No.','pl'],['업체명*','vendor'],['품명*','item'],['규격*','model'],['단위*','unit'],['입고수량*','quantity'],['보관 구역*','location'],['실제 입고일*','arrivedAt'],['입고자*','receivedBy'],['서류 상태','docState'],['서류 사유','docReason'],['발주일','orderDate'],['발주수량','ordered'],['도착 예정일','expectedDate'],['PO 품목 줄 번호','poLine'],['입고 묶음 수','packCount'],['묶음당 낱개 수량','perSet'],['묶음 표기','packLabel'],['개체 번호','serial'],['비고','note']];
+const MAT_XL_PARTS=[['묶음 식별번호*','bundleKey'],['구성품명*','name'],['규격*','spec'],['단위*','unit'],['세트당 수량*','perSet']];
+let MATERIAL_XL=null,MATERIAL_XL_RUN=0;
+const matXlHeader=v=>String(v||'').replace(/[\s*.()（）]/g,'').toLowerCase();
+function materialExcelTemplate(){if(!needXLSX())return;const wb=XLSX.utils.book_new();
+ const sheet=cols=>{const ws=XLSX.utils.aoa_to_sheet([cols.map(c=>c[0])]);ws['!cols']=cols.map(([name,key])=>({wch:['model','note','docReason'].includes(key)?26:['item','vendor','location'].includes(key)?20:16}));for(let r=1;r<=500;r++)for(let c=0;c<cols.length;c++)ws[XLSX.utils.encode_cell({r,c})]={t:'s',v:'',z:'@'};ws['!ref']=XLSX.utils.encode_range({r:0,c:0},{r:500,c:cols.length-1});ws['!autofilter']={ref:XLSX.utils.encode_range({r:0,c:0},{r:0,c:cols.length-1})};return ws;};
+ XLSX.utils.book_append_sheet(wb,sheet(MAT_XL_COLUMNS),'자재입고');XLSX.utils.book_append_sheet(wb,sheet(MAT_XL_PARTS),'세트구성품');
+ const guide=[['항목','작성 방법'],['기본','자재입고 한 줄 = 새 자재 한 묶음·QR. 관리번호는 자동 생성하며 기존 재고를 덮어쓰지 않습니다.'],['필수','별표 열을 입력하세요. PO·PL이 없으면 서류 상태를 미수령 또는 해당 없음으로 쓰고 사유를 입력하세요.'],['수량','실제 반출 단위 기준. EA·BOX·SET·ROLL은 정수, M·KG·L·M2·M3은 소수 3자리 이내.'],['같은 자재 묶음','입고 묶음 수 5, 묶음당 낱개 수량 20, 단위 EA이면 입고수량 100 EA. 입고수량을 비우면 자동 계산합니다.'],['구성품 세트','묶음 식별번호를 지정하고 단위를 SET, 입고수량을 세트 수로 입력하세요. 세트구성품 시트에 같은 식별번호로 2종 이상 작성합니다.'],['구성품 예시','입고 시트: KIT-A / 밸브 세트 / 20A / SET / 3. 구성품 시트: KIT-A / 밸브 / 20A / EA / 1, KIT-A / 볼트 / M20 / EA / 4.'],['PO·PL','같은 PO·PL·업체·날짜·입고자 등의 줄은 같은 입고 건으로 연결합니다. 번호는 텍스트로 입력해 앞자리 0을 보존하세요.'],['발주수량','입고수량과 별개인 PO 품목 전체 발주수량입니다. 세트는 SET 기준. 같은 PO 품목에 반복 작성해도 중복 합산하지 않습니다.'],['서류 상태','등록 완료(기본), 미수령, 해당 없음 중 하나. 미수령·해당 없음은 서류 사유 필수.'],['날짜','YYYY-MM-DD로 입력하세요. 실제 입고일은 필수, 발주일·도착 예정일은 선택.'],['묶음 식별번호','세트 연결 시 필수, 파일 내 중복 불가. 일반 자재는 비워도 됩니다. MAT 관리번호를 적는 칸이 아닙니다.'],['사진·위치','사진·GPS 없이 등록할 수 있습니다. 나중에 기존 사진·위치 기능으로 추가하세요.'],['검토·저장','업로드 후 오류와 등록 예정 목록을 확인하고 일괄 등록을 누릅니다. 오류가 있으면 일부도 저장하지 않습니다.'],['중복 방지','같은 파일·같은 내용을 다시 등록할 수 없습니다. 추가 입고는 실제 PL·날짜·수량 등으로 구분해 작성하세요.'],['제한','한 파일 10MB, 자재 500줄, 입고 건 100건, 구성품 5000줄·묶음당 30종 이내. 수식 대신 값으로 붙여넣으세요.'],['주의','내려받은 재고·이력 보고서는 등록 양식이 아닙니다. 수량 정정은 상세의 수량 조정을 사용하세요.']];
+ const ws=XLSX.utils.aoa_to_sheet(guide);ws['!cols']=[{wch:20},{wch:110}];XLSX.utils.book_append_sheet(wb,ws,'작성안내');XLSX.writeFile(wb,'Aurora_자재입고_양식.xlsx');}
+function materialExcelPick(){if(MATERIAL_XL?.saving){toast('일괄 등록 중입니다. 잠시 기다려 주세요');return;}const inp=$('xl-file');inp.dataset.material='1';inp.value='';inp.click();}
+function materialExcelRows(wb,name,columns,limit){
+ const ws=wb.Sheets[name];if(!ws)throw Error(name+' 시트가 없습니다. 자재 엑셀 양식을 사용해 주세요');
+ const full=XLSX.utils.decode_range(ws['!fullref']||ws['!ref']||'A1');if(full.e.r>limit||full.e.c>columns.length+5)throw Error(name+' 시트 범위가 너무 큽니다. 안내된 행 수 이내로 작성해 주세요');
+ const aliases={ponumber:'po',pono:'po',po번호:'po',plno:'pl',pl번호:'pl',규격없으면해당없음:'model',재고단위:'unit',입고수량세트는세트수:'quantity',서류미수령해당없음사유:'docReason'};
+ const lookup=new Map(columns.map(([h,k])=>[matXlHeader(h),k]));for(const [h,k]of Object.entries(aliases))if(columns.some(c=>c[1]===k))lookup.set(h,k);
+ const headers=[],seen=new Set();for(let c=0;c<=full.e.c;c++){const cell=ws[XLSX.utils.encode_cell({r:0,c})],name=String(cell?.v||'').trim();if(cell?.f)throw Error('열 제목에는 수식을 사용할 수 없습니다');if(!name){headers.push(null);continue;}if(/관리번호|장부.?재고|사용.?가능|반출중/.test(name))throw Error('조회용 재고표는 입고 양식이 아닙니다. 자재 엑셀 양식을 받아 작성해 주세요');const key=lookup.get(matXlHeader(name));if(!key)throw Error('지원하지 않는 열: '+name+' · 자재 엑셀 양식을 사용해 주세요');if(seen.has(key))throw Error('같은 열 제목이 중복됐습니다: '+name);seen.add(key);headers.push(key);}
+ for(const [h,k]of columns.filter(([h])=>h.includes('*')))if(!seen.has(k))throw Error(name+' 시트에 필수 열이 없습니다: '+h);
+ const rows=[];for(let r=1;r<=full.e.r;r++){const row={sourceRow:r+1};let nonempty=false;for(let c=0;c<=full.e.c;c++){const cell=ws[XLSX.utils.encode_cell({r,c})];if(cell?.f)throw Error(name+' '+(r+1)+'행: 수식 대신 값을 붙여넣어 주세요');const v=cell?.v??'';if(String(v).trim())nonempty=true;if(headers[c])row[headers[c]]=v;else if(String(v).trim())throw Error(name+' '+(r+1)+'행: 제목이 없는 열에 값이 있습니다');}if(nonempty)rows.push(row);}return rows;
+}
+function materialExcelPlan(wb){
+ const errors=[],warnings=[],fail=(sheet,row,message)=>errors.push({sheet,row,message}),str=v=>String(v??'').trim(),unit=v=>str(v).toUpperCase().replace('㎡','M2').replace('㎥','M3').replace('㎏','KG'),number=v=>{let s=str(v);if(/^\d{1,3}(,\d{3})+(\.\d+)?$/.test(s))s=s.replace(/,/g,'');return s;};
+ const date=(v,required,label)=>{if(!str(v)){if(required)throw Error(label+'을 입력해 주세요');return '';}const d=cellDate(v);if(!d||!/^\d{4}-\d{2}-\d{2}$/.test(d)||!Number.isFinite(Date.parse(d))||new Date(d+'T00:00:00Z').toISOString().slice(0,10)!==d)throw Error(label+'은 올바른 날짜(YYYY-MM-DD)로 입력해 주세요');return d;};
+ let rows,partRows;try{rows=materialExcelRows(wb,'자재입고',MAT_XL_COLUMNS,501);partRows=wb.Sheets['세트구성품']?materialExcelRows(wb,'세트구성품',MAT_XL_PARTS,5001):[];}catch(e){return {errors:[{sheet:'파일',row:'—',message:e.message}],warnings,receipts:[],rows:[]};}
+ if(!rows.length)fail('자재입고','—','등록할 자재가 없습니다');if(rows.length>500)fail('자재입고','—','한 파일에 자재 500줄까지 등록할 수 있습니다');if(partRows.length>5000)fail('세트구성품','—','구성품은 5000줄까지 등록할 수 있습니다');
+ const keys=new Map(),parts=new Map(),groups=new Map(),preview=[],duplicates=new Map();
+ for(const r of rows){const k=str(r.bundleKey);if(k){if(keys.has(k))fail('자재입고',r.sourceRow,'묶음 식별번호 중복: '+k+' (먼저 나온 '+keys.get(k)+'행)');else keys.set(k,r.sourceRow);}}
+ for(const r of partRows){try{const key=str(r.bundleKey);if(!keys.has(key))throw Error('자재입고 시트에 없는 묶음 식별번호입니다: '+key);if(!str(r.name)||!str(r.spec))throw Error('구성품명과 규격을 입력해 주세요');const u=unit(r.unit);if(!MaterialCore.UNITS.includes(u))throw Error('단위를 확인해 주세요');const q=MaterialCore.qty(number(r.perSet),u);const p={name:str(r.name),spec:str(r.spec),unit:u,perSet:String(q/1000)};const list=parts.get(key)||[];if(list.some(x=>x.name===p.name&&x.spec===p.spec&&x.unit===p.unit))throw Error('같은 구성품이 중복됐습니다');list.push(p);parts.set(key,list);}catch(e){fail('세트구성품',r.sourceRow,e.message);}}
+ for(const r of rows){try{
+  for(const [k,label]of [['vendor','업체명'],['item','품명'],['model','규격'],['location','보관 구역'],['receivedBy','입고자']])if(!str(r[k]))throw Error(label+'을 입력해 주세요');
+  const docStates={'':'complete','등록 완료':'complete','등록':'complete','PO·PL 등록':'complete','complete':'complete','미수령':'pending','서류 미수령':'pending','pending':'pending','해당 없음':'none','해당없음':'none','none':'none'};const state=Object.hasOwn(docStates,str(r.docState))?docStates[str(r.docState)]:null;if(!state)throw Error('서류 상태는 등록 완료·미수령·해당 없음 중 하나입니다');if(state==='complete'&&(!str(r.po)||!str(r.pl)))throw Error('PO No.와 PL No.를 입력하거나 서류 상태·사유를 선택해 주세요');if(state!=='complete'&&!str(r.docReason))throw Error('서류 사유를 입력해 주세요');
+  const common={po:str(r.po),pl:str(r.pl),vendor:str(r.vendor),arrivedAt:date(r.arrivedAt,true,'실제 입고일'),receivedBy:str(r.receivedBy),docState:state,docReason:str(r.docReason),orderDate:date(r.orderDate,false,'발주일'),expectedDate:date(r.expectedDate,false,'도착 예정일')};
+  const ps=parts.get(str(r.bundleKey))||[];if(ps.length===1||ps.length>30)throw Error('구성품 세트는 2~30종입니다. 같은 자재 묶음은 본 시트의 묶음 수·묶음당 수량으로 입력하세요');let u=unit(r.unit),q=number(r.quantity),pack=number(r.packCount),per=number(r.perSet);if(!MaterialCore.UNITS.includes(u))throw Error('단위를 확인해 주세요: '+MaterialCore.UNITS.join(', '));
+  if(ps.length){if(u!=='SET')throw Error('구성품 세트는 본 시트의 단위를 SET으로 입력하세요');pack=pack||q;if(!q)q=pack;MaterialCore.qty(pack,'SET');if(Number(pack)!==Number(q))throw Error('세트 입고수량과 입고 묶음 수가 다릅니다');}
+  else if(pack||per){if(!pack||!per)throw Error('입고 묶음 수와 묶음당 낱개 수량을 함께 입력하세요');const n=MaterialCore.qty(pack,'BOX')/1000,p=MaterialCore.qty(per,u)/1000;if(!q)q=String(Math.round(n*p*1000)/1000);}
+  const quantity=MaterialCore.qty(q,ps.length?'SET':u);let ordered=number(r.ordered);if(ordered)ordered=String(MaterialCore.qty(ordered,ps.length?'SET':u)/1000);
+  const line={bundleKey:str(r.bundleKey),sourceRow:r.sourceRow,item:str(r.item),model:str(r.model),unit:u,quantity:String(quantity/1000),location:str(r.location),packCount:pack?String(Number(pack)):'',perSet:per?String(Number(per)):'',packLabel:str(r.packLabel)||'묶음',ordered,poLine:str(r.poLine),serial:str(r.serial),note:str(r.note),parts:ps};
+  const sig=JSON.stringify([common.po,common.pl,common.arrivedAt,line.item,line.model,line.unit,line.quantity,line.location]);if(duplicates.has(sig))warnings.push(`${r.sourceRow}행은 ${duplicates.get(sig)}행과 주요 내용이 같습니다. 각각 별도 묶음으로 등록됩니다.`);else duplicates.set(sig,r.sourceRow);
+  const groupKey=JSON.stringify(common);let g=groups.get(groupKey);if(!g){g={common,lines:[]};groups.set(groupKey,g);}g.lines.push(line);preview.push({row:r.sourceRow,line,common});
+ }catch(e){fail('자재입고',r.sourceRow,e.message);}}
+ const receipts=[...groups.values()];if(receipts.length>100)fail('자재입고','—','한 파일에 입고 건 100건까지 등록할 수 있습니다');return {errors,warnings,receipts,rows:preview};
+}
+async function materialHash(data){return [...new Uint8Array(await crypto.subtle.digest('SHA-256',data))].map(v=>v.toString(16).padStart(2,'0')).join('');}
+function materialExcelErrorRows(errors){return `<div class="tbl-wrap material-xl-table"><table class="tbl"><thead><tr><th>시트</th><th>행</th><th>수정할 내용</th></tr></thead><tbody>${errors.map(e=>`<tr><td>${esc(e.sheet)}</td><td>${esc(e.row)}</td><td>${esc(e.message)}</td></tr>`).join('')}</tbody></table></div>`;}
+async function handleMaterialExcel(input){if(MATERIAL_XL?.saving){input.value='';return;}const file=input.files?.[0];input.value='';if(!file||!needXLSX())return;const run=++MATERIAL_XL_RUN;MATERIAL_XL=null;if(file.size>10*1024*1024){toast('엑셀 파일은 10MB 이내로 올려주세요','warn');return;}
+ try{const bytes=await file.arrayBuffer();if(run!==MATERIAL_XL_RUN)return;const wb=XLSX.read(bytes,{type:'array',cellDates:false,sheetRows:5003});const plan=materialExcelPlan(wb);const contentHash=await materialHash(new TextEncoder().encode(MaterialCore.importKey(plan.receipts))),fileHash=await materialHash(bytes);if(run!==MATERIAL_XL_RUN)return;const old=(DOC.materialOps||[]).find(o=>o.kind==='import'&&(o.fileHash===fileHash||o.contentHash===contentHash));
+ const conflicts=plan.rows.filter(r=>DOC.assets.some(a=>isMaterial(a)&&a.material.common.po===r.common.po&&a.material.common.pl===r.common.pl&&a.material.common.arrivedAt===r.common.arrivedAt&&a.item===r.line.item&&a.model===r.line.model));if(conflicts.length)plan.warnings.push(`기존 자재와 PO·PL·입고일·품명·규격이 겹치는 행이 ${conflicts.length}개 있습니다. 별도 실제 입고인지 확인하세요.`);
+ if(old)plan.errors.push({sheet:'파일',row:'—',message:'이미 등록한 파일 또는 같은 내용입니다. '+fmtAt(old.at)+' · '+old.operator+' · '+(old.fileName||'엑셀 입고')});
+ MATERIAL_XL={id:crypto.randomUUID(),at:new Date().toISOString(),fileName:file.name,fileHash,contentHash,plan,saving:false};renderMaterialExcelReview();
+ }catch(e){if(run===MATERIAL_XL_RUN)openModal(`<div class="m-head"><h2>자재 엑셀 확인</h2><button class="icon-btn" onclick="closeModal()">×</button></div><div class="m-body"><p class="material-error">${esc(e.message||'파일을 읽지 못했습니다. 자재 양식을 다시 확인해 주세요.')}</p></div><div class="m-foot"><button class="btn" onclick="closeModal()">닫기</button></div>`);}}
+function materialExcelCommand(s,operator){return {id:s.id,kind:'import',at:s.at,operator,fileName:s.fileName,fileHash:s.fileHash,contentHash:s.contentHash,receipts:s.plan.receipts};}
+function renderMaterialExcelReview(){const s=MATERIAL_XL;if(!s)return;const p=s.plan;openModal(`<div class="m-head"><h2>자재 엑셀 검토</h2><button class="icon-btn" onclick="closeModal()">×</button></div><div class="m-body"><p><b>${esc(s.fileName)}</b> · ${p.rows.length}묶음 / ${p.receipts.length}입고 건</p><p class="hint">새 관리번호·QR을 생성합니다. 기존 재고는 덮어쓰지 않으며, 사진·GPS는 나중에 추가할 수 있습니다.</p>${p.errors.length?`<h3>등록 불가 · ${p.errors.length}개 오류</h3>${materialExcelErrorRows(p.errors)}`:''}${p.rows.length?`<div class="tbl-wrap material-xl-table"><table class="tbl"><thead><tr><th>엑셀 행</th><th>품명·규격</th><th>PL No. / PO No.</th><th>보관 구역</th><th>입고일 · 입고자</th><th>입고수량</th></tr></thead><tbody>${p.rows.map(({row,line:l,common:c})=>`<tr><td>${row}${l.bundleKey?`<div class="ri-sub">${esc(l.bundleKey)}</div>`:''}</td><td>${esc(l.item)}<div class="ri-sub">${esc(l.model)}</div></td><td>${esc(c.pl||'서류 미수령')}<div class="ri-sub">${esc(c.po||'—')}</div></td><td>${esc(l.location)}</td><td>${esc(c.arrivedAt)}<div class="ri-sub">${esc(c.receivedBy)}</div></td><td>${esc(l.quantity)} ${esc(l.parts.length?'SET':l.unit)}${l.parts.length?`<div class="ri-sub">${l.parts.map(part=>`${esc(part.name)} ${Number(l.quantity)*Number(part.perSet)} ${esc(part.unit)}`).join(' / ')}</div>`:''}</td></tr>`).join('')}</tbody></table></div>`:''}${p.warnings.length?`<div class="material-xl-warning">${p.warnings.map(t=>`<p>${esc(t)}</p>`).join('')}<label class="material-check"><input type="checkbox" id="material-xl-ack">기존·동일 행과 구분되는 실제 입고임을 확인했습니다.</label></div>`:''}${materialInput('등록 담당자','material-xl-operator',lsGet('aam_material_operator')||'','text',true)}<p id="material-xl-error" class="material-error" role="alert"></p></div><div class="m-foot"><button class="btn" onclick="closeModal()">취소</button><button class="btn" onclick="materialExcelPick()">수정 파일 다시 선택</button><button id="material-xl-save" class="btn primary" ${p.errors.length||!p.rows.length?'disabled':''} onclick="saveMaterialExcel()">일괄 등록 (${p.rows.length}묶음)</button></div>`,'wide');}
+async function saveMaterialExcel(){const s=MATERIAL_XL;if(!s||s.saving||s.plan.errors.length)return;const operator=document.querySelector('[name="material-xl-operator"]');if(!operator.reportValidity())return;const err=$('material-xl-error');if(!operator.value.trim()){err.textContent='등록 담당자를 입력해 주세요';operator.focus();return;}if(s.plan.warnings.length&&!$('material-xl-ack')?.checked){err.textContent='겹치는 행의 실제 입고 여부를 확인해 주세요';return;}
+ const cmd=s.command||(s.command=materialExcelCommand(s,operator.value.trim()));s.saving=true;document.querySelectorAll('#modal-box button,#modal-box input').forEach(el=>el.disabled=true);err.textContent='최신 재고와 발주수량을 검증하고 있습니다…';
+ try{MaterialCore.apply(structuredClone(DOC),cmd);const {doc,result}=await Store.commit(d=>MaterialCore.apply(d,cmd));DOC=doc;s.saving=false;lsSet('aam_material_operator',cmd.operator);UI.cat='자재';UI.mode='list';UI.materialFilter='all';UI.item='전체';UI.loc='전체';UI.q='';UI.filter='all';UI.sel.clear();closeDrawer();closeModal();render();openModal(`<div class="m-head"><h2>자재 일괄 등록 완료</h2><button class="icon-btn" onclick="closeModal()">×</button></div><div class="m-body"><p><b>${result.ids.length}묶음</b>을 등록했습니다.</p><p class="mono">${result.ids.slice(0,20).join(' · ')}${result.ids.length>20?' 외':''}</p><p class="hint">수량은 입고 이력에 반영됐습니다. 목록에서 사진·위치를 추가하거나 QR 라벨을 인쇄하세요.</p></div><div class="m-foot"><button class="btn" onclick="closeModal()">목록 보기</button><button class="btn primary desktop-only" id="material-xl-print">QR 라벨 인쇄</button></div>`);$('material-xl-print').onclick=()=>openPrint(result.ids);MATERIAL_XL=null;toast(`${result.ids.length}묶음 일괄 등록 완료`);
+ }catch(e){s.saving=false;document.querySelectorAll('#modal-box button,#modal-box input').forEach(el=>el.disabled=false);err.textContent=e.message;try{DOC=await Store.load();}catch{}if(!/통신|fetch|network|연결|저장소 요청/i.test(e.message))s.command=null;}}
+
 /* 앱 상태 */
 let DOC = null;
 let DRAWER = null;          // {mode:'detail'|'form', id, draft}
@@ -1108,7 +1167,7 @@ function auditCardHTML(noCoord) {
 /* ── 자산 화면 ── */
 function renderAssets() {
   const c = catalog(); const items = UI.cat === '전체' ? [] : UI.cat==='자재'?[...new Set(DOC.assets.filter(isMaterial).map(a=>a.item))]:c[UI.cat];
-  const sel = (key, all, list) => `<select class="sel" onchange="UI.${key}=this.value;${key === 'cat' ? "UI.item='전체';UI.filter='all';UI.sel.clear();render()" : 'refreshList()'}">${['전체', ...list].map(k => `<option ${UI[key] === k ? 'selected' : ''} value="${esc(k)}">${k === '전체' ? all : esc(k)}</option>`).join('')}</select>`;
+  const sel = (key, all, list) => `<select class="sel" onchange="UI.${key}=this.value;${key === 'cat' ? "UI.item='전체';UI.filter='all';UI.sel.clear();if(UI.cat==='자재')UI.mode='list';render()" : 'refreshList()'}">${['전체', ...list].map(k => `<option ${UI[key] === k ? 'selected' : ''} value="${esc(k)}">${k === '전체' ? all : esc(k)}</option>`).join('')}</select>`;
   const fk = FILTER_KO[UI.filter];
   return `
   ${cardsHTML()}
@@ -1124,7 +1183,7 @@ function renderAssets() {
     <div class="secondary-actions">
       <div class="paper-seg">${[['list', '목록'], ['map', '지도']].map(([k, l]) => `<button class="${UI.mode === k ? 'on' : ''}" onclick="UI.mode='${k}';render()">${icon(k === 'map' ? 'map' : 'list', 15)} ${l}</button>`).join('')}</div>
       <div class="dd desktop-only"><button class="btn" onclick="toggleDD(this)">${icon('file', 16)} 엑셀 ${icon('down', 14)}</button>
-        <div class="dd-menu">${UI.cat==='자재'?'':`<button onclick="downloadTemplate()">${icon('file', 16)} 엑셀 양식 받기</button><button onclick="$('xl-file').click()">${icon('upload', 16)} 엑셀 올리기</button>`}<button onclick="exportExcel()">${icon('download', 16)} ${UI.cat==='자재'?'자재·이력 내보내기':'비품·공기구 내보내기'}</button></div></div>
+        <div class="dd-menu"><button onclick="downloadTemplate()">${icon('file', 16)} 엑셀 양식 받기</button><button onclick="${UI.cat==='자재'?'materialExcelPick()':"$('xl-file').click()"}">${icon('upload', 16)} 엑셀 올리기</button><button onclick="exportExcel()">${icon('download', 16)} ${UI.cat==='자재'?'자재·이력 내보내기':'비품·공기구 내보내기'}</button></div></div>
     </div>
     <div class="list-head"><span id="asset-count"></span>${fk ? `<span class="chip on" onclick="setFilter('all')">${fk} ✕</span>` : ''}</div>
   </div>
@@ -1144,7 +1203,7 @@ function openAssetFilters() {
 }
 function applyAssetFilters() {
   const category = $('filter-category').value;
-  if (UI.cat !== category){UI.item='전체';UI.filter='all';} UI.cat = category; UI.loc = $('filter-location').value;
+  if (UI.cat !== category){UI.item='전체';UI.filter='all';if(category==='자재')UI.mode='list';} UI.cat = category; UI.loc = $('filter-location').value;
   UI.sort = { k: $('filter-sort').value, d: Number($('filter-direction').value) };
   lsSet('aam_sort', UI.sort); UI.sel.clear(); closeModal(); render();
 }
@@ -3421,7 +3480,7 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden)stopVoicePr
 
 /* 모달 */
 function openModal(html, size = '') { stopVoicePreview(); if(FINDER)stopMyPosition(); $('modal-box').className = 'modal ' + size; $('modal-box').innerHTML = html; $('modal').classList.remove('hidden'); }
-function closeModal() { if(MATERIAL_EDIT?.saving){toast('자재 처리를 저장 중입니다. 잠시 기다려 주세요');return;}stopVoicePreview();stopNFC(); $('modal').classList.add('hidden'); $('modal-box').innerHTML = ''; PMAP = null; }
+function closeModal() { if(MATERIAL_EDIT?.saving||MATERIAL_XL?.saving){toast('자재 처리를 저장 중입니다. 잠시 기다려 주세요');return;}stopVoicePreview();stopNFC(); $('modal').classList.add('hidden'); $('modal-box').innerHTML = ''; PMAP = null; }
 
 /* ═══════════════════════════════════════════
    [6] 엑셀
@@ -3442,7 +3501,7 @@ function xlSheet(rows) {
   ws['!cols'] = XL_WIDTH.map(w => ({ wch: w })); return ws;
 }
 function downloadTemplate() {
-  if(UI.cat==='자재')return toast('자재는 신규 자재 등록에서 PL별로 여러 줄 입력해 주세요','warn');
+  if(UI.cat==='자재')return materialExcelTemplate();
   if (!needXLSX()) return;
   const c = catalog();
   const guide = XLSX.utils.aoa_to_sheet([
@@ -3503,7 +3562,7 @@ function cellDate(v) {
 }
 let PLAN = [];
 async function handleExcel(inp) {
-  if(UI.cat==='자재'){inp.value='';toast('자재는 신규 자재 등록에서 PL별로 입력해 주세요','warn');return;}
+  if(inp.dataset.material==='1'||UI.cat==='자재'){delete inp.dataset.material;return handleMaterialExcel(inp);}
   const f = inp.files[0]; inp.value = ''; if (!f || !needXLSX()) return;
   let rows;
   try {
@@ -3733,7 +3792,7 @@ function showInstall() {
   box.innerHTML = h; box.classList.remove('hidden');
 }
 
-const BUILD = '2026-11-23f';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
+const BUILD = '2026-11-23g';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
 async function checkUpdate() {
   try {
     const t = await (await fetch(location.pathname + '?v=' + Date.now(), { cache: 'reload' })).text();

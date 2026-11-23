@@ -51,11 +51,19 @@ function apply(doc,command){
   event(a,'receive',{delta,orderQuantity:parts.length>1?count*1000:Object.values(delta).reduce((n,v)=>n+v,0),photo:common.plPhoto||null,location:a.location,lat:a.lat,lng:a.lng});if(proof(line.photo)){a.photo=line.photo;a.photos=[line.photo];a.thumb=line.thumb||'';}return a;
  };
  let result={};
- if(c.kind==='create'){
-  need(Array.isArray(c.lines)&&c.lines.length&&c.lines.length<=30,'자재를 1~30줄 입력해 주세요');const common=c.common||{};text(common.vendor,'업체명');
-  if(common.docState==='complete'){text(common.po,'PO번호');text(common.pl,'PL번호');}else{need(['pending','none'].includes(common.docState),'서류 상태를 선택해 주세요');text(common.docReason,'서류 사유');}
-  need(common.arrivedAt&&Number.isFinite(Date.parse(common.arrivedAt)),'실제 입고일을 입력해 주세요');if(common.plPhoto)need(proof(common.plPhoto),'PL 사진 경로를 확인해 주세요');
-  common.receiptId=c.id;common.receivedBy=c.operator;result.ids=c.lines.map(l=>make(l,common).id);
+ if(c.kind==='create'||c.kind==='import'){
+  const importing=c.kind==='import';
+  if(importing){need(/^[a-f0-9]{64}$/.test(c.fileHash||'')&&/^[a-f0-9]{64}$/.test(c.contentHash||''),'엑셀 파일 확인 정보가 없습니다');need(!(d.materialOps||[]).some(o=>o.kind==='import'&&(o.fileHash===c.fileHash||o.contentHash===c.contentHash)),'이미 등록한 엑셀 파일 또는 같은 내용입니다. 기존 입고 내역을 확인해 주세요');}
+  const receipts=importing?c.receipts:[{common:c.common,lines:c.lines}];
+  need(Array.isArray(receipts)&&receipts.length&&receipts.length<=100,'입고 건은 한 번에 1~100건까지 등록할 수 있습니다');
+  need(receipts.reduce((n,r)=>n+(Array.isArray(r.lines)?r.lines.length:501),0)<=(importing?500:30),importing?'엑셀은 한 번에 500묶음까지 등록할 수 있습니다':'자재를 1~30줄 입력해 주세요');result.ids=[];
+  for(const [ri,receipt] of receipts.entries()){
+   need(Array.isArray(receipt.lines)&&receipt.lines.length,'입고할 자재 줄이 없습니다');const common=receipt.common||{};text(common.vendor,'업체명');
+   if(common.docState==='complete'){text(common.po,'PO번호');text(common.pl,'PL번호');}else{need(['pending','none'].includes(common.docState),'서류 상태를 선택해 주세요');text(common.docReason,'서류 사유');}
+   need(common.arrivedAt&&Number.isFinite(Date.parse(common.arrivedAt)),'실제 입고일을 입력해 주세요');if(common.plPhoto)need(proof(common.plPhoto),'PL 사진 경로를 확인해 주세요');
+   common.receiptId=importing?c.id+'_r'+ri:c.id;common.receivedBy=importing?text(common.receivedBy,'입고자'):c.operator;
+   for(const line of receipt.lines){need(line&&typeof line==='object','자재 행 정보를 확인해 주세요');try{const a=make(line,common);if(importing){a.material.importBatch=c.id;a.material.sourceRow=line.sourceRow;}result.ids.push(a.id);}catch(error){throw Error((importing?'엑셀 '+(line.sourceRow||'?')+'행: ':'')+error.message);}}
+  }
  }else if(c.kind==='renameLocation'){const from=text(c.from,'기존 위치'),to=text(c.to,'새 위치');d.locations=[...new Set((d.locations||[]).map(x=>x===from?to:x))];for(const a of d.assets.filter(a=>a.location===from)){a.location=to;a.updatedAt=c.at;a.log=[{at:c.at,t:'위치 이름 변경 '+from+' → '+to},...(a.log||[])].slice(0,15);if(mat(a))event(a,'locationRename',{from,to});}
  }else{
   const a=d.assets.find(x=>x.id===c.asset&&mat(x));need(a,'자재를 찾을 수 없습니다');need(!a.material.archived||c.kind==='restore','보관함 자재를 먼저 복원해 주세요');const s=state(a),reason=()=>text(c.reason,'사유');
@@ -87,11 +95,17 @@ function apply(doc,command){
  for(const order of d.materialOrders){const received=d.assets.filter(a=>mat(a)&&a.material.orderId===order.id).reduce((n,a)=>n+a.material.ledger.filter(e=>e.kind==='receive').reduce((n,e)=>n+(e.orderQuantity??Object.values(e.delta).reduce((n,q)=>n+q,0)),0),0);need(received<=order.quantity,'기존 입고를 포함하면 발주수량을 초과합니다. PO 발주수량을 확인해 주세요');}
  d.materialOps.push(clone(command));Object.assign(doc,d);return result;
 }
+// 행 순서·Excel 저장 형식이 바뀌어도 같은 입고 내용을 구분합니다.
+function importKey(receipts){
+ const number=v=>v===''||v==null?'':String(Number(v));
+ const values=(receipts||[]).map(r=>({common:Object.fromEntries(['po','pl','vendor','arrivedAt','receivedBy','docState','docReason','orderDate','expectedDate'].map(k=>[k,String(r.common?.[k]||'').trim()])),lines:(r.lines||[]).map(l=>({item:String(l.item||'').trim(),model:String(l.model||'').trim(),unit:l.unit,quantity:number(l.quantity),location:String(l.location||'').trim(),packCount:number(l.packCount||1),perSet:number(l.perSet||l.quantity),packLabel:l.packLabel||'묶음',ordered:number(l.ordered),poLine:l.poLine||'',serial:l.serial||'',note:l.note||'',bundleKey:l.bundleKey||'',parts:(l.parts||[]).map(p=>({name:p.name,spec:p.spec,unit:p.unit,perSet:number(p.perSet)})).sort((a,b)=>JSON.stringify(a).localeCompare(JSON.stringify(b)))})).sort((a,b)=>JSON.stringify(a).localeCompare(JSON.stringify(b)))}));
+ return JSON.stringify(values.sort((a,b)=>JSON.stringify(a).localeCompare(JSON.stringify(b))));
+}
 function protectedView(doc){return {orders:doc.materialOrders||[],trash:(doc.trash||[]).filter(t=>t.kind==='material'),assets:doc.assets.filter(a=>a.material).map(a=>({id:a.id,category:a.category,item:a.item,model:a.model,unit:a.unit,qty:a.qty,status:a.status||'상',out:a.out||null,location:a.location,material:a.material||null})).sort((a,b)=>a.id.localeCompare(b.id))};}
 function validateTransition(old,next){
  const legacy=new Set(old.assets.filter(a=>a.category===CAT&&!a.material).map(a=>a.id));need(next.assets.every(a=>a.category!==CAT||a.material||legacy.has(a.id)),'자재는 신규 자재 등록에서 입력해 주세요');
  const before=old.materialOps||[],after=next.materialOps||[];need(Array.isArray(after)&&after.length>=before.length,'자재 원장은 삭제할 수 없습니다');need(eq(before,after.slice(0,before.length)),'기존 자재 원장은 수정할 수 없습니다');
  const replay=clone(old);for(const c of after.slice(before.length)){need(!(replay.materialOps||[]).some(x=>x.id===c.id),'원장에 같은 처리 번호를 중복 추가할 수 없습니다');apply(replay,c);}need(eq(protectedView(replay),protectedView(next)),'자재 수량·정보는 자재 처리 기능으로 변경해 주세요');
 }
-root.MaterialCore=Object.freeze({CAT,UNITS,mat,qty,state,summary,refresh,apply,validateTransition,proof});
+root.MaterialCore=Object.freeze({CAT,UNITS,mat,qty,state,summary,refresh,apply,validateTransition,proof,importKey});
 })(globalThis);

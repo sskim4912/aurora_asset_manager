@@ -87,6 +87,13 @@ async function data(request, env) {
   for(const command of (Array.isArray(doc.materialOps)?doc.materialOps:[]).slice((previous.materialOps||[]).length)){
     if(['confirm','return','amend','cancel'].includes(command?.kind)&&typeof command?.expectedIssue!=='string')fail(400,'반출 확인 화면을 새로고침한 뒤 다시 처리해 주세요');
   }
+  for(const command of (Array.isArray(doc.materialOps)?doc.materialOps:[]).slice((previous.materialOps||[]).length)){
+    if(command?.kind==='import'){
+      let content;try{content=globalThis.MaterialCore.importKey(command.receipts);}catch{fail(400,'엑셀 입고 구조를 확인해 주세요');}
+      const hash=[...new Uint8Array(await crypto.subtle.digest('SHA-256',enc.encode(content)))].map(v=>v.toString(16).padStart(2,'0')).join('');
+      if(hash!==command.contentHash)fail(400,'엑셀 검토 내용이 변경되었습니다. 파일을 다시 올려 확인해 주세요');
+    }
+  }
   try{globalThis.MaterialCore.validateTransition(previous,doc);}catch(error){fail(400,error.message);}
   // 현재 세대를 백업한 뒤 조건부 쓰기: 다른 기기의 변경을 덮어쓰지 않는다.
   if (generation !== '0') {
