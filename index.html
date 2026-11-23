@@ -756,7 +756,7 @@ const validLat = v => Number.isFinite(v) && v >= 33 && v <= 39;
 const validLng = v => Number.isFinite(v) && v >= 124 && v <= 132;
 function badge(s) { return `<span class="badge ${ST_KEY[s] || 'off'}">${esc(s)}</span>`; }
 function outBadge(a) { return `<span class="badge off">${esc(a.out.type === LOSS ? (a.out.to || LOSS) : a.out.type)}</span>`; }
-const stBadge = a => a.out ? outBadge(a) : badge(a.status);
+const stBadge = a => isMaterial(a) ? matBadge(a) : a.out ? outBadge(a) : badge(a.status);
 function toast(msg, type = '') {
   const el = document.createElement('div'); el.className = 'toast ' + type; el.textContent = msg;
   $('toasts').appendChild(el); setTimeout(() => el.remove(), type === 'err' ? 5000 : 2600);
@@ -1124,7 +1124,7 @@ function renderAssets() {
     <div class="secondary-actions">
       <div class="paper-seg">${[['list', '목록'], ['map', '지도']].map(([k, l]) => `<button class="${UI.mode === k ? 'on' : ''}" onclick="UI.mode='${k}';render()">${icon(k === 'map' ? 'map' : 'list', 15)} ${l}</button>`).join('')}</div>
       <div class="dd desktop-only"><button class="btn" onclick="toggleDD(this)">${icon('file', 16)} 엑셀 ${icon('down', 14)}</button>
-        <div class="dd-menu">${UI.cat==='자재'?'':`<button onclick="downloadTemplate()">${icon('file', 16)} 엑셀 양식 받기</button><button onclick="$('xl-file').click()">${icon('upload', 16)} 엑셀 올리기</button>`}<button onclick="exportExcel()">${icon('download', 16)} ${UI.cat==='자재'?'자재·이력 내보내기':'내보내기 (전체)'}</button></div></div>
+        <div class="dd-menu">${UI.cat==='자재'?'':`<button onclick="downloadTemplate()">${icon('file', 16)} 엑셀 양식 받기</button><button onclick="$('xl-file').click()">${icon('upload', 16)} 엑셀 올리기</button>`}<button onclick="exportExcel()">${icon('download', 16)} ${UI.cat==='자재'?'자재·이력 내보내기':'비품·공기구 내보내기'}</button></div></div>
     </div>
     <div class="list-head"><span id="asset-count"></span>${fk ? `<span class="chip on" onclick="setFilter('all')">${fk} ✕</span>` : ''}</div>
   </div>
@@ -3733,7 +3733,7 @@ function showInstall() {
   box.innerHTML = h; box.classList.remove('hidden');
 }
 
-const BUILD = '2026-11-23d';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
+const BUILD = '2026-11-23e';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
 async function checkUpdate() {
   try {
     const t = await (await fetch(location.pathname + '?v=' + Date.now(), { cache: 'reload' })).text();
