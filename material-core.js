@@ -7,7 +7,7 @@ function need(v,msg){if(!v)throw Error(msg);}
 function text(v,label){need(typeof v==='string'&&v.trim()&&v.length<=1000,label+'을(를) 입력해 주세요');return v.trim();}
 function qty(v,unit,zero=false){const s=String(v??'');need(/^\d+(?:\.\d{1,3})?$/.test(s),'수량은 소수 3자리 이내의 숫자로 입력해 주세요');const n=Math.round(Number(s)*1000);need(Number.isSafeInteger(n)&&n<=1e12&&(zero?n>=0:n>0),'수량 범위를 확인해 주세요');need(!COUNT.includes(unit)||n%1000===0,unit+' 단위에는 소수를 입력할 수 없습니다');return n;}
 function state(a){
- const parts=a.material.parts,book=Object.fromEntries(parts.map(p=>[p.key,0])),damage={...book},issues={};
+ const parts=a.material.parts,book=Object.fromEntries(parts.map(p=>[p.key,0])),damage={...book},issues=Object.create(null);
  for(const e of a.material.ledger){
   if(['receive','use','splitOut','splitIn','adjust'].includes(e.kind)){for(const k in e.delta)book[k]+=e.delta[k];if(e.damage)for(const k in e.damage)damage[k]+=e.damage[k];}
   if(e.kind==='issue')issues[e.id]={...clone(e),returned:Object.fromEntries(parts.map(p=>[p.key,0])),confirmed:false,cancelled:false};
@@ -58,7 +58,7 @@ function apply(doc,command){
   common.receiptId=c.id;common.receivedBy=c.operator;result.ids=c.lines.map(l=>make(l,common).id);
  }else{
   const a=d.assets.find(x=>x.id===c.asset&&mat(x));need(a,'자재를 찾을 수 없습니다');need(!a.material.archived||c.kind==='restore','보관함 자재를 먼저 복원해 주세요');const s=state(a),reason=()=>text(c.reason,'사유');
-  const issue=()=>{const i=s.issues[c.target];need(i&&!i.cancelled,'반출 건을 다시 확인해 주세요');return i;};
+  const issue=()=>{const i=s.issues[c.target];need(Object.hasOwn(s.issues,c.target)&&i&&!i.cancelled,'반출 건을 다시 확인해 주세요');return i;};
   if(['use','issue','split'].includes(c.kind)){
    const q=vector(a,c.quantities);available(a,q);
    if(c.kind==='use')event(a,'use',{delta:Object.fromEntries(Object.entries(q).map(([k,v])=>[k,-v])),place:text(c.place,'사용처'),note:c.note||''});

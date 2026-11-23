@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-title" content="비품관리">
 <title>Aurora Asset Manager · 충남 현장</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
-<script src="./material-core.js"></script>
+<script src="./material-core.js?v=2026-11-23c"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <!--
@@ -3732,7 +3732,7 @@ function showInstall() {
   box.innerHTML = h; box.classList.remove('hidden');
 }
 
-const BUILD = '2026-11-23b';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
+const BUILD = '2026-11-23c';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
 async function checkUpdate() {
   try {
     const t = await (await fetch(location.pathname + '?v=' + Date.now(), { cache: 'reload' })).text();

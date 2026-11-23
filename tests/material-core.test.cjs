@@ -27,4 +27,5 @@ let receipt=base();const receiptCmd=op('create',{common:{po:'',pl:'',docState:'p
 let duplicate=copy(receipt);duplicate.materialOps.push(copy(duplicate.materialOps[0]));assert.throws(()=>M.validateTransition(receipt,duplicate));
 let badUnits=copy(coords);assert.throws(()=>act(badUnits,badUnits.assets[0],'metadata',{item:'볼트',model:'M20',unit:'KG',reason:'변경'}));
 let kitOrders=base();const kp=[{name:'밸브',spec:'20A',unit:'EA',perSet:'1'},{name:'볼트',spec:'M20',unit:'EA',perSet:'4'}];receive(kitOrders,{quantity:'2',packCount:'2',parts:kp,ordered:'3'});receive(kitOrders,{quantity:'1',packCount:'1',parts:kp,ordered:'3'});assert.equal(kitOrders.materialOrders[0].unit,'SET');assert.equal(kitOrders.materialOrders[0].quantity,3000);assert.throws(()=>receive(kitOrders,{quantity:'1',packCount:'1',parts:kp,ordered:'3'}));
+assert.throws(()=>act(d,d.assets[0],'confirm',{target:'__proto__'}));assert.equal(Object.prototype.confirmed,undefined);
 console.log('PASS material ledger: idempotency, reservation, confirmation, returns before/after, damage, returned-location split, conservation, PO lines, components, cancellation/amendment, archives, old data and tamper prevention');
