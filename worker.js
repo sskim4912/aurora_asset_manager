@@ -76,7 +76,7 @@ async function data(request, env) {
   if (enc.encode(body).length > 10 * 1024 * 1024) fail(413, '데이터가 너무 커요');
   let doc; try { doc = JSON.parse(body); } catch { fail(400, '데이터 형식을 확인해 주세요'); }
   if (!doc || !Array.isArray(doc.assets) || !Number.isInteger(doc.version)) fail(400, '자산 데이터 형식을 확인해 주세요');
-  if (doc.version < 11) fail(409, '앱이 업데이트되었습니다. 새로고침 후 저장해 주세요');
+  if (doc.version < 12) fail(409, '앱이 업데이트되었습니다. 새로고침 후 저장해 주세요');
   // 원장 삭제·변조 및 브라우저 검증 우회를 막고, 동일 세대 데이터로 서버에서 재계산합니다.
   let previous={assets:[]};
   if(generation!=='0'){
