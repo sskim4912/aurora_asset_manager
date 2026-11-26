@@ -1050,6 +1050,7 @@ async function saveMaterialExcel(){const s=MATERIAL_XL;if(!s||s.saving||s.plan.e
 
 /* 앱 상태 */
 let DOC = null;
+let dataLoadState = 'loading';
 let DRAWER = null;          // {mode:'detail'|'form', id, draft}
 let PENDING_ID = null;      // QR로 들어온 자산번호
 const UI = { materialFilter: 'all', toolFilter: 'all', q: '', filter: 'all', cat: '전체', item: '전체', loc: '전체', mode: 'list', sel: new Set(),
@@ -1087,12 +1088,14 @@ function setSync(state, msg = '') {
   document.querySelectorAll('.sync').forEach(b => b.title = msg || t);
 }
 async function reloadData() {
+  dataLoadState = 'loading';
   setSync('loading');
   try {
     DOC = await Store.load();
+    dataLoadState = 'ready';
     lsSet('aam_gcs_cache', DOC); setSync('ok');
   }
-  catch (e) { DOC = DOC || normalizeDoc(lsGet('aam_gcs_cache') || seedDoc()); setSync('err', e.message); toast('데이터를 불러오지 못했어요 · ' + e.message, 'err'); }
+  catch (e) { dataLoadState = 'error'; DOC = DOC || normalizeDoc(lsGet('aam_gcs_cache') || seedDoc()); setSync('err', e.message); toast('데이터를 불러오지 못했어요 · ' + e.message, 'err'); }
   render(); if (DRAWER) renderDrawer();
   if (!$('app').classList.contains('hidden') && DOC) autoStartAudit();
   if (PENDING_ID) {
@@ -1893,14 +1896,17 @@ const shortNo = id => String(id).split('~zone~')[0].replace(ID_PREFIX, '');
 async function initMainMap() {
   updateSelBar();
   const all = filteredAssets(), points=all.flatMap(a=>isMaterial(a)?materialZones(a).map((z,index)=>getAsset(a.id+'~zone~'+index)).filter(z=>Object.values(materialZones(a).find(p=>p.name===z.location).book).some(Boolean)):[a]),list=points.filter(hasCoord);
-  const cntEl = $('asset-count'); if (cntEl) cntEl.textContent = `${all.length}건`;
+  const waitingForAssets = !list.length && dataLoadState !== 'ready';
+  const cntEl = $('asset-count'); if (cntEl) cntEl.textContent = waitingForAssets ? '' : `${all.length}건`;
   const box = $('asset-list'); if (!box) return;
-  box.innerHTML = `<div class="map-summary" aria-live="polite"><b>지도 ${list.length}건</b><span>좌표 없음 ${points.length-list.length}위치</span><small>전체 ${all.length}건</small></div>
+  const summary = waitingForAssets
+    ? (dataLoadState === 'loading' ? '자산 위치를 불러오는 중…' : '자산 위치를 불러오지 못했어요')
+    : `<b>지도 ${list.length}건</b><span>좌표 없음 ${points.length-list.length}위치</span><small>전체 ${all.length}건</small>`;
+  box.innerHTML = `<div class="map-summary" aria-live="polite">${summary}</div>
     <div class="legend map-legend">${STATUSES.map(s=>`<span class="${ST_KEY[s]}"><i></i>상태 ${s}</span>`).join('')}<span class="muted">원을 누르면 자산 선택</span></div>
     <div class="map-navigation" aria-label="지도 조작"><button class="btn" onclick="mapZoomBy(1)" aria-label="지도 확대">＋ 확대</button><button class="btn" onclick="mapZoomBy(-1)" aria-label="지도 축소">－ 축소</button><button class="btn normal-map-control" onclick="mapShowAll()">전체 비품 보기</button><button class="btn normal-map-control" onclick="mapRestoreInitial()">처음 화면으로</button></div>
     <div class="map-location-tools"><button class="btn sm" id="show-my-position" onclick="showMyPosition()">내 위치 보기</button><span id="my-position-status">현재 위치는 저장하지 않아요</span><button class="link" id="stop-my-position" onclick="stopMyPosition()" hidden>끄기</button></div><div class="map-box"><div id="kmap"></div></div>`;
   const el = $('kmap');if(FINDER?.phase==='pending')FINDER.mount=el;
-  if (!list.length) { el.parentElement.insertAdjacentHTML('beforeend', `<div class="map-fail">${icon('pin', 30)}<b>지도에 표시할 자산이 없어요</b>좌표가 등록된 자산만 지도에 나와요.<br>휴대폰으로 [QR 스캔]을 하면 위치가 들어가요.</div>`); }
   try { await MAPX.load(); } catch (e) { if(FINDER?.mount===el)stopMyPosition();el.parentElement.insertAdjacentHTML('beforeend', mapFail()); return; }
   if (!document.body.contains(el)) return;
   MAP = MAPX.create(el, CONFIG.MAP_CENTER, 3);
@@ -3864,7 +3870,7 @@ function showInstall() {
   box.innerHTML = h; box.classList.remove('hidden');
 }
 
-const BUILD = '2026-11-26e';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
+const BUILD = '2026-11-27a';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
 async function checkUpdate() {
   try {
     const t = await (await fetch(location.pathname + '?v=' + Date.now(), { cache: 'reload' })).text();
