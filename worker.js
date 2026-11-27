@@ -27,18 +27,14 @@ async function token(env, scope = STORAGE_SCOPE) {
   if (!scopes.has(scope)) scopes.set(scope, { expires: 0 });
   const state = scopes.get(scope);
   if (state.accessToken && state.expires > Date.now() + 60000) return state.accessToken;
-  if (state.pending) return state.pending;
-  state.pending = (async () => {
-    const now = Math.floor(Date.now() / 1000);
-    const input = encoded({ alg: 'RS256', typ: 'JWT' }) + '.' + encoded({ iss: a.client_email, scope, aud: 'https://oauth2.googleapis.com/token', iat: now, exp: now + 3600 });
-    const pem = a.private_key.replace(/-----[^-]+-----|\s/g, '');
-    const key = await crypto.subtle.importKey('pkcs8', Uint8Array.from(atob(pem), c => c.charCodeAt(0)), { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }, false, ['sign']);
-    const assertion = input + '.' + b64(await crypto.subtle.sign('RSASSA-PKCS1-v1_5', key, enc.encode(input)));
-    const r = await fetch('https://oauth2.googleapis.com/token', { method: 'POST', body: new URLSearchParams({ grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer', assertion }) });
-    if (!r.ok) fail(502, 'GCP 서비스 계정 인증에 실패했어요 (' + r.status + ')');
-    const d = await r.json(); state.accessToken = d.access_token; state.expires = Date.now() + d.expires_in * 1000; return state.accessToken;
-  })();
-  try { return await state.pending; } finally { state.pending = null; }
+  const now = Math.floor(Date.now() / 1000);
+  const input = encoded({ alg: 'RS256', typ: 'JWT' }) + '.' + encoded({ iss: a.client_email, scope, aud: 'https://oauth2.googleapis.com/token', iat: now, exp: now + 3600 });
+  const pem = a.private_key.replace(/-----[^-]+-----|\s/g, '');
+  const key = await crypto.subtle.importKey('pkcs8', Uint8Array.from(atob(pem), c => c.charCodeAt(0)), { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }, false, ['sign']);
+  const assertion = input + '.' + b64(await crypto.subtle.sign('RSASSA-PKCS1-v1_5', key, enc.encode(input)));
+  const r = await fetch('https://oauth2.googleapis.com/token', { method: 'POST', body: new URLSearchParams({ grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer', assertion }), signal: AbortSignal.timeout(8000) });
+  if (!r.ok) fail(502, 'GCP 서비스 계정 인증에 실패했어요 (' + r.status + ')');
+  const d = await r.json(); state.accessToken = d.access_token; state.expires = Date.now() + d.expires_in * 1000; return state.accessToken;
 }
 async function gcs(env, path, opts = {}, upload = false) {
   const headers = new Headers(opts.headers); headers.set('Authorization', 'Bearer ' + await token(env));
@@ -140,7 +136,7 @@ async function issueTagCaptureToken(env) {
   const signature = await crypto.subtle.sign('HMAC', await sessionKey(env), tagCaptureMessage(expiry));
   return json({ token: expiry + '.' + b64(signature) });
 }
-async function uploadTagCapture(request, env, ctx) {
+async function uploadTagCapture(request, env) {
   const match = /^Bearer (\d{13})\.([A-Za-z0-9_-]{43})$/.exec(request.headers.get('Authorization') || '');
   if (!match || Number(match[1]) <= Date.now()) fail(401, '유효한 스크린샷 전송 키가 필요해요');
   const signature = Uint8Array.from(atob(match[2].replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0));
@@ -168,10 +164,12 @@ async function uploadTagCapture(request, env, ctx) {
     method: 'POST', headers: { 'Content-Type': 'image/png' }, body
   }, true));
   const result = await r.json();
-  const analysis = saveTagCaptureAnalysis(env, body, result.generation);
-  if (ctx) ctx.waitUntil(analysis);
-  else await analysis;
-  return json({ ok: true, receivedAt: result.updated });
+  try {
+    const analysis = await saveTagCaptureAnalysis(env, body, result.generation);
+    return json({ ok: true, receivedAt: result.updated, analysis });
+  } catch (error) {
+    return json({ ok: true, receivedAt: result.updated, analysis: { state: 'error', error: error.status ? error.message : '판독 결과를 저장하지 못했어요' } });
+  }
 }
 async function readTagCapture(env) {
   const r = await checked(await gcs(env, '/o/' + TAG_CAPTURE_OBJECT + '?alt=media'));
@@ -227,10 +225,11 @@ async function analyzeTagCapture(env, body) {
         contents: [{ role: 'user', parts: [{ text: TAG_ANALYSIS_PROMPT }, { inlineData: { mimeType: 'image/png', data: image } }] }],
         generationConfig: { responseMimeType: 'application/json', responseJsonSchema: TAG_ANALYSIS_SCHEMA, maxOutputTokens: 2048, thinkingConfig: { thinkingLevel: 'LOW' } }
       }),
-      signal: AbortSignal.timeout(24000)
+      signal: AbortSignal.timeout(40000)
     });
   } catch (error) {
     if (error.status) throw error;
+    if (error.name === 'TimeoutError' || error.name === 'AbortError') fail(504, 'Vertex AI 응답 시간이 초과됐어요');
     fail(502, 'Vertex AI에 연결하지 못했어요');
   }
   if ([401, 403].includes(response.status)) {
@@ -263,15 +262,15 @@ async function saveTagCaptureAnalysis(env, body, generation) {
   } catch (error) {
     result = { state: 'error', error: error.status ? error.message : 'Gemini 판독에 실패했어요' };
   }
-  try {
-    const response = await gcs(env, '/o/' + TAG_CAPTURE_OBJECT + '?ifGenerationMatch=' + encodeURIComponent(generation), {
-      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ metadata: { tagAnalysis: JSON.stringify({ ...result, analyzedAt: new Date().toISOString() }) } })
-    });
-    if (response.status !== 412 && response.status !== 404) await checked(response);
-  } catch {
-    console.error('Tag screenshot analysis metadata could not be saved');
-  }
+  const analysis = { ...result, analyzedAt: new Date().toISOString() };
+  const response = await gcs(env, '/o/' + TAG_CAPTURE_OBJECT + '?ifGenerationMatch=' + encodeURIComponent(generation), {
+    method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ metadata: { tagAnalysis: JSON.stringify(analysis) } }),
+    signal: AbortSignal.timeout(8000)
+  }).catch(() => fail(502, '판독 결과 저장소에 연결하지 못했어요'));
+  if (response.status === 412 || response.status === 404) fail(409, '새 스크린샷이 도착했어요. 최신 판독 결과를 확인해 주세요');
+  if (!response.ok) fail(502, '판독 결과를 저장하지 못했어요 (GCS ' + response.status + ')');
+  return analysis;
 }
 async function readTagCaptureAnalysis(env) {
   const response = await gcs(env, '/o/' + TAG_CAPTURE_OBJECT + '?fields=generation,timeCreated,metadata');
@@ -280,27 +279,25 @@ async function readTagCaptureAnalysis(env) {
   const result = info.metadata?.tagAnalysis ? JSON.parse(info.metadata.tagAnalysis) : { state: 'pending' };
   return json({ ...result, generation: info.generation, receivedAt: info.timeCreated });
 }
-async function retryTagCaptureAnalysis(env, ctx) {
+async function retryTagCaptureAnalysis(env) {
   const info = await (await readTagCaptureAnalysis(env)).json();
   if (info.state === 'empty') fail(404, '수신한 스크린샷이 없어요');
   const capture = await checked(await gcs(env, '/o/' + TAG_CAPTURE_OBJECT + '?alt=media&generation=' + encodeURIComponent(info.generation)));
-  const analysis = saveTagCaptureAnalysis(env, await capture.arrayBuffer(), info.generation);
-  if (ctx) ctx.waitUntil(analysis);
-  else await analysis;
-  return json({ ok: true }, 202);
+  const analysis = await saveTagCaptureAnalysis(env, await capture.arrayBuffer(), info.generation);
+  return json(analysis);
 }
 export default {
-  async fetch(request, env, ctx) {
+  async fetch(request, env) {
     const url = new URL(request.url);
     if (!url.pathname.startsWith('/api/')) return env.ASSETS.fetch(request);
     try {
-      if (url.pathname === TAG_CAPTURE_PATH && request.method === 'POST') return await uploadTagCapture(request, env, ctx);
+      if (url.pathname === TAG_CAPTURE_PATH && request.method === 'POST') return await uploadTagCapture(request, env);
       if (!['GET', 'HEAD'].includes(request.method) && request.headers.get('Origin') !== url.origin) fail(403, '이 사이트에서 다시 요청해 주세요');
       if (url.pathname === '/api/login' && request.method === 'POST') return await login(request, env);
       if (url.pathname === '/api/logout' && request.method === 'POST') return json({ ok: true }, 200, { 'Set-Cookie': cookie('', 0) });
       if (!await authed(request, env)) fail(401, '다시 로그인해 주세요');
       if (url.pathname === TAG_CAPTURE_PATH + '/analysis' && request.method === 'GET') return await readTagCaptureAnalysis(env);
-      if (url.pathname === TAG_CAPTURE_PATH + '/analyze' && request.method === 'POST') return await retryTagCaptureAnalysis(env, ctx);
+      if (url.pathname === TAG_CAPTURE_PATH + '/analyze' && request.method === 'POST') return await retryTagCaptureAnalysis(env);
       if (url.pathname === TAG_CAPTURE_PATH + '/token' && request.method === 'POST') return await issueTagCaptureToken(env);
       if (url.pathname === TAG_CAPTURE_PATH && request.method === 'GET') return await readTagCapture(env);
       if (url.pathname === '/api/session' && request.method === 'GET') return json({ ok: true });

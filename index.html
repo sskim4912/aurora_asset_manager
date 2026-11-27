@@ -1907,7 +1907,7 @@ function tagCaptureTime(value) {
 function tagAnalysisStatus(result) {
   if (result.state === 'empty') return '수신한 스크린샷이 없어요';
   if (result.state === 'error') return result.error || '스크린샷 판독에 실패했어요';
-  if (result.state === 'pending' && Date.now() - Date.parse(result.receivedAt) > 90000)
+  if (result.state === 'pending' && Date.now() - Date.parse(result.receivedAt) > 60000)
     return '판독 결과가 아직 없어요. 설정에서 최근 이미지를 다시 판독할 수 있어요.';
   return '태그 스크린샷 판독 중…';
 }
@@ -3894,9 +3894,11 @@ async function retryLatestTagCapture(button) {
   const status = $('tag-retry-status');
   button.disabled = true;
   try {
+    status.textContent = '최근 이미지를 다시 판독하고 있어요…';
     const response = await fetch('/api/tag-screenshot/analyze', { method: 'POST' });
-    if (!response.ok) throw Error((await response.json()).error || '판독 요청에 실패했어요');
-    status.textContent = '판독을 요청했습니다. 아래 결과가 자동으로 갱신됩니다.';
+    const result = await response.json();
+    if (!response.ok || result.state === 'error') throw Error(result.error || '판독 요청에 실패했어요');
+    status.textContent = '판독이 완료됐어요. 아래에서 결과를 확인하세요.';
   } catch (error) {
     status.textContent = error.message;
   } finally { button.disabled = false; }
@@ -4031,7 +4033,7 @@ function showInstall() {
   box.innerHTML = h; box.classList.remove('hidden');
 }
 
-const BUILD = '2026-11-27e';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
+const BUILD = '2026-11-27f';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
 async function checkUpdate() {
   try {
     const t = await (await fetch(location.pathname + '?v=' + Date.now(), { cache: 'reload' })).text();
