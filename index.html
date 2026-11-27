@@ -1893,6 +1893,74 @@ function spotGroups(list) {         // 거의 같은 자리(3m) 자산끼리 묶
   return groups;
 }
 const shortNo = id => String(id).split('~zone~')[0].replace(ID_PREFIX, '');
+const TAG_ADDRESS_TYPES = new Set(['street_address','premise','subpremise','intersection','point_of_interest','establishment']);
+const TAG_REGION_TYPES = new Set(['route','locality','sublocality','neighborhood','administrative_area_level_2','administrative_area_level_3','administrative_area_level_4']);
+function showTagPositions(map, mount) {
+  const status = $('tag-map-status'), locate = $('tag-map-locate');
+  let marker, generation, addressResult;
+  const active = () => MAP === map && mount.isConnected;
+  const clear = () => { marker?.setMap(null); marker = null; locate.hidden = true; };
+  locate.onclick = () => {
+    const point = marker?.getPosition();
+    if (point) { map.panTo(point); map.setZoom(addressResult.regional ? 13 : 17); }
+  };
+  async function refresh() {
+    if (!active()) { clear(); return; }
+    try {
+      const response = await fetch('/api/tag-screenshot/analysis');
+      if (!response.ok) throw Error('태그 정보를 가져오지 못했어요');
+      const result = await response.json();
+      if (!active()) return;
+      if (generation !== result.generation) {
+        generation = result.generation;
+        addressResult = undefined;
+        clear();
+      }
+      status.hidden = result.state === 'empty';
+      if (result.state === 'empty') { clear(); return; }
+      if (result.state !== 'ready') {
+        clear();
+        status.textContent = result.state === 'error' ? result.error : '태그 스크린샷 판독 중…';
+        return;
+      }
+      const received = result.receivedAt ? new Date(result.receivedAt).toLocaleString('ko-KR', {timeZone:'Asia/Seoul'}) : '';
+      const label = [result.tagName || '태그', result.address, result.updateLabel && '화면 표시 ' + result.updateLabel, received && '수신 ' + received].filter(Boolean).join(' · ');
+      if (!result.address || !result.tagName) {
+        status.textContent = label + ' · 지도에 표시할 위치를 확인하지 못했어요';
+        return;
+      }
+      if (addressResult === undefined) {
+        const { Geocoder } = await google.maps.importLibrary('geocoding');
+        const { results } = await new Geocoder().geocode({ address: result.address, region: 'kr', fulfillOnZeroResults: true });
+        if (!active()) return;
+        const match = results[0];
+        const detailed = match?.types.some(type => TAG_ADDRESS_TYPES.has(type));
+        const regional = match?.types.some(type => TAG_REGION_TYPES.has(type));
+        addressResult = match && !match.partial_match && (detailed || regional)
+          ? { location: match.geometry.location, regional: !detailed } : null;
+      }
+      if (!addressResult) {
+        status.textContent = label + ' · 지도에서 주소를 확인하지 못했어요';
+        return;
+      }
+      const description = addressResult.regional ? '지역 대표 위치' : '주소 기준 추정 위치';
+      status.textContent = label + ' · ' + description;
+      if (!marker) {
+        marker = new google.maps.Marker({ map, position: addressResult.location, label: 'T', title: result.tagName + ' · ' + description });
+      }
+      locate.hidden = false;
+    } catch {
+      if (active()) {
+        status.hidden = false;
+        status.textContent = '태그 위치를 확인하지 못했어요. 잠시 후 다시 확인합니다.';
+      }
+    } finally {
+      if (active()) setTimeout(refresh, 30000);
+      else clear();
+    }
+  }
+  refresh();
+}
 async function initMainMap() {
   updateSelBar();
   const all = filteredAssets(), points=all.flatMap(a=>isMaterial(a)?materialZones(a).map((z,index)=>getAsset(a.id+'~zone~'+index)).filter(z=>Object.values(materialZones(a).find(p=>p.name===z.location).book).some(Boolean)):[a]),list=points.filter(hasCoord);
@@ -1903,6 +1971,8 @@ async function initMainMap() {
     ? (dataLoadState === 'loading' ? '자산 위치를 불러오는 중…' : '자산 위치를 불러오지 못했어요')
     : `<b>지도 ${list.length}건</b><span>좌표 없음 ${points.length-list.length}위치</span><small>전체 ${all.length}건</small>`;
   box.innerHTML = `<div class="map-summary" aria-live="polite">${summary}</div>
+    <p id="tag-map-status" class="hint" role="status" hidden></p>
+    <button id="tag-map-locate" class="btn sm" type="button" hidden>태그 위치 보기</button>
     <div class="legend map-legend">${STATUSES.map(s=>`<span class="${ST_KEY[s]}"><i></i>상태 ${s}</span>`).join('')}<span class="muted">원을 누르면 자산 선택</span></div>
     <div class="map-navigation" aria-label="지도 조작"><button class="btn" onclick="mapZoomBy(1)" aria-label="지도 확대">＋ 확대</button><button class="btn" onclick="mapZoomBy(-1)" aria-label="지도 축소">－ 축소</button><button class="btn normal-map-control" onclick="mapShowAll()">전체 비품 보기</button><button class="btn normal-map-control" onclick="mapRestoreInitial()">처음 화면으로</button></div>
     <div class="map-location-tools"><button class="btn sm" id="show-my-position" onclick="showMyPosition()">내 위치 보기</button><span id="my-position-status">현재 위치는 저장하지 않아요</span><button class="link" id="stop-my-position" onclick="stopMyPosition()" hidden>끄기</button></div><div class="map-box"><div id="kmap"></div></div>`;
@@ -1913,6 +1983,7 @@ async function initMainMap() {
   MAP_INFO = null; MAP_SELECTED = null;
   MAP_LIST = list;
   const ownMap = MAP;bindFinderMapControls(ownMap,el);
+  showTagPositions(ownMap, el);
   let drawFrame=0;
   const labelToggle=()=>{if(drawFrame)return;drawFrame=requestAnimationFrame(()=>{drawFrame=0;if(MAP!==ownMap||!document.body.contains(el))return;drawPins();el.classList.remove('map-zooming');});};
   MAP.addListener('idle',labelToggle);
@@ -3767,20 +3838,13 @@ async function copyTagCaptureHeader(button) {
     status.textContent = '복사하지 못했어요. 로그인과 클립보드 권한을 확인해 주세요.';
   } finally { button.disabled = false; }
 }
-async function analyzeLatestTagCapture(button) {
+async function retryLatestTagCapture(button) {
   const status = $('tag-analysis-status');
   button.disabled = true;
-  status.textContent = 'Gemini로 판독 중…';
   try {
     const response = await fetch('/api/tag-screenshot/analyze', { method: 'POST' });
-    const result = await response.json();
-    if (!response.ok) throw Error(result.error || '판독에 실패했어요');
-    status.textContent = [
-      '태그: ' + (result.tagName || '확인 안 됨'),
-      '화면에 표시된 위치: ' + (result.address || '확인 안 됨'),
-      '갱신 표시: ' + (result.updateLabel || '확인 안 됨'),
-      '이미지 내 핀 위치 (0–1000): ' + (result.pin ? result.pin.x + ', ' + result.pin.y : '확인 안 됨')
-    ].join('\n');
+    if (!response.ok) throw Error((await response.json()).error || '판독 요청에 실패했어요');
+    status.textContent = '판독을 요청했습니다. 지도에서 결과를 확인하세요.';
   } catch (error) {
     status.textContent = error.message;
   } finally { button.disabled = false; }
@@ -3798,11 +3862,11 @@ function openSettings() {
       </div>
       <div class="set-block">
         <h3>태그 스크린샷</h3>
-        <p class="hint">아이폰 단축어에서 PNG를 전송하면 최근 수신 이미지 한 장을 볼 수 있어요. 전송 키는 발급 후 30일간 유효해요.</p>
+        <p class="hint">아이폰 단축어에서 PNG를 전송하면 최근 수신 이미지를 자동 판독해 지도에 표시해요. 전송 키는 발급 후 30일간 유효해요.</p>
         <button class="btn" type="button" onclick="copyTagCaptureHeader(this)">전송 키 복사</button>
         <a class="btn" href="/api/tag-screenshot" target="_blank" rel="noopener">최근 이미지 보기</a>
         <p id="tag-capture-status" class="hint" role="status"></p>
-        <button class="btn" type="button" onclick="analyzeLatestTagCapture(this)">Gemini 판독</button>
+        <button class="btn" type="button" onclick="retryLatestTagCapture(this)">최근 이미지 다시 판독</button>
         <p id="tag-analysis-status" class="hint" role="status" style="white-space:pre-wrap"></p>
       </div>
       <div class="set-block">
@@ -3912,7 +3976,7 @@ function showInstall() {
   box.innerHTML = h; box.classList.remove('hidden');
 }
 
-const BUILD = '2026-11-27c';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
+const BUILD = '2026-11-27d';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
 async function checkUpdate() {
   try {
     const t = await (await fetch(location.pathname + '?v=' + Date.now(), { cache: 'reload' })).text();

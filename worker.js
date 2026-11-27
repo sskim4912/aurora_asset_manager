@@ -140,7 +140,7 @@ async function issueTagCaptureToken(env) {
   const signature = await crypto.subtle.sign('HMAC', await sessionKey(env), tagCaptureMessage(expiry));
   return json({ token: expiry + '.' + b64(signature) });
 }
-async function uploadTagCapture(request, env) {
+async function uploadTagCapture(request, env, ctx) {
   const match = /^Bearer (\d{13})\.([A-Za-z0-9_-]{43})$/.exec(request.headers.get('Authorization') || '');
   if (!match || Number(match[1]) <= Date.now()) fail(401, '유효한 스크린샷 전송 키가 필요해요');
   const signature = Uint8Array.from(atob(match[2].replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0));
@@ -168,6 +168,9 @@ async function uploadTagCapture(request, env) {
     method: 'POST', headers: { 'Content-Type': 'image/png' }, body
   }, true));
   const result = await r.json();
+  const analysis = saveTagCaptureAnalysis(env, body, result.generation);
+  if (ctx) ctx.waitUntil(analysis);
+  else await analysis;
   return json({ ok: true, receivedAt: result.updated });
 }
 async function readTagCapture(env) {
@@ -209,11 +212,10 @@ function imageBase64(bytes) {
   }
   return output;
 }
-async function analyzeTagCapture(env) {
+async function analyzeTagCapture(env, body) {
   const project = env.VERTEX_PROJECT_ID || account(env).project_id;
   if (!project) fail(503, 'Vertex AI 프로젝트 설정이 필요해요');
-  const capture = await checked(await gcs(env, '/o/' + TAG_CAPTURE_OBJECT + '?alt=media'));
-  const image = imageBase64(new Uint8Array(await capture.arrayBuffer()));
+  const image = imageBase64(new Uint8Array(body));
   const endpoint = 'https://aiplatform.googleapis.com/v1/projects/' + encodeURIComponent(project) +
     '/locations/global/publishers/google/models/' + TAG_ANALYSIS_MODEL + ':generateContent';
   let response;
@@ -225,7 +227,7 @@ async function analyzeTagCapture(env) {
         contents: [{ role: 'user', parts: [{ text: TAG_ANALYSIS_PROMPT }, { inlineData: { mimeType: 'image/png', data: image } }] }],
         generationConfig: { responseMimeType: 'application/json', responseJsonSchema: TAG_ANALYSIS_SCHEMA, maxOutputTokens: 2048, thinkingConfig: { thinkingLevel: 'LOW' } }
       }),
-      signal: AbortSignal.timeout(30000)
+      signal: AbortSignal.timeout(24000)
     });
   } catch (error) {
     if (error.status) throw error;
@@ -246,19 +248,53 @@ async function analyzeTagCapture(env) {
   const { pin } = parsed;
   result.pin = [pin?.x, pin?.y].every(value => Number.isInteger(value) && value >= 0 && value <= 1000)
     ? { x: pin.x, y: pin.y } : null;
-  return json({ model: TAG_ANALYSIS_MODEL, ...result });
+  return { model: TAG_ANALYSIS_MODEL, ...result };
+}
+async function saveTagCaptureAnalysis(env, body, generation) {
+  let result;
+  try {
+    result = { state: 'ready', ...await analyzeTagCapture(env, body) };
+  } catch (error) {
+    result = { state: 'error', error: error.status ? error.message : 'Gemini 판독에 실패했어요' };
+  }
+  try {
+    const response = await gcs(env, '/o/' + TAG_CAPTURE_OBJECT + '?ifGenerationMatch=' + encodeURIComponent(generation), {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ metadata: { tagAnalysis: JSON.stringify(result) } })
+    });
+    if (response.status !== 412 && response.status !== 404) await checked(response);
+  } catch {
+    console.error('Tag screenshot analysis metadata could not be saved');
+  }
+}
+async function readTagCaptureAnalysis(env) {
+  const response = await gcs(env, '/o/' + TAG_CAPTURE_OBJECT + '?fields=generation,timeCreated,metadata');
+  if (response.status === 404) return json({ state: 'empty' });
+  const info = await (await checked(response)).json();
+  const result = info.metadata?.tagAnalysis ? JSON.parse(info.metadata.tagAnalysis) : { state: 'pending' };
+  return json({ ...result, generation: info.generation, receivedAt: info.timeCreated });
+}
+async function retryTagCaptureAnalysis(env, ctx) {
+  const info = await (await readTagCaptureAnalysis(env)).json();
+  if (info.state === 'empty') fail(404, '수신한 스크린샷이 없어요');
+  const capture = await checked(await gcs(env, '/o/' + TAG_CAPTURE_OBJECT + '?alt=media&generation=' + encodeURIComponent(info.generation)));
+  const analysis = saveTagCaptureAnalysis(env, await capture.arrayBuffer(), info.generation);
+  if (ctx) ctx.waitUntil(analysis);
+  else await analysis;
+  return json({ ok: true }, 202);
 }
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const url = new URL(request.url);
     if (!url.pathname.startsWith('/api/')) return env.ASSETS.fetch(request);
     try {
-      if (url.pathname === TAG_CAPTURE_PATH && request.method === 'POST') return await uploadTagCapture(request, env);
+      if (url.pathname === TAG_CAPTURE_PATH && request.method === 'POST') return await uploadTagCapture(request, env, ctx);
       if (!['GET', 'HEAD'].includes(request.method) && request.headers.get('Origin') !== url.origin) fail(403, '이 사이트에서 다시 요청해 주세요');
       if (url.pathname === '/api/login' && request.method === 'POST') return await login(request, env);
       if (url.pathname === '/api/logout' && request.method === 'POST') return json({ ok: true }, 200, { 'Set-Cookie': cookie('', 0) });
       if (!await authed(request, env)) fail(401, '다시 로그인해 주세요');
-      if (url.pathname === TAG_CAPTURE_PATH + '/analyze' && request.method === 'POST') return await analyzeTagCapture(env);
+      if (url.pathname === TAG_CAPTURE_PATH + '/analysis' && request.method === 'GET') return await readTagCaptureAnalysis(env);
+      if (url.pathname === TAG_CAPTURE_PATH + '/analyze' && request.method === 'POST') return await retryTagCaptureAnalysis(env, ctx);
       if (url.pathname === TAG_CAPTURE_PATH + '/token' && request.method === 'POST') return await issueTagCaptureToken(env);
       if (url.pathname === TAG_CAPTURE_PATH && request.method === 'GET') return await readTagCapture(env);
       if (url.pathname === '/api/session' && request.method === 'GET') return json({ ok: true });
