@@ -1920,6 +1920,12 @@ function tagGeocode(geocoder, address) {
     });
   });
 }
+function tagCardAddressQuery(address) {
+  if (!address) return '';
+  const compact = address.normalize('NFKC').replace(/\s+/g, ' ').trim();
+  const koreanAddress = compact.match(/(?:^|,\s*)대한민국\s+(.+)$/)?.[1];
+  return koreanAddress ? koreanAddress.replace(/,\s*\d{5}$/, '').replace(/,\s*(?=\d)/g, ' ').trim() : compact;
+}
 async function resolveTagAddress(geocoder, result) {
   async function find(address, estimated, reference = false) {
     if (!address) return null;
@@ -1927,9 +1933,14 @@ async function resolveTagAddress(geocoder, result) {
     if (!match || match.partial_match) return null;
     const detailed = match.types.some(type => TAG_ADDRESS_TYPES.has(type) || (reference && TAG_REFERENCE_TYPES.has(type)));
     if (!detailed && !match.types.some(type => TAG_REGION_TYPE.test(type))) return null;
-    return { location: match.geometry.location, bounds: match.geometry.bounds || match.geometry.viewport, regional: !detailed, estimated, reference, cardAddress: !estimated && !reference && address === result.address };
+    return { location: match.geometry.location, bounds: match.geometry.bounds || match.geometry.viewport, regional: !detailed, estimated, reference, cardAddress: !estimated && !reference };
   }
-  const shown = await find(result.address, false);
+  const cardQuery = tagCardAddressQuery(result.address);
+  let shown = await find(cardQuery, false);
+  if (cardQuery !== result.address && result.address && (!shown || shown.regional)) {
+    const original = await find(result.address, false);
+    if (original && (!shown || !original.regional)) shown = original;
+  }
   if (shown && (!shown.regional || result.cardStatus)) return shown;
   const estimate = result.estimatedAddress === result.address ? null : await find(result.estimatedAddress, true);
   if (!shown) return estimate || await find(result.referencePlace, false, true);
@@ -1986,7 +1997,7 @@ function showTagPositions(map, mount) {
         result.relativePosition && result.relativePosition !== estimatedText && '화면 기준: ' + result.relativePosition,
         result.estimateBasis && '추정 근거: ' + result.estimateBasis
       ].filter(Boolean).join('\n');
-      const query = result.estimatedAddress || result.address || result.referencePlace;
+      const query = tagCardAddressQuery(result.address) || result.estimatedAddress || result.referencePlace;
       if (query) {
         search.href = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(query);
         search.hidden = false;
@@ -4117,7 +4128,7 @@ function showInstall() {
   box.innerHTML = h; box.classList.remove('hidden');
 }
 
-const BUILD = '2026-11-27l';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
+const BUILD = '2026-11-27m';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
 async function checkUpdate() {
   try {
     const t = await (await fetch(location.pathname + '?v=' + Date.now(), { cache: 'reload' })).text();
