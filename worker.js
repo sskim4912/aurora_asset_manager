@@ -181,7 +181,7 @@ async function readTagCapture(env) {
   } });
 }
 const TAG_ANALYSIS_MODEL = 'gemini-3.8-flash';
-const TAG_ANALYSIS_FIELDS = ['tagName', 'address', 'updateLabel', 'estimatedAddress', 'estimateBasis'];
+const TAG_ANALYSIS_FIELDS = ['tagName', 'address', 'updateLabel', 'estimatedAddress', 'estimateBasis', 'referencePlace', 'relativePosition'];
 const TAG_ANALYSIS_SCHEMA = {
   type: 'object',
   properties: {
@@ -208,7 +208,9 @@ const TAG_ANALYSIS_PROMPT = [
   'Use the whole image, x from left and y from top, normalized to 0–1000. If no item marker can be identified, use null. Do not infer geographic coordinates.',
   'If the item card does not give a full street address and a clear item pin exists, estimate the most specific searchable address for the pin based on its position relative to nearby roads, intersections and identifiable landmarks.',
   'In estimatedAddress use a Korean search query with city and district if identifiable. Include a building number only if a visible or uniquely identifiable building supports it. Otherwise give a nearby street or neighborhood. If the area cannot be identified, return null.',
-  'In estimateBasis briefly explain the visible evidence and the pin’s position relative to it in Korean. Keep the estimated address separate from the address printed in the item card.'
+  'In estimateBasis briefly explain the visible evidence in Korean. Keep the estimated address separate from the address printed in the item card.',
+  'Even if no address can be estimated, return referencePlace as the closest unambiguous labeled landmark visible near the item pin, such as a station. Include the city or district in the search name if identifiable.',
+  'In relativePosition state the item pin position relative to that landmark in Korean. Use screen directions (위쪽, 오른쪽, etc.) unless map orientation is established. Do not claim the tag is at the landmark.'
 ].join(' ');
 function imageBase64(bytes) {
   let output = '';
@@ -266,6 +268,8 @@ async function analyzeTagCapture(env, body) {
   }
   if (!result.pin || !result.tagName || !result.estimateBasis) result.estimatedAddress = null;
   if (!result.estimatedAddress) result.estimateBasis = null;
+  if (!result.pin || !result.tagName || !result.relativePosition) result.referencePlace = null;
+  if (!result.referencePlace) result.relativePosition = null;
   return { model: TAG_ANALYSIS_MODEL, ...result };
 }
 async function saveTagCaptureAnalysis(env, body, generation) {
