@@ -3878,7 +3878,7 @@ async function showLatestTagAnalysis(status) {
       result.analyzedAt && '판독 완료: ' + tagCaptureTime(result.analyzedAt)
     ];
     if (result.state === 'ready') fields.push(
-      '태그: ' + (result.tagName || '확인 안 됨'),
+      '태그: ' + (result.tagName || '확인 안 됨') + (result.tagInferred ? ' (물품 핀 1개 기준)' : ''),
       '화면에 표시된 위치: ' + (result.address || '확인 안 됨'),
       '태그 갱신 표시: ' + (result.updateLabel || '확인 안 됨'),
       '이미지 내 핀 위치 (0–1000): ' + (result.pin ? result.pin.x + ', ' + result.pin.y : '확인 안 됨')
@@ -4033,7 +4033,7 @@ function showInstall() {
   box.innerHTML = h; box.classList.remove('hidden');
 }
 
-const BUILD = '2026-11-27g';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
+const BUILD = '2026-11-27h';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
 async function checkUpdate() {
   try {
     const t = await (await fetch(location.pathname + '?v=' + Date.now(), { cache: 'reload' })).text();
