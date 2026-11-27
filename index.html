@@ -1935,16 +1935,19 @@ async function resolveTagAddress(geocoder, result) {
   if (!shown) return estimate || await find(result.referencePlace, false, true);
   return estimate && !estimate.regional && shown.bounds?.contains(estimate.location) ? estimate : shown;
 }
+const retriedTagGenerations = new Set();
 function showTagPositions(map, mount) {
   const status = $('tag-map-status'), locate = $('tag-map-locate'), search = $('tag-map-search');
-  let marker, revision, addressResult;
+  let marker, revision, addressResult, framed = false;
   const active = () => MAP === map && mount.isConnected;
   const clear = () => { marker?.setMap(null); marker = null; locate.hidden = true; };
-  locate.onclick = () => {
+  const frameTag = () => {
     const point = marker?.getPosition();
-    if (point) { map.panTo(point); map.setZoom(addressResult.regional || addressResult.reference ? 14 : 17); }
+    if (point) { map.panTo(point); map.setZoom(addressResult.regional || addressResult.reference || addressResult.imageEstimate ? 14 : 17); }
   };
+  locate.onclick = frameTag;
   async function refresh() {
+    let nextCheck = 30000;
     if (!active()) { clear(); return; }
     try {
       const result = await fetchTagAnalysis();
@@ -1963,6 +1966,18 @@ function showTagPositions(map, mount) {
         status.textContent = tagAnalysisStatus(result);
         return;
       }
+      if (result.pin && result.generation && !Object.hasOwn(result, 'estimatedCoordinates') && !retriedTagGenerations.has(result.generation)) {
+        retriedTagGenerations.add(result.generation);
+        status.textContent = '기존 스크린샷의 지도 좌표를 다시 판독 중…';
+        const retry = await fetch('/api/tag-screenshot/analyze', { method: 'POST' });
+        const outcome = await retry.json();
+        if (!retry.ok || outcome.state === 'error') {
+          if (active()) status.textContent = outcome.error || '지도 좌표를 다시 판독하지 못했어요';
+          return;
+        }
+        nextCheck = 0;
+        return;
+      }
       const received = tagCaptureTime(result.receivedAt);
       const estimatedText = result.estimatedAddress || result.relativePosition || '확인 안 됨';
       const label = [
@@ -1976,26 +1991,35 @@ function showTagPositions(map, mount) {
         search.href = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(query);
         search.hidden = false;
       }
-      if (!query || !result.tagName) {
+      if ((!query && !result.estimatedCoordinates) || !result.tagName) {
         status.textContent = label + '\n지도에 표시할 좌표를 확인하지 못했어요.';
         return;
       }
       if (addressResult === undefined) {
         status.textContent = label + ' · 지도에서 위치 확인 중…';
-        try {
-          const { Geocoder } = await google.maps.importLibrary('geocoding');
-          addressResult = await resolveTagAddress(new Geocoder(), result);
-        } catch (error) {
-          if (active()) status.textContent = label + ' · ' + error.message;
-          return;
+        const imageEstimate = result.estimatedCoordinates
+          ? { location: result.estimatedCoordinates, imageEstimate: true } : null;
+        let geocodeError;
+        if (query) {
+          try {
+            const { Geocoder } = await google.maps.importLibrary('geocoding');
+            addressResult = await resolveTagAddress(new Geocoder(), result);
+          } catch (error) { geocodeError = error; }
         }
         if (!active()) return;
+        if (!addressResult || addressResult.reference || addressResult.regional) addressResult = imageEstimate || addressResult;
+        if (!addressResult && geocodeError) {
+          addressResult = undefined;
+          status.textContent = label + ' · ' + geocodeError.message;
+          return;
+        }
       }
       if (!addressResult) {
         status.textContent = label + ' · 지도에서 일치하는 주소를 찾지 못했어요';
         return;
       }
       const description = addressResult.reference ? '주변 기준점: ' + result.referencePlace
+        : addressResult.imageEstimate ? '스크린샷 기반 추정 좌표'
         : addressResult.regional ? '지역 대표 위치' : addressResult.estimated ? '지도 이미지 기반 추정 위치' : '주소 기준 추정 위치';
       status.textContent = label + ' · ' + description;
       if (!marker) {
@@ -2003,13 +2027,17 @@ function showTagPositions(map, mount) {
       }
       locate.textContent = addressResult.reference ? '주변 기준점 보기' : '태그 위치 보기';
       locate.hidden = false;
+      if (!framed && !FINDER && !MOVE && !MAP_FOCUS && !MAP_SELECTED) {
+        framed = true;
+        frameTag();
+      }
     } catch {
       if (active()) {
         status.hidden = false;
         status.textContent = '태그 위치를 확인하지 못했어요. 잠시 후 다시 확인합니다.';
       }
     } finally {
-      if (active()) setTimeout(refresh, 30000);
+      if (active()) setTimeout(refresh, nextCheck);
       else clear();
     }
   }
@@ -3909,6 +3937,7 @@ async function showLatestTagAnalysis(status) {
       result.estimateBasis && '추정 근거: ' + result.estimateBasis,
       result.referencePlace && '주변 기준점: ' + result.referencePlace,
       result.relativePosition && '화면 기준 추정 위치: ' + result.relativePosition,
+      result.estimatedCoordinates && '스크린샷 기반 추정 좌표: ' + result.estimatedCoordinates.lat.toFixed(4) + ', ' + result.estimatedCoordinates.lng.toFixed(4),
       '태그 갱신 표시: ' + (result.updateLabel || '확인 안 됨'),
       '이미지 내 핀 위치 (0–1000): ' + (result.pin ? result.pin.x + ', ' + result.pin.y : '확인 안 됨')
     );
@@ -4062,7 +4091,7 @@ function showInstall() {
   box.innerHTML = h; box.classList.remove('hidden');
 }
 
-const BUILD = '2026-11-27j';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
+const BUILD = '2026-11-27k';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
 async function checkUpdate() {
   try {
     const t = await (await fetch(location.pathname + '?v=' + Date.now(), { cache: 'reload' })).text();
