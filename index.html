@@ -1894,10 +1894,34 @@ function spotGroups(list) {         // 거의 같은 자리(3m) 자산끼리 묶
 }
 const shortNo = id => String(id).split('~zone~')[0].replace(ID_PREFIX, '');
 const TAG_ADDRESS_TYPES = new Set(['street_address','premise','subpremise','intersection','point_of_interest','establishment']);
-const TAG_REGION_TYPES = new Set(['route','locality','sublocality','neighborhood','administrative_area_level_2','administrative_area_level_3','administrative_area_level_4']);
+const TAG_REGION_TYPE = /^(?:route|locality|neighborhood|sublocality(?:_level_[1-5])?|administrative_area_level_[2-7])$/;
+async function fetchTagAnalysis() {
+  const response = await fetch('/api/tag-screenshot/analysis');
+  const result = await response.json();
+  if (!response.ok) throw Error(result.error || '태그 판독 결과를 불러오지 못했어요');
+  return result;
+}
+function tagCaptureTime(value) {
+  return value ? new Date(value).toLocaleString('ko-KR', {timeZone:'Asia/Seoul'}) : '';
+}
+function tagAnalysisStatus(result) {
+  if (result.state === 'empty') return '수신한 스크린샷이 없어요';
+  if (result.state === 'error') return result.error || '스크린샷 판독에 실패했어요';
+  if (result.state === 'pending' && Date.now() - Date.parse(result.receivedAt) > 90000)
+    return '판독 결과가 아직 없어요. 설정에서 최근 이미지를 다시 판독할 수 있어요.';
+  return '태그 스크린샷 판독 중…';
+}
+function tagGeocode(geocoder, address) {
+  return new Promise((resolve, reject) => {
+    geocoder.geocode({ address, region: 'kr' }, (results, status) => {
+      if (status === 'OK' || status === 'ZERO_RESULTS') resolve(results || []);
+      else reject(Error(status === 'REQUEST_DENIED' ? 'Google 지도 주소 검색 권한을 확인해 주세요' : 'Google 지도 주소 검색에 실패했어요'));
+    });
+  });
+}
 function showTagPositions(map, mount) {
   const status = $('tag-map-status'), locate = $('tag-map-locate');
-  let marker, generation, addressResult;
+  let marker, revision, addressResult;
   const active = () => MAP === map && mount.isConnected;
   const clear = () => { marker?.setMap(null); marker = null; locate.hidden = true; };
   locate.onclick = () => {
@@ -1907,12 +1931,11 @@ function showTagPositions(map, mount) {
   async function refresh() {
     if (!active()) { clear(); return; }
     try {
-      const response = await fetch('/api/tag-screenshot/analysis');
-      if (!response.ok) throw Error('태그 정보를 가져오지 못했어요');
-      const result = await response.json();
+      const result = await fetchTagAnalysis();
       if (!active()) return;
-      if (generation !== result.generation) {
-        generation = result.generation;
+      const nextRevision = [result.generation, result.analyzedAt, result.tagName, result.address].join('|');
+      if (revision !== nextRevision) {
+        revision = nextRevision;
         addressResult = undefined;
         clear();
       }
@@ -1920,27 +1943,34 @@ function showTagPositions(map, mount) {
       if (result.state === 'empty') { clear(); return; }
       if (result.state !== 'ready') {
         clear();
-        status.textContent = result.state === 'error' ? result.error : '태그 스크린샷 판독 중…';
+        status.textContent = tagAnalysisStatus(result);
         return;
       }
-      const received = result.receivedAt ? new Date(result.receivedAt).toLocaleString('ko-KR', {timeZone:'Asia/Seoul'}) : '';
+      const received = tagCaptureTime(result.receivedAt);
       const label = [result.tagName || '태그', result.address, result.updateLabel && '화면 표시 ' + result.updateLabel, received && '수신 ' + received].filter(Boolean).join(' · ');
       if (!result.address || !result.tagName) {
         status.textContent = label + ' · 지도에 표시할 위치를 확인하지 못했어요';
         return;
       }
       if (addressResult === undefined) {
-        const { Geocoder } = await google.maps.importLibrary('geocoding');
-        const { results } = await new Geocoder().geocode({ address: result.address, region: 'kr', fulfillOnZeroResults: true });
+        status.textContent = label + ' · 지도에서 위치 확인 중…';
+        let results;
+        try {
+          const { Geocoder } = await google.maps.importLibrary('geocoding');
+          results = await tagGeocode(new Geocoder(), result.address);
+        } catch (error) {
+          if (active()) status.textContent = label + ' · ' + error.message;
+          return;
+        }
         if (!active()) return;
         const match = results[0];
         const detailed = match?.types.some(type => TAG_ADDRESS_TYPES.has(type));
-        const regional = match?.types.some(type => TAG_REGION_TYPES.has(type));
+        const regional = match?.types.some(type => TAG_REGION_TYPE.test(type));
         addressResult = match && !match.partial_match && (detailed || regional)
           ? { location: match.geometry.location, regional: !detailed } : null;
       }
       if (!addressResult) {
-        status.textContent = label + ' · 지도에서 주소를 확인하지 못했어요';
+        status.textContent = label + ' · 지도에서 일치하는 주소를 찾지 못했어요';
         return;
       }
       const description = addressResult.regional ? '지역 대표 위치' : '주소 기준 추정 위치';
@@ -3838,13 +3868,35 @@ async function copyTagCaptureHeader(button) {
     status.textContent = '복사하지 못했어요. 로그인과 클립보드 권한을 확인해 주세요.';
   } finally { button.disabled = false; }
 }
+async function showLatestTagAnalysis(status) {
+  if (!status.isConnected) return;
+  try {
+    const result = await fetchTagAnalysis();
+    const fields = [
+      result.model && '모델: ' + result.model,
+      result.receivedAt && '스크린샷 수신: ' + tagCaptureTime(result.receivedAt),
+      result.analyzedAt && '판독 완료: ' + tagCaptureTime(result.analyzedAt)
+    ];
+    if (result.state === 'ready') fields.push(
+      '태그: ' + (result.tagName || '확인 안 됨'),
+      '화면에 표시된 위치: ' + (result.address || '확인 안 됨'),
+      '태그 갱신 표시: ' + (result.updateLabel || '확인 안 됨'),
+      '이미지 내 핀 위치 (0–1000): ' + (result.pin ? result.pin.x + ', ' + result.pin.y : '확인 안 됨')
+    );
+    else fields.push(tagAnalysisStatus(result));
+    status.textContent = fields.filter(Boolean).join('\n');
+  } catch (error) {
+    status.textContent = error.message;
+  }
+  if (status.isConnected) setTimeout(() => showLatestTagAnalysis(status), 5000);
+}
 async function retryLatestTagCapture(button) {
-  const status = $('tag-analysis-status');
+  const status = $('tag-retry-status');
   button.disabled = true;
   try {
     const response = await fetch('/api/tag-screenshot/analyze', { method: 'POST' });
     if (!response.ok) throw Error((await response.json()).error || '판독 요청에 실패했어요');
-    status.textContent = '판독을 요청했습니다. 지도에서 결과를 확인하세요.';
+    status.textContent = '판독을 요청했습니다. 아래 결과가 자동으로 갱신됩니다.';
   } catch (error) {
     status.textContent = error.message;
   } finally { button.disabled = false; }
@@ -3867,7 +3919,9 @@ function openSettings() {
         <a class="btn" href="/api/tag-screenshot" target="_blank" rel="noopener">최근 이미지 보기</a>
         <p id="tag-capture-status" class="hint" role="status"></p>
         <button class="btn" type="button" onclick="retryLatestTagCapture(this)">최근 이미지 다시 판독</button>
-        <p id="tag-analysis-status" class="hint" role="status" style="white-space:pre-wrap"></p>
+        <p id="tag-retry-status" class="hint" role="status"></p>
+        <h4>최근 판독 결과</h4>
+        <p id="tag-analysis-status" class="hint" role="status" style="white-space:pre-wrap">판독 결과를 불러오는 중…</p>
       </div>
       <div class="set-block">
         <h3>품목 추가</h3>
@@ -3893,6 +3947,7 @@ function openSettings() {
     </div>
     <div class="m-foot"><button class="btn" onclick="testConn()">연결 확인</button><span class="sp"></span>
       <button class="btn" onclick="closeModal()">취소</button><button class="btn primary" onclick="saveSettings()">저장</button></div>`);
+  showLatestTagAnalysis($('tag-analysis-status'));
 }
 async function addLoc() {
   const name = (prompt('새 위치 이름 (건물 · 층 · 실 순서)\n예: 본관 2층 회의실, 식당동, 야적장 A구역') || '').trim().replace(/\s+/g, ' ');
@@ -3976,7 +4031,7 @@ function showInstall() {
   box.innerHTML = h; box.classList.remove('hidden');
 }
 
-const BUILD = '2026-11-27d';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
+const BUILD = '2026-11-27e';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
 async function checkUpdate() {
   try {
     const t = await (await fetch(location.pathname + '?v=' + Date.now(), { cache: 'reload' })).text();

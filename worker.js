@@ -233,7 +233,13 @@ async function analyzeTagCapture(env, body) {
     if (error.status) throw error;
     fail(502, 'Vertex AI에 연결하지 못했어요');
   }
-  if ([401, 403].includes(response.status)) fail(503, 'Vertex AI API 활성화와 서비스 계정 권한을 확인해 주세요');
+  if ([401, 403].includes(response.status)) {
+    const body = await response.json().catch(() => null);
+    const reasons = body?.error?.details?.map(detail => detail.reason) || [];
+    if (reasons.includes('SERVICE_DISABLED')) fail(503, 'GCP 프로젝트의 Vertex AI API가 꺼져 있어요');
+    if (reasons.includes('BILLING_DISABLED')) fail(503, 'Vertex AI 프로젝트의 결제 설정을 확인해 주세요');
+    fail(503, 'Vertex AI 서비스 계정의 예측 권한(aiplatform.endpoints.predict)을 확인해 주세요');
+  }
   if (response.status === 429) fail(429, 'Vertex AI 요청 한도에 도달했어요. 잠시 후 다시 시도해 주세요');
   if (!response.ok) fail(502, 'Vertex AI 요청에 실패했어요 (' + response.status + ')');
   let parsed;
@@ -260,7 +266,7 @@ async function saveTagCaptureAnalysis(env, body, generation) {
   try {
     const response = await gcs(env, '/o/' + TAG_CAPTURE_OBJECT + '?ifGenerationMatch=' + encodeURIComponent(generation), {
       method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ metadata: { tagAnalysis: JSON.stringify(result) } })
+      body: JSON.stringify({ metadata: { tagAnalysis: JSON.stringify({ ...result, analyzedAt: new Date().toISOString() }) } })
     });
     if (response.status !== 412 && response.status !== 404) await checked(response);
   } catch {
