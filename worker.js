@@ -128,6 +128,7 @@ async function photo(request, env, pathname) {
 }
 const TAG_CAPTURE_PATH = '/api/tag-screenshot';
 const TAG_CAPTURE_OBJECT = encodeURIComponent('tag-screenshots/latest.png');
+const TAG_ANALYSIS_OBJECT = encodeURIComponent('tag-screenshots/latest-analysis.json');
 const TAG_CAPTURE_LIMIT = 8 * 1024 * 1024;
 const PNG_HEADER = [137, 80, 78, 71, 13, 10, 26, 10];
 const tagCaptureMessage = expiry => enc.encode('tag-screenshot-upload-v1:' + expiry);
@@ -263,20 +264,36 @@ async function saveTagCaptureAnalysis(env, body, generation) {
     result = { state: 'error', error: error.status ? error.message : 'Gemini 판독에 실패했어요' };
   }
   const analysis = { ...result, analyzedAt: new Date().toISOString() };
-  const response = await gcs(env, '/o/' + TAG_CAPTURE_OBJECT + '?ifGenerationMatch=' + encodeURIComponent(generation), {
-    method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ metadata: { tagAnalysis: JSON.stringify(analysis) } }),
-    signal: AbortSignal.timeout(8000)
-  }).catch(() => fail(502, '판독 결과 저장소에 연결하지 못했어요'));
-  if (response.status === 412 || response.status === 404) fail(409, '새 스크린샷이 도착했어요. 최신 판독 결과를 확인해 주세요');
-  if (!response.ok) fail(502, '판독 결과를 저장하지 못했어요 (GCS ' + response.status + ')');
-  return analysis;
+  try {
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const stored = await gcs(env, '/o/' + TAG_ANALYSIS_OBJECT + '?fields=generation', { signal: AbortSignal.timeout(8000) });
+      const resultGeneration = stored.status === 404 ? '0' : (await (await checked(stored)).json()).generation;
+      const latest = await gcs(env, '/o/' + TAG_CAPTURE_OBJECT + '?fields=generation', { signal: AbortSignal.timeout(8000) });
+      if (latest.status === 404 || (await (await checked(latest)).json()).generation !== generation)
+        fail(409, '새 스크린샷이 도착했어요. 최신 판독 결과를 확인해 주세요');
+      const response = await gcs(env, '/o?uploadType=media&name=' + TAG_ANALYSIS_OBJECT + '&ifGenerationMatch=' + resultGeneration, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...analysis, generation }),
+        signal: AbortSignal.timeout(8000)
+      }, true);
+      if (response.status === 412) continue;
+      if (!response.ok) fail(502, '판독 결과 파일을 저장하지 못했어요 (GCS ' + response.status + ')');
+      return analysis;
+    }
+  } catch (error) {
+    if (error.status) throw error;
+    fail(502, '판독 결과 저장소에 연결하지 못했어요');
+  }
+  fail(409, '다른 판독 결과가 먼저 저장됐어요. 최신 결과를 확인해 주세요');
 }
 async function readTagCaptureAnalysis(env) {
   const response = await gcs(env, '/o/' + TAG_CAPTURE_OBJECT + '?fields=generation,timeCreated,metadata');
   if (response.status === 404) return json({ state: 'empty' });
   const info = await (await checked(response)).json();
-  const result = info.metadata?.tagAnalysis ? JSON.parse(info.metadata.tagAnalysis) : { state: 'pending' };
+  const stored = await gcs(env, '/o/' + TAG_ANALYSIS_OBJECT + '?alt=media');
+  let result = stored.status === 404 ? null : await (await checked(stored)).json();
+  if (result?.generation !== info.generation)
+    result = info.metadata?.tagAnalysis ? JSON.parse(info.metadata.tagAnalysis) : { state: 'pending' };
   return json({ ...result, generation: info.generation, receivedAt: info.timeCreated });
 }
 async function retryTagCaptureAnalysis(env) {
