@@ -217,6 +217,7 @@ const TAG_ANALYSIS_PROMPT = [
   'In a Korean card, for example: GS26 is tagName, 사용자가 소지함 is cardStatus, 용인시 마북동 is address, and 지금 is updateLabel. Other status texts, languages, and card layouts are possible.',
   'Preserve a complete road name and building number or lot number if visible, including a building name, city, district, neighborhood, hyphenated lot number on the next line, and postal code if shown. Return a locality alone if that is all the card shows. Never combine a background map label with the card address.',
   'Use null for each missing or ambiguous field. Do not use labels on the basemap as an item address.',
+  'If the card contains a detailed address with a street or lot number, stop after transcribing the card. Set singleItemMarker to false and all map estimation fields and pin to null. Apply the map instructions below only when no detailed card address is visible.',
   'Set singleItemMarker to true only when exactly one clearly identifiable Find My Items marker is visible.',
   'Count a Find My item icon such as the heart in a dark map pin, but exclude the blue phone location dot, people, places, and other map symbols.',
   'For pin, give the pointed tip of the selected item marker, or the only clearly visible item marker if no item card is open.',
@@ -234,6 +235,12 @@ function imageBase64(bytes) {
     output += btoa(String.fromCharCode(...bytes.subarray(offset, offset + 24576)));
   }
   return output;
+}
+function hasDetailedTagCardAddress(address) {
+  const text = address?.normalize('NFKC').replace(/\s+/g, ' ').trim();
+  if (!text) return false;
+  const withoutPostalCode = text.replace(/,\s*\d{5}$/, '');
+  return /[가-힣0-9]+(?:대로|로|길|읍|면|동|리|가)[ ,]+(?:산\s*)?\d+(?:-\d+)?(?:\s*번지)?(?=$|[ ,(])/.test(withoutPostalCode);
 }
 async function analyzeTagCapture(env, body) {
   const project = env.VERTEX_PROJECT_ID || account(env).project_id;
@@ -275,6 +282,13 @@ async function analyzeTagCapture(env, body) {
   const result = Object.fromEntries(TAG_ANALYSIS_FIELDS.map(field => [
     field, typeof parsed[field] === 'string' ? parsed[field].trim().slice(0, 240) || null : null
   ]));
+  if (result.tagName && hasDetailedTagCardAddress(result.address)) {
+    return {
+      model: TAG_ANALYSIS_MODEL, tagName: result.tagName, address: result.address,
+      cardStatus: result.cardStatus, updateLabel: result.updateLabel,
+      addressSource: 'card-text', pin: null, estimatedCoordinates: null
+    };
+  }
   const { pin } = parsed;
   result.pin = [pin?.x, pin?.y].every(value => Number.isInteger(value) && value >= 0 && value <= 1000)
     ? { x: pin.x, y: pin.y } : null;

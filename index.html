@@ -1941,6 +1941,7 @@ async function resolveTagAddress(geocoder, result) {
     const original = await find(result.address, false);
     if (original && (!shown || !original.regional)) shown = original;
   }
+  if (result.addressSource === 'card-text') return shown;
   if (shown && (!shown.regional || result.cardStatus)) return shown;
   const estimate = result.estimatedAddress === result.address ? null : await find(result.estimatedAddress, true);
   if (!shown) return estimate || await find(result.referencePlace, false, true);
@@ -3974,6 +3975,7 @@ async function showLatestTagAnalysis(status) {
     if (result.state === 'ready') fields.push(
       '태그: ' + (result.tagName || '확인 안 됨') + (result.tagInferred ? ' (물품 핀 1개 기준)' : ''),
       '화면에 표시된 위치: ' + (result.address || '확인 안 됨'),
+      result.addressSource === 'card-text' && '위치 출처: 물품 카드의 상세 주소',
       result.cardStatus && '물품 상태: ' + result.cardStatus,
       '지도에서 추정한 주소: ' + (result.estimatedAddress || '확인 안 됨'),
       result.estimateBasis && '추정 근거: ' + result.estimateBasis,
@@ -4158,7 +4160,7 @@ function showInstall() {
   box.innerHTML = h; box.classList.remove('hidden');
 }
 
-const BUILD = '2026-11-27n';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
+const BUILD = '2026-11-27o';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
 async function checkUpdate() {
   try {
     const t = await (await fetch(location.pathname + '?v=' + Date.now(), { cache: 'reload' })).text();
