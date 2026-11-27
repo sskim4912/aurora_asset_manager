@@ -1927,10 +1927,10 @@ async function resolveTagAddress(geocoder, result) {
     if (!match || match.partial_match) return null;
     const detailed = match.types.some(type => TAG_ADDRESS_TYPES.has(type) || (reference && TAG_REFERENCE_TYPES.has(type)));
     if (!detailed && !match.types.some(type => TAG_REGION_TYPE.test(type))) return null;
-    return { location: match.geometry.location, bounds: match.geometry.bounds || match.geometry.viewport, regional: !detailed, estimated, reference };
+    return { location: match.geometry.location, bounds: match.geometry.bounds || match.geometry.viewport, regional: !detailed, estimated, reference, cardAddress: !estimated && !reference && address === result.address };
   }
   const shown = await find(result.address, false);
-  if (shown && !shown.regional) return shown;
+  if (shown && (!shown.regional || result.cardStatus)) return shown;
   const estimate = result.estimatedAddress === result.address ? null : await find(result.estimatedAddress, true);
   if (!shown) return estimate || await find(result.referencePlace, false, true);
   return estimate && !estimate.regional && shown.bounds?.contains(estimate.location) ? estimate : shown;
@@ -1952,7 +1952,7 @@ function showTagPositions(map, mount) {
     try {
       const result = await fetchTagAnalysis();
       if (!active()) return;
-      const nextRevision = [result.generation, result.analyzedAt, result.tagName, result.address, result.estimatedAddress, result.referencePlace].join('|');
+      const nextRevision = [result.generation, result.analyzedAt, result.tagName, result.address, result.cardStatus, result.estimatedAddress, result.referencePlace].join('|');
       if (revision !== nextRevision) {
         revision = nextRevision;
         addressResult = undefined;
@@ -1966,7 +1966,7 @@ function showTagPositions(map, mount) {
         status.textContent = tagAnalysisStatus(result);
         return;
       }
-      if (result.pin && result.generation && !Object.hasOwn(result, 'estimatedCoordinates') && !retriedTagGenerations.has(result.generation)) {
+      if ((result.pin || result.address) && result.generation && !Object.hasOwn(result, 'cardStatus') && !retriedTagGenerations.has(result.generation)) {
         retriedTagGenerations.add(result.generation);
         status.textContent = '기존 스크린샷의 지도 좌표를 다시 판독 중…';
         const retry = await fetch('/api/tag-screenshot/analyze', { method: 'POST' });
@@ -1981,7 +1981,7 @@ function showTagPositions(map, mount) {
       const received = tagCaptureTime(result.receivedAt);
       const estimatedText = result.estimatedAddress || result.relativePosition || '확인 안 됨';
       const label = [
-        [result.tagName || '태그', result.address && '화면 주소: ' + result.address, result.updateLabel && '화면 표시 ' + result.updateLabel, received && '수신 ' + received].filter(Boolean).join(' · '),
+        [result.tagName || '태그', result.address && '화면 주소: ' + result.address, result.cardStatus, result.updateLabel && '화면 표시 ' + result.updateLabel, received && '수신 ' + received].filter(Boolean).join(' · '),
         '추정 위치: ' + estimatedText,
         result.relativePosition && result.relativePosition !== estimatedText && '화면 기준: ' + result.relativePosition,
         result.estimateBasis && '추정 근거: ' + result.estimateBasis
@@ -2007,7 +2007,7 @@ function showTagPositions(map, mount) {
           } catch (error) { geocodeError = error; }
         }
         if (!active()) return;
-        if (!addressResult || addressResult.reference || addressResult.regional) addressResult = imageEstimate || addressResult;
+        if (!addressResult || addressResult.reference || (addressResult.regional && !(addressResult.cardAddress && result.cardStatus))) addressResult = imageEstimate || addressResult;
         if (!addressResult && geocodeError) {
           addressResult = undefined;
           status.textContent = label + ' · ' + geocodeError.message;
@@ -2020,7 +2020,7 @@ function showTagPositions(map, mount) {
       }
       const description = addressResult.reference ? '주변 기준점: ' + result.referencePlace
         : addressResult.imageEstimate ? '스크린샷 기반 추정 좌표'
-        : addressResult.regional ? '지역 대표 위치' : addressResult.estimated ? '지도 이미지 기반 추정 위치' : '주소 기준 추정 위치';
+        : addressResult.regional ? '지역 대표 위치' : addressResult.estimated ? '지도 이미지 기반 추정 위치' : '물품 카드 주소 기준 위치';
       status.textContent = label + ' · ' + description;
       if (!marker) {
         marker = new google.maps.Marker({ map, position: addressResult.location, label: addressResult.reference ? 'R' : 'T', title: addressResult.reference ? description : result.tagName + ' · ' + description });
@@ -3933,6 +3933,7 @@ async function showLatestTagAnalysis(status) {
     if (result.state === 'ready') fields.push(
       '태그: ' + (result.tagName || '확인 안 됨') + (result.tagInferred ? ' (물품 핀 1개 기준)' : ''),
       '화면에 표시된 위치: ' + (result.address || '확인 안 됨'),
+      result.cardStatus && '물품 상태: ' + result.cardStatus,
       '지도에서 추정한 주소: ' + (result.estimatedAddress || '확인 안 됨'),
       result.estimateBasis && '추정 근거: ' + result.estimateBasis,
       result.referencePlace && '주변 기준점: ' + result.referencePlace,
@@ -3947,6 +3948,28 @@ async function showLatestTagAnalysis(status) {
     status.textContent = error.message;
   }
   if (status.isConnected) setTimeout(() => showLatestTagAnalysis(status), 5000);
+}
+async function uploadManualTagCapture(input) {
+  const image = input.files[0];
+  if (!image) return;
+  const status = $('tag-retry-status');
+  input.disabled = true;
+  try {
+    if (image.size > 8 * 1024 * 1024) throw Error('스크린샷은 8MB까지 보낼 수 있어요');
+    status.textContent = '스크린샷을 올리고 판독 중이에요…';
+    const response = await fetch('/api/tag-screenshot/manual', {
+      method: 'POST', headers: { 'Content-Type': 'image/png' }, body: image
+    });
+    const result = await response.json();
+    if (!response.ok) throw Error(result.error || '스크린샷을 올리지 못했어요');
+    if (result.analysis?.state === 'error') throw Error(result.analysis.error);
+    status.textContent = '판독이 완료됐어요. 아래 결과 또는 지도에서 확인하세요.';
+  } catch (error) {
+    status.textContent = error.message;
+  } finally {
+    input.value = '';
+    input.disabled = false;
+  }
 }
 async function retryLatestTagCapture(button) {
   const status = $('tag-retry-status');
@@ -3978,6 +4001,9 @@ function openSettings() {
         <button class="btn" type="button" onclick="copyTagCaptureHeader(this)">전송 키 복사</button>
         <a class="btn" href="/api/tag-screenshot" target="_blank" rel="noopener">최근 이미지 보기</a>
         <p id="tag-capture-status" class="hint" role="status"></p>
+        <label class="set-one">직접 캡처한 스크린샷 (PNG)
+          <input class="inp" type="file" accept="image/png" onchange="uploadManualTagCapture(this)">
+        </label>
         <button class="btn" type="button" onclick="retryLatestTagCapture(this)">최근 이미지 다시 판독</button>
         <p id="tag-retry-status" class="hint" role="status"></p>
         <h4>최근 판독 결과</h4>
@@ -4091,7 +4117,7 @@ function showInstall() {
   box.innerHTML = h; box.classList.remove('hidden');
 }
 
-const BUILD = '2026-11-27k';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
+const BUILD = '2026-11-27l';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
 async function checkUpdate() {
   try {
     const t = await (await fetch(location.pathname + '?v=' + Date.now(), { cache: 'reload' })).text();
