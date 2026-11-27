@@ -128,6 +128,7 @@ async function photo(request, env, pathname) {
 }
 const TAG_CAPTURE_PATH = '/api/tag-screenshot';
 const TAG_CAPTURE_OBJECT = encodeURIComponent('tag-screenshots/latest.png');
+const TAG_POSITION_OBJECT = encodeURIComponent('tag-screenshots/latest-position.json');
 const TAG_ANALYSIS_OBJECT = encodeURIComponent('tag-screenshots/latest-analysis.json');
 const TAG_CAPTURE_LIMIT = 8 * 1024 * 1024;
 const PNG_HEADER = [137, 80, 78, 71, 13, 10, 26, 10];
@@ -299,37 +300,59 @@ async function saveTagCaptureAnalysis(env, body, generation) {
     result = { state: 'error', error: error.status ? error.message : 'Gemini 판독에 실패했어요' };
   }
   const analysis = { ...result, analyzedAt: new Date().toISOString() };
+  await writeTagCaptureResult(env, TAG_ANALYSIS_OBJECT, generation, analysis);
+  return analysis;
+}
+async function writeTagCaptureResult(env, object, generation, result) {
   try {
     for (let attempt = 0; attempt < 3; attempt++) {
-      const stored = await gcs(env, '/o/' + TAG_ANALYSIS_OBJECT + '?fields=generation', { signal: AbortSignal.timeout(8000) });
+      const stored = await gcs(env, '/o/' + object + '?fields=generation', { signal: AbortSignal.timeout(8000) });
       const resultGeneration = stored.status === 404 ? '0' : (await (await checked(stored)).json()).generation;
       const latest = await gcs(env, '/o/' + TAG_CAPTURE_OBJECT + '?fields=generation', { signal: AbortSignal.timeout(8000) });
       if (latest.status === 404 || (await (await checked(latest)).json()).generation !== generation)
         fail(409, '새 스크린샷이 도착했어요. 최신 판독 결과를 확인해 주세요');
-      const response = await gcs(env, '/o?uploadType=media&name=' + TAG_ANALYSIS_OBJECT + '&ifGenerationMatch=' + resultGeneration, {
+      const response = await gcs(env, '/o?uploadType=media&name=' + object + '&ifGenerationMatch=' + resultGeneration, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...analysis, generation }),
+        body: JSON.stringify({ ...result, generation }),
         signal: AbortSignal.timeout(8000)
       }, true);
       if (response.status === 412) continue;
-      if (!response.ok) fail(502, '판독 결과 파일을 저장하지 못했어요 (GCS ' + response.status + ')');
-      return analysis;
+      if (!response.ok) fail(502, '태그 결과 파일을 저장하지 못했어요 (GCS ' + response.status + ')');
+      return;
     }
   } catch (error) {
     if (error.status) throw error;
-    fail(502, '판독 결과 저장소에 연결하지 못했어요');
+    fail(502, '태그 결과 저장소에 연결하지 못했어요');
   }
-  fail(409, '다른 판독 결과가 먼저 저장됐어요. 최신 결과를 확인해 주세요');
+  fail(409, '다른 기기에서 먼저 저장했어요. 다시 시도해 주세요');
 }
 async function readTagCaptureAnalysis(env) {
   const response = await gcs(env, '/o/' + TAG_CAPTURE_OBJECT + '?fields=generation,timeCreated,metadata');
   if (response.status === 404) return json({ state: 'empty' });
   const info = await (await checked(response)).json();
-  const stored = await gcs(env, '/o/' + TAG_ANALYSIS_OBJECT + '?alt=media');
+  const [stored, manual] = await Promise.all([
+    gcs(env, '/o/' + TAG_ANALYSIS_OBJECT + '?alt=media'),
+    gcs(env, '/o/' + TAG_POSITION_OBJECT + '?alt=media')
+  ]);
+  const position = manual.status === 404 ? null : await (await checked(manual)).json();
   let result = stored.status === 404 ? null : await (await checked(stored)).json();
   if (result?.generation !== info.generation)
     result = info.metadata?.tagAnalysis ? JSON.parse(info.metadata.tagAnalysis) : { state: 'pending' };
-  return json({ ...result, generation: info.generation, receivedAt: info.timeCreated });
+  return json({
+    ...result, generation: info.generation, receivedAt: info.timeCreated,
+    manualPosition: position?.generation === info.generation ? position : null
+  });
+}
+async function setTagCapturePosition(request, env) {
+  const body = await request.json().catch(() => null);
+  const { generation, lat, lng } = body || {};
+  if (typeof generation !== 'string' || !/^\d+$/.test(generation) ||
+      !Number.isFinite(lat) || Math.abs(lat) > 90 || !Number.isFinite(lng) || Math.abs(lng) > 180) {
+    fail(400, '지도 좌표와 스크린샷을 확인해 주세요');
+  }
+  const position = { lat, lng };
+  await writeTagCaptureResult(env, TAG_POSITION_OBJECT, generation, position);
+  return json(position);
 }
 async function retryTagCaptureAnalysis(env) {
   const info = await (await readTagCaptureAnalysis(env)).json();
@@ -352,6 +375,7 @@ export default {
       if (url.pathname === '/api/logout' && request.method === 'POST') return json({ ok: true }, 200, { 'Set-Cookie': cookie('', 0) });
       if (!await authed(request, env)) fail(401, '다시 로그인해 주세요');
       if (url.pathname === TAG_CAPTURE_PATH + '/manual' && request.method === 'POST') return await uploadTagCapture(request, env);
+      if (url.pathname === TAG_CAPTURE_PATH + '/position' && request.method === 'PUT') return await setTagCapturePosition(request, env);
       if (url.pathname === TAG_CAPTURE_PATH + '/analysis' && request.method === 'GET') return await readTagCaptureAnalysis(env);
       if (url.pathname === TAG_CAPTURE_PATH + '/analyze' && request.method === 'POST') return await retryTagCaptureAnalysis(env);
       if (url.pathname === TAG_CAPTURE_PATH + '/token' && request.method === 'POST') return await issueTagCaptureToken(env);
