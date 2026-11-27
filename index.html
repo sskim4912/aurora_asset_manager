@@ -3767,6 +3767,24 @@ async function copyTagCaptureHeader(button) {
     status.textContent = '복사하지 못했어요. 로그인과 클립보드 권한을 확인해 주세요.';
   } finally { button.disabled = false; }
 }
+async function analyzeLatestTagCapture(button) {
+  const status = $('tag-analysis-status');
+  button.disabled = true;
+  status.textContent = 'Gemini로 판독 중…';
+  try {
+    const response = await fetch('/api/tag-screenshot/analyze', { method: 'POST' });
+    const result = await response.json();
+    if (!response.ok) throw Error(result.error || '판독에 실패했어요');
+    status.textContent = [
+      '태그: ' + (result.tagName || '확인 안 됨'),
+      '화면에 표시된 위치: ' + (result.address || '확인 안 됨'),
+      '갱신 표시: ' + (result.updateLabel || '확인 안 됨'),
+      '이미지 내 핀 위치 (0–1000): ' + (result.pin ? result.pin.x + ', ' + result.pin.y : '확인 안 됨')
+    ].join('\n');
+  } catch (error) {
+    status.textContent = error.message;
+  } finally { button.disabled = false; }
+}
 function openSettings() {
   const c = Store.cfg();
   const locCount = l => DOC.assets.filter(a => a.location === l).length;
@@ -3784,6 +3802,8 @@ function openSettings() {
         <button class="btn" type="button" onclick="copyTagCaptureHeader(this)">전송 키 복사</button>
         <a class="btn" href="/api/tag-screenshot" target="_blank" rel="noopener">최근 이미지 보기</a>
         <p id="tag-capture-status" class="hint" role="status"></p>
+        <button class="btn" type="button" onclick="analyzeLatestTagCapture(this)">Gemini 판독</button>
+        <p id="tag-analysis-status" class="hint" role="status" style="white-space:pre-wrap"></p>
       </div>
       <div class="set-block">
         <h3>품목 추가</h3>
@@ -3892,7 +3912,7 @@ function showInstall() {
   box.innerHTML = h; box.classList.remove('hidden');
 }
 
-const BUILD = '2026-11-27b';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
+const BUILD = '2026-11-27c';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
 async function checkUpdate() {
   try {
     const t = await (await fetch(location.pathname + '?v=' + Date.now(), { cache: 'reload' })).text();
