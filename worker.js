@@ -123,15 +123,66 @@ async function photo(request, env, pathname) {
   }
   const result = await (await checked(r)).json(); return json({ ok: true, generation: result.generation, md5Hash: result.md5Hash });
 }
+const TAG_CAPTURE_PATH = '/api/tag-screenshot';
+const TAG_CAPTURE_OBJECT = encodeURIComponent('tag-screenshots/latest.png');
+const TAG_CAPTURE_LIMIT = 8 * 1024 * 1024;
+const PNG_HEADER = [137, 80, 78, 71, 13, 10, 26, 10];
+const tagCaptureMessage = expiry => enc.encode('tag-screenshot-upload-v1:' + expiry);
+async function issueTagCaptureToken(env) {
+  const expiry = Date.now() + 30 * 86400000;
+  const signature = await crypto.subtle.sign('HMAC', await sessionKey(env), tagCaptureMessage(expiry));
+  return json({ token: expiry + '.' + b64(signature) });
+}
+async function uploadTagCapture(request, env) {
+  const match = /^Bearer (\d{13})\.([A-Za-z0-9_-]{43})$/.exec(request.headers.get('Authorization') || '');
+  if (!match || Number(match[1]) <= Date.now()) fail(401, '유효한 스크린샷 전송 키가 필요해요');
+  const signature = Uint8Array.from(atob(match[2].replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0));
+  if (!await crypto.subtle.verify('HMAC', await sessionKey(env), signature, tagCaptureMessage(match[1]))) fail(401, '유효한 스크린샷 전송 키가 필요해요');
+  if (request.headers.get('Content-Type')?.split(';')[0].trim() !== 'image/png' || !request.body) fail(415, 'PNG 이미지 파일을 보내 주세요');
+  const reader = request.body.getReader();
+  const chunks = [];
+  let size = 0;
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      size += value.byteLength;
+      if (size > TAG_CAPTURE_LIMIT) {
+        await reader.cancel();
+        fail(413, '스크린샷은 8MB까지 보낼 수 있어요');
+      }
+      chunks.push(value);
+    }
+  } finally { reader.releaseLock(); }
+  const body = await new Blob(chunks).arrayBuffer();
+  const bytes = new Uint8Array(body);
+  if (!PNG_HEADER.every((value, index) => bytes[index] === value)) fail(415, 'PNG 파일 형식을 확인해 주세요');
+  const r = await checked(await gcs(env, '/o?uploadType=media&name=' + TAG_CAPTURE_OBJECT, {
+    method: 'POST', headers: { 'Content-Type': 'image/png' }, body
+  }, true));
+  const result = await r.json();
+  return json({ ok: true, receivedAt: result.updated });
+}
+async function readTagCapture(env) {
+  const r = await checked(await gcs(env, '/o/' + TAG_CAPTURE_OBJECT + '?alt=media'));
+  return new Response(r.body, { headers: {
+    'Content-Type': 'image/png',
+    'Cache-Control': 'private, no-store',
+    'X-Content-Type-Options': 'nosniff'
+  } });
+}
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     if (!url.pathname.startsWith('/api/')) return env.ASSETS.fetch(request);
     try {
+      if (url.pathname === TAG_CAPTURE_PATH && request.method === 'POST') return await uploadTagCapture(request, env);
       if (!['GET', 'HEAD'].includes(request.method) && request.headers.get('Origin') !== url.origin) fail(403, '이 사이트에서 다시 요청해 주세요');
       if (url.pathname === '/api/login' && request.method === 'POST') return await login(request, env);
       if (url.pathname === '/api/logout' && request.method === 'POST') return json({ ok: true }, 200, { 'Set-Cookie': cookie('', 0) });
       if (!await authed(request, env)) fail(401, '다시 로그인해 주세요');
+      if (url.pathname === TAG_CAPTURE_PATH + '/token' && request.method === 'POST') return await issueTagCaptureToken(env);
+      if (url.pathname === TAG_CAPTURE_PATH && request.method === 'GET') return await readTagCapture(env);
       if (url.pathname === '/api/session' && request.method === 'GET') return json({ ok: true });
       if (url.pathname === '/api/status' && request.method === 'GET') {
         await checked(await gcs(env, '/o?maxResults=1&fields=kind'));

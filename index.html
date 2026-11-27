@@ -3752,6 +3752,21 @@ async function applyPlan() {
 /* ═══════════════════════════════════════════
    [7] 설정 · 시작
    ═══════════════════════════════════════════ */
+async function copyTagCaptureHeader(button) {
+  button.disabled = true;
+  const status = $('tag-capture-status');
+  try {
+    const header = fetch('/api/tag-screenshot/token', { method: 'POST' }).then(async response => {
+      if (!response.ok) throw Error('로그인 상태를 확인해 주세요.');
+      const { token } = await response.json();
+      return new Blob(['Bearer ' + token], { type: 'text/plain' });
+    });
+    await navigator.clipboard.write([new ClipboardItem({ 'text/plain': header })]);
+    status.textContent = '복사했습니다. 단축어의 Authorization 헤더 값에 붙여넣으세요.';
+  } catch {
+    status.textContent = '복사하지 못했어요. 로그인과 클립보드 권한을 확인해 주세요.';
+  } finally { button.disabled = false; }
+}
 function openSettings() {
   const c = Store.cfg();
   const locCount = l => DOC.assets.filter(a => a.location === l).length;
@@ -3762,6 +3777,13 @@ function openSettings() {
         <h3>클라우드 저장소</h3>
         <p class="hint">모든 기기가 같은 자산·사진을 사용해요. 로그인하면 자동으로 연결됩니다.</p>
         <div id="s-test" class="test-res"></div>
+      </div>
+      <div class="set-block">
+        <h3>태그 스크린샷</h3>
+        <p class="hint">아이폰 단축어에서 PNG를 전송하면 최근 수신 이미지 한 장을 볼 수 있어요. 전송 키는 발급 후 30일간 유효해요.</p>
+        <button class="btn" type="button" onclick="copyTagCaptureHeader(this)">전송 키 복사</button>
+        <a class="btn" href="/api/tag-screenshot" target="_blank" rel="noopener">최근 이미지 보기</a>
+        <p id="tag-capture-status" class="hint" role="status"></p>
       </div>
       <div class="set-block">
         <h3>품목 추가</h3>
@@ -3870,7 +3892,7 @@ function showInstall() {
   box.innerHTML = h; box.classList.remove('hidden');
 }
 
-const BUILD = '2026-11-27a';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
+const BUILD = '2026-11-27b';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
 async function checkUpdate() {
   try {
     const t = await (await fetch(location.pathname + '?v=' + Date.now(), { cache: 'reload' })).text();
