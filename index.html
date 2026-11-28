@@ -613,6 +613,63 @@ details[open].more summary::before{transform:rotate(90deg)}
 @media(max-width:600px){.excel-groups{grid-template-columns:1fr}.excel-groups section+section{border-left:0;border-top:1px solid var(--line);padding-left:0}.excel-menu{min-width:260px}}
 .material-help{font-size:11px;opacity:.7;cursor:help;display:inline-block;padding:2px;border-radius:3px}.material-help:focus-visible{outline:2px solid var(--acc);opacity:1}.material-filters{align-items:flex-start}.material-filters .chip{height:36px;min-height:36px;padding:6px 10px;white-space:nowrap;display:inline-flex;align-items:center;gap:4px}.material-filters details{margin:0}.material-more-options{position:absolute;right:0;top:calc(100% + 6px);display:grid;gap:5px;background:white;padding:8px;border:1px solid var(--line);border-radius:10px;z-index:35;min-width:190px;box-shadow:0 8px 24px #10203026}.material-more-options .chip{justify-content:space-between;transition:background .15s,border-color .15s}.material-more-options .chip:not(.on):hover,.material-more-options .chip:not(.on):focus-visible,.material-more-options .chip:not(.on):active{background:#eff6ff;border-color:#b9d4f4;color:var(--acc)}.material-stock-table{min-width:1160px}.material-flow-cell{white-space:normal;min-width:90px;line-height:1.7}.material-mobile-flow{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}.material-mobile-flow>div{padding:7px;background:#f3f6fb;border-radius:7px;min-width:0}.material-mobile-flow small{display:block;color:var(--sub);font-size:11px}.material-mobile-flow b{display:block;overflow-wrap:anywhere}.material-mobile-flow>div:last-child{background:#e7f5eb;color:#17663a}@media(max-width:899px){.material-filters .tool-more{position:relative}.material-more-options{left:0;right:auto;max-width:calc(100vw - 32px)}}
 .material-formula{display:block;font-size:10px;font-weight:500;white-space:nowrap;color:var(--sub);margin-top:3px}.material-flow-note{font-weight:400;line-height:1.6}.material-flow-note>div{margin-top:4px}#material-adjust-preview{background:#eef5ff;border-radius:8px;padding:5px 10px;font-size:12px}
+/* ── 화면 개편 (2026-11-28): 사이드바·하단 탭·홈 ── */
+.nv-side{position:fixed;left:0;top:64px;bottom:0;width:212px;background:#fff;border-right:1px solid var(--line);padding:14px 12px;display:flex;flex-direction:column;gap:4px;z-index:30;overflow-y:auto}
+.nv-group{display:flex;flex-direction:column;gap:3px}
+.nv-item{display:flex;align-items:center;gap:11px;width:100%;border:0;background:none;padding:11px 12px;border-radius:10px;color:#475467;font-weight:650;font-size:15px;text-align:left}
+.nv-item:hover{background:#f3f5f9}.nv-item.on{background:var(--acc-bg);color:var(--acc)}
+.nv-item.sm{font-size:13.5px;padding:9px 12px;font-weight:600}
+.nv-cnt{margin-left:auto;background:var(--red);color:#fff;font-size:11px;font-weight:750;padding:1px 7px;border-radius:99px;min-width:20px;text-align:center}
+.nv-foot{margin-top:auto;border-top:1px solid var(--line);padding-top:10px;display:flex;flex-direction:column;gap:2px}
+.nv-tab{display:none}
+@media(min-width:900px){#app>main{margin-left:212px;width:auto;max-width:none;padding-left:28px;padding-right:28px}#app>main>*{max-width:1400px}}
+@media(max-width:899px){
+  .nv-side{display:none}
+  .nv-tab{display:grid;grid-template-columns:repeat(5,1fr);position:fixed;left:0;right:0;bottom:0;z-index:45;background:#fff;border-top:1px solid var(--line);padding:4px 2px calc(4px + env(safe-area-inset-bottom));box-shadow:0 -4px 16px rgba(16,24,40,.06)}
+  .nv-tab-btn{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border:0;background:none;color:#667085;font-size:11px;font-weight:650;min-height:52px;padding:2px 0}
+  .nv-tab-btn.on{color:var(--acc)}
+  .nv-tab-btn .nv-cnt{position:absolute;top:3px;left:calc(50% + 6px);margin:0;font-size:10px;padding:0 5px;min-width:16px}
+  .nv-scan{color:#166534}.nv-scan-ring{display:grid;place-items:center;width:46px;height:46px;margin-top:-18px;border-radius:50%;background:#166534;color:#fff;box-shadow:0 4px 12px rgba(22,101,52,.35);border:3px solid #fff}
+  #app>main{padding-bottom:calc(96px + env(safe-area-inset-bottom))}
+  .header-more{display:none}
+  #toasts{bottom:calc(84px + env(safe-area-inset-bottom))}
+}
+@media print{.nv-side,.nv-tab{display:none!important}#app>main{margin-left:0}}
+.page-title h1,.home-head h1{font-size:22px;margin:0;letter-spacing:-.02em}.page-title{margin-bottom:14px}
+.home{display:flex;flex-direction:column;gap:14px;max-width:1100px}
+.home-top{display:flex;gap:10px;align-items:stretch}
+.big-search{flex:1;height:52px;border-radius:12px;font-size:16px;border-width:1.5px}.big-search input{flex:1;border:0;outline:0;background:none;font-size:16px;min-width:0;height:100%;color:var(--text)}
+.big-search:focus-within{border-color:var(--acc);box-shadow:0 0 0 4px var(--acc-bg)}
+.home-scan{height:52px;padding:0 20px;font-size:15.5px;border-radius:12px;gap:8px}
+.home-sec h2{font-size:15px;margin:4px 0 9px;color:#344054}.home-sec h2 small{color:var(--muted);font-weight:600;font-size:12px;margin-left:4px}
+.checks{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:9px}
+.check{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid var(--line);border-left:4px solid var(--muted);border-radius:12px;padding:12px 12px 12px 14px;text-align:left;min-width:0}
+.check:hover{border-color:var(--line2);box-shadow:0 2px 10px rgba(16,24,40,.06)}
+.check.red{border-left-color:var(--red)}.check.amber{border-left-color:#f59e0b}.check.blue{border-left-color:var(--acc)}.check.gray{border-left-color:#98a2b3}
+.check-num{font-size:24px;font-weight:800;min-width:56px;letter-spacing:-.02em;white-space:nowrap}.check-num small{font-size:12px;font-weight:650;margin-left:1px;color:var(--sub)}
+.check.red .check-num{color:var(--red)}.check.amber .check-num{color:#b45309}.check.blue .check-num{color:var(--acc)}
+.check-txt{flex:1;min-width:0;display:flex;flex-direction:column}.check-txt b{font-size:14.5px}.check-txt small{color:var(--sub);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.check>svg{color:var(--muted)}
+.empty-ok{display:flex;gap:8px;align-items:center;background:#fff;border:1px dashed var(--line2);border-radius:12px;padding:16px;color:var(--ok);font-weight:650}
+.qa-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:9px}
+.qa{display:flex;flex-direction:column;align-items:flex-start;gap:3px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 14px;text-align:left;min-height:88px;min-width:0}
+.qa svg{color:var(--acc);margin-bottom:4px}.qa b{font-size:14.5px}.qa small{color:var(--sub);font-size:11.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+.qa:hover{border-color:#b9d4f4;background:#f8fbff}
+.home-links{display:flex;gap:16px}
+.slist{display:flex;flex-direction:column;background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.srow{display:flex;align-items:center;gap:10px;border:0;border-bottom:1px solid var(--line);background:none;padding:11px 14px;text-align:left;min-width:0;flex-wrap:wrap}
+.srow:last-child{border-bottom:0}.srow:hover{background:#f8fafc}.srow>svg{margin-left:auto;color:var(--muted)}
+.srow-main{flex:1 1 260px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.srow-main small{color:var(--sub)}
+.srow-sub{display:flex;gap:6px;align-items:center;color:var(--sub);font-size:12.5px;min-width:0}
+.muted-row{opacity:.75}.slist-more{width:100%;margin-top:8px}
+.search-tools{margin:10px 0 14px}
+.more-group{background:#fff;border:1px solid var(--line);border-radius:12px;margin-bottom:14px;overflow:hidden}.more-group h2{font-size:12.5px;color:var(--sub);margin:0;padding:10px 14px 4px}
+.more-row{display:flex;align-items:center;gap:12px;width:100%;border:0;border-top:1px solid var(--line);background:none;padding:13px 14px;text-align:left}
+.more-row:first-of-type{border-top:0}.more-row>span{flex:1;display:flex;flex-direction:column}.more-row small{color:var(--sub);font-size:12px}.more-row>svg:first-child{color:var(--acc)}.more-row>svg:last-child{color:var(--muted)}
+.more-build{text-align:center}
+.excel-modal .excel-groups{display:grid;grid-template-columns:1fr 1fr;gap:12px}.excel-modal section{display:flex;flex-direction:column;gap:7px}
+@media(max-width:899px){.home-top{flex-direction:column}.home-scan{width:100%;height:50px}.checks{grid-template-columns:1fr}.qa-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.qa{min-height:80px;padding:11px 12px}}
+@media(max-width:360px){.excel-modal .excel-groups{grid-template-columns:1fr}.check-num{min-width:44px;font-size:21px}}
 </style>
 </head>
 <body>
@@ -636,7 +693,7 @@ details[open].more summary::before{transform:rotate(90deg)}
 <!-- 앱: 프로젝트 이름을 누르면 첫 화면 -->
 <div id="app" class="hidden">
   <header class="hdr">
-    <a class="hdr-logo" href="#assets" onclick="goHome();return false" title="첫 화면으로"><span class="project-logo">Aurora Project(충남)</span></a>
+    <a class="hdr-logo" href="#home" onclick="goHome();return false" title="첫 화면으로"><span class="project-logo">Aurora Project(충남)</span></a>
     <div class="hdr-title"><b><span class="desktop-only">Aurora Asset Manager</span><span class="mobile-only">비품관리</span></b><small>충남 현장 v2.4</small></div>
     <span class="sp"></span>
     <button class="sync" onclick="reloadData()" title="눌러서 새로고침"><span class="dot" data-sync-dot></span><span data-sync-text class="sync-text">불러오는 중…</span></button>
@@ -650,7 +707,9 @@ details[open].more summary::before{transform:rotate(90deg)}
       </div>
     </div>
   </header>
+  <nav id="side-nav" class="nv-side" aria-label="주 메뉴"></nav>
   <main id="view"></main>
+  <nav id="tab-bar" class="nv-tab" aria-label="하단 메뉴"></nav>
 </div>
 
 <!-- QR 스캐너 (휴대폰) -->
@@ -1143,23 +1202,192 @@ async function logout() {
 /* ═══════════════════════════════════════════
    [4] 화면 — 자산(한 페이지: 요약 카드 · 목록/지도) / 라벨 인쇄
    ═══════════════════════════════════════════ */
+/* ── 화면 구성 (2026-11-28 개편): PC 사이드바 홈·비품·자재·지도 / 모바일 하단 홈·검색·QR 스캔·지도·더보기
+   · 예전 주소 #assets 는 비품 화면으로 연결 (기존 QR ?id= 링크는 상세 열기 그대로) */
 const VIEWS = {
-  assets: { label: '자산', icon: 'box', render: renderAssets, after: afterAssets }
+  home:     { label: '홈',   icon: 'home', render: renderHome },
+  equip:    { label: '비품', icon: 'box',  render: () => viewAssets('equip'),    after: afterAssets },
+  material: { label: '자재', icon: 'tag',  render: () => viewAssets('material'), after: afterAssets },
+  map:      { label: '지도', icon: 'map',  render: () => viewAssets('map'),      after: afterAssets },
+  search:   { label: '검색', icon: 'search', render: renderSearch, after: afterSearch },
+  more:     { label: '더보기', icon: 'list', render: renderMore }
 };
-function currentView() { const h = location.hash.slice(1); return VIEWS[h] ? h : 'assets'; }
+const VIEW_ALIAS = { assets: 'equip' };
+function currentView() { const h = location.hash.slice(1); return VIEWS[h] ? h : VIEW_ALIAS[h] || 'home'; }
 function go(v) { if (location.hash.slice(1) === v) render(); else location.hash = v; window.scrollTo(0, 0); }
-function goHome() {   // GS 로고: 첫 화면으로
+/* 메뉴 이동: 화면별 기본 상태로 맞춘 뒤 이동 (자재 ↔ 비품 분류가 섞이지 않게) */
+function navTo(v) {
+  closeDrawer(); closeModal(); UI.sel.clear();
+  if (v === 'material') { if (UI.cat !== '자재') Object.assign(UI, { cat: '자재', item: '전체', filter: 'all', materialFilter: UI.materialFilter || 'all' }); }
+  else if ((v === 'equip' || v === 'map') && UI.cat === '자재') Object.assign(UI, { cat: '전체', item: '전체', filter: 'all' });
+  go(v);
+}
+function goHome() {   // 로고: 첫 화면(홈)으로
   closeDrawer(); closeModal();
   Object.assign(UI, { q: '', filter: 'all', cat: '전체', item: '전체', loc: '전체', mode: 'list' }); UI.sel.clear();
-  go('assets');
+  go('home');
 }
+function viewAssets(scope) {
+  UI.scope = scope;
+  if (scope === 'material') { UI.cat = '자재'; UI.mode = 'list'; }
+  else { if (UI.cat === '자재') UI.cat = '전체'; UI.mode = scope === 'map' ? 'map' : 'list'; }
+  return renderAssets();
+}
+function goMode(k) { go(k === 'map' ? 'map' : 'equip'); }
 function render() {
   if (!DOC) return;
-  const v = currentView();
-  const keepFinder=!!(FINDER?.phase==='pending'&&FINDER.navigation&&UI.mode==='map'&&v==='assets');if(keepFinder)FINDER.navigation=false;
+  let v = currentView();
+  // 자재 저장 뒤처럼 분류가 '자재'로 바뀐 채 비품·지도 화면에 있으면 자재 화면으로 옮김
+  if ((v === 'equip' || v === 'map') && UI.cat === '자재') { history.replaceState(null, '', '#material'); v = 'material'; }
+  if (v !== 'equip' && v !== 'material' && v !== 'map') UI.scope = '';
+  const keepFinder=!!(FINDER?.phase==='pending'&&FINDER.navigation&&UI.mode==='map'&&v==='map');if(keepFinder)FINDER.navigation=false;
   stopMyPosition(keepFinder); cancelMapMove(); closeMapInfo(); resetMapPins(); MAP_INITIAL_VIEW=null; MAP = null;
   $('view').innerHTML = VIEWS[v].render();
+  document.body.dataset.view = v;
+  renderNav(v);
   if (VIEWS[v].after) VIEWS[v].after();
+}
+
+/* ── 사이드바·하단 탭 ── */
+function navBadges() {
+  const todo = todos().length;
+  const pending = DOC.assets.filter(a => isMaterial(a) && !a.material.archived && matPending(a) > 0).length;
+  return { home: todo, material: pending };
+}
+function renderNav(v) {
+  const b = navBadges(), cnt = n => n ? `<span class="nv-cnt">${n > 99 ? '99+' : n}</span>` : '';
+  const item = (k, cls = 'nv-item') => `<button class="${cls} ${v === k ? 'on' : ''}" onclick="navTo('${k}')" aria-current="${v === k ? 'page' : 'false'}">${icon(VIEWS[k].icon, 20)}<span>${VIEWS[k].label}</span>${cnt(b[k])}</button>`;
+  const side = $('side-nav'), tab = $('tab-bar');
+  if (side) side.innerHTML = `<div class="nv-group">${['home', 'equip', 'material', 'map'].map(k => item(k)).join('')}</div>
+    <div class="nv-foot">
+      <button class="nv-item sm" onclick="openTrash()">${icon('file', 18)}<span>삭제 보관함</span></button>
+      <button class="nv-item sm" onclick="openSettings()">${icon('settings', 18)}<span>설정</span></button>
+    </div>`;
+  if (tab) tab.innerHTML = `${item('home', 'nv-tab-btn')}${item('search', 'nv-tab-btn')}
+    <button class="nv-tab-btn nv-scan" onclick="openScanner()" aria-label="QR 스캔"><span class="nv-scan-ring">${icon('qr', 24)}</span><span>QR 스캔</span></button>
+    ${item('map', 'nv-tab-btn')}${item('more', 'nv-tab-btn')}`;
+}
+
+/* ── 통합 검색: 비품·공기구·자재·현장 종료·삭제 보관함을 한 번에 ── */
+function assetSearchText(a) {
+  return [a.id, a.item, a.model, a.contract, a.location, a.category, a.note, a.manager, kitText(a.toolKit), a.tool?.borrower, a.tool?.place, isMaterial(a)?materialLocationText(a):'', a.material?.common?.po, a.material?.common?.pl, a.material?.common?.vendor, a.material?.serial, a.material?.parts?.map(p=>p.name+' '+p.spec).join(' '), a.leaseVendor, a.out && a.out.type, a.out && a.out.to, a.out && a.out.docNo].map(v => String(v || '')).join('\n').toLowerCase();
+}
+function searchAll(q) {
+  q = String(q || '').trim().toLowerCase(); if (!q) return { assets: [], trash: [] };
+  const words = q.split(/\s+/);
+  const hit = text => words.every(w => text.includes(w));
+  const assets = DOC.assets.filter(a => hit(assetSearchText(a)));
+  const rank = a => (a.id.toLowerCase() === q ? 0 : a.id.toLowerCase().includes(q) ? 1 : 2) + (a.out || a.material?.archived ? 3 : 0);
+  assets.sort((x, y) => rank(x) - rank(y) || x.id.localeCompare(y.id));
+  const trash = (DOC.trash || []).filter(t => t.kind === 'asset' && !t.restoredAt && hit([t.id, t.snap?.item, t.snap?.location, t.reason].join(' ').toLowerCase()));
+  return { assets, trash };
+}
+function searchRowHTML(a) {
+  const kind = isMaterial(a) ? '<span class="badge use">자재</span>' : '';
+  const st = a.out ? outBadge(a) : isMaterial(a) ? (a.material.archived ? '<span class="badge off">자재 휴지통</span>' : '') : badge(a.status);
+  const loc = isMaterial(a) ? materialLocationText(a) : a.location;
+  return `<button class="srow" onclick="openAsset('${esc(a.id)}')"><span class="srow-main"><b class="mono">${esc(a.id)}</b> ${esc(a.item || '')}${a.model ? ` <small>${esc(shortModel(a.model))}</small>` : ''}</span><span class="srow-sub">${kind}${st}<span>${esc(loc || '위치 없음')}</span></span>${icon('chev', 16)}</button>`;
+}
+function searchResultsHTML(q, limit) {
+  if (!String(q || '').trim()) return '';
+  const r = searchAll(q), total = r.assets.length + r.trash.length;
+  if (!total) return `<div class="empty"><b>‘${esc(q)}’ 검색 결과가 없습니다</b><p class="hint">관리번호·품목·위치·PO·PL·업체·메모로 찾을 수 있어요</p></div>`;
+  const list = limit ? r.assets.slice(0, limit) : r.assets;
+  return `<div class="slist">${list.map(searchRowHTML).join('')}${(!limit || list.length < limit) ? r.trash.map(t => `<button class="srow muted-row" onclick="openTrash()"><span class="srow-main"><b class="mono">${esc(t.id)}</b> ${esc(t.snap?.item || '')}</span><span class="srow-sub"><span class="badge off">삭제 보관함</span><span>${esc(t.reason || '')}</span></span>${icon('chev', 16)}</button>`).join('') : ''}</div>
+    ${limit && total > list.length ? `<button class="btn slist-more" onclick="openSearch(HOME_Q)">검색 결과 전체 ${total}건 보기 ›</button>` : ''}`;
+}
+let HOME_Q = '', SEARCH_Q = '';
+function openSearch(q) { SEARCH_Q = q || ''; go('search'); }
+function renderSearch() {
+  return `<div class="page-title"><h1>통합 검색</h1><p class="sub">비품·공기구·자재·현장 종료·삭제 보관함을 한 번에 찾습니다</p></div>
+  <label class="search big-search">${icon('search', 20)}<input id="sq" type="search" enterkeyhint="search" placeholder="관리번호·품목·위치·PO·PL·업체 검색" value="${esc(SEARCH_Q)}" oninput="SEARCH_Q=this.value;$('search-results').innerHTML=searchResultsHTML(SEARCH_Q)" aria-label="통합 검색"></label>
+  <div class="search-tools"><button class="btn scan-action" onclick="openScanner()">${icon('qr', 18)} QR로 찾기</button></div>
+  <div id="search-results">${searchResultsHTML(SEARCH_Q)}</div>`;
+}
+function afterSearch() { const el = $('sq'); if (el && !SEARCH_Q) setTimeout(() => el.focus(), 30); }
+
+/* ── 홈: 통합 검색 · QR 스캔 · 확인할 일 · 자주 쓰는 작업 ── */
+function homeChecks() {
+  const list = todos(), counts = {};
+  list.forEach(({ tags }) => new Set(tags.map(t => t.key)).forEach(k => counts[k] = (counts[k] || 0) + 1));
+  const out = [];
+  const add = (level, title, num, sub, action) => out.push({ level, title, num, sub, action });
+  if (list.length) add(list.some(x => x.tags.some(t => t.level === 'red')) ? 'red' : 'amber', '비품 할 일', list.length,
+    Object.entries(TODO_GROUPS).filter(([k]) => counts[k]).map(([k, l]) => `${l} ${counts[k]}`).join(' · '), "homeGo('equip',{filter:'todo'})");
+  const pend = DOC.assets.filter(a => isMaterial(a) && !a.material.archived && matPending(a) > 0).length;
+  if (pend) add('amber', '자재 반출 확인 대기', pend, '사무실 확정이 필요한 반출 건', "homeGo('material',{materialFilter:'pending'})");
+  if (DOC.audit) { const s = auditStats(); add('blue', '정기 실사 진행 중', s.total - s.done, `확인 ${s.done}/${s.total} · 미확인 자산`, "homeGo('equip',{filter:'unaudited'})"); }
+  else { const d = auditDue(); if (d.left <= 7) add(d.left <= 0 ? 'red' : 'amber', d.left <= 0 ? '정기 실사 시기' : '정기 실사 예정', d.left <= 0 ? (d.left === 0 ? '오늘' : -d.left + '일 지남') : 'D-' + d.left, `다음 예정 ${d.due}`, 'startAudit()'); }
+  const noCoord = activeAssets().filter(a => !hasCoord(a)).length;
+  if (noCoord) add('gray', '좌표 미등록', noCoord, '지도에 표시되지 않는 비품', "homeGo('equip',{filter:'nocoord'})");
+  if (UPQ.length) add(UPQ.some(j => j.err) ? 'red' : 'blue', '사진 저장 대기', UPQ.length, UPQ.some(j => j.err) ? '신호 좋은 곳에서 다시 시도' : '뒤에서 저장 중', 'UPQ.forEach(j=>j.tries=0);runUploads()');
+  return out;
+}
+function homeGo(v, state) { closeDrawer(); closeModal(); UI.sel.clear(); Object.assign(UI, { q: '', item: '전체', loc: '전체', filter: 'all' }, state || {}); if (v === 'material') UI.cat = '자재'; else if (UI.cat === '자재') UI.cat = '전체'; go(v); }
+const HOME_ACTIONS = [
+  ['plus', '비품 등록', '사진·GPS·QR 생성', "UI.cat='전체';openForm()"],
+  ['tag', '자재 입고', '업체·PO·PL 입고', 'openMaterialForm()'],
+  ['check', '정기 실사', '', "DOC.audit?homeGo('equip',{filter:'unaudited'}):startAudit()"],
+  ['printer', '라벨 인쇄', 'A4·A3 · 7×7cm', 'openLabelGuide()'],
+  ['file', '엑셀', '양식·일괄 등록·내보내기', 'openExcelMenu()'],
+  ['map', '지도에서 찾기', '내 위치·거리', "navTo('map')"],
+  ['download', '삭제 보관함', '되살리기', 'openTrash()'],
+];
+function renderHome() {
+  UI.scope = '';
+  const checks = homeChecks(), act = activeAssets(), mats = DOC.assets.filter(a => isMaterial(a) && !a.material.archived);
+  const actions = HOME_ACTIONS.map(([ic, t, sub, fn]) => {
+    if (t === '정기 실사') sub = DOC.audit ? '진행 중 · 이어서 확인' : `다음 예정 ${auditDue().due}`;
+    return `<button class="qa" onclick="${fn}">${icon(ic, 20)}<b>${t}</b><small>${esc(sub)}</small></button>`;
+  }).join('');
+  return `<div class="home">
+  <div class="home-head"><div><h1>오늘 확인할 일</h1><p class="sub">${todayLabel()} · 비품 ${act.length}건 · 자재 ${mats.length}묶음</p></div></div>
+  <div class="home-top">
+    <label class="search big-search">${icon('search', 20)}<input id="hq" type="search" enterkeyhint="search" placeholder="관리번호·품목·위치·PO·PL 통합 검색" value="${esc(HOME_Q)}" aria-label="통합 검색"
+      oninput="HOME_Q=this.value;$('home-results').innerHTML=searchResultsHTML(HOME_Q,6)" onkeydown="if(event.key==='Enter'){event.preventDefault();openSearch(HOME_Q)}"></label>
+    <button class="btn scan-action home-scan" onclick="openScanner()">${icon('qr', 22)}<span>QR 스캔</span></button>
+  </div>
+  <div id="home-results">${searchResultsHTML(HOME_Q, 6)}</div>
+  <section class="home-sec"><h2>확인할 일 <small>${checks.length ? checks.length + '종류' : ''}</small></h2>
+    ${checks.length ? `<div class="checks">${checks.map(c => `<button class="check ${c.level}" onclick="${c.action}"><span class="check-num">${c.num}${typeof c.num === 'number' ? '<small>건</small>' : ''}</span><span class="check-txt"><b>${c.title}</b><small>${esc(c.sub)}</small></span>${icon('chev', 16)}</button>`).join('')}</div>`
+      : `<div class="empty-ok">${icon('check', 20)} 지금 확인할 일이 없습니다</div>`}
+  </section>
+  <section class="home-sec"><h2>자주 쓰는 작업</h2><div class="qa-grid">${actions}</div></section>
+  <section class="home-sec home-links"><button class="link" onclick="navTo('equip')">비품 전체 목록 ›</button><button class="link" onclick="navTo('material')">자재 재고 ›</button></section>
+  </div>`;
+}
+/* 엑셀 메뉴: 목록 화면의 드롭다운과 같은 6개 버튼 (홈·더보기에서는 창으로) */
+function excelGroupsHTML() {
+  return `<div class="excel-groups"><section><strong>비품·공기구</strong><button onclick="downloadTemplate('assets')">양식 받기</button><button onclick="pickExcel('assets')">일괄 등록</button><button onclick="exportExcel('assets')">내보내기</button></section><section><strong>자재</strong><button onclick="downloadTemplate('materials')">양식 받기</button><button onclick="materialExcelPick()">일괄 등록</button><button onclick="exportExcel('materials')">내보내기</button></section></div><p class="hint">처음이라면 양식을 먼저 받아주세요.</p>`;
+}
+function openExcelMenu() { openModal(`<div class="m-head"><h2>엑셀 등록·다운로드</h2><button class="icon-btn" onclick="closeModal()" aria-label="닫기">×</button></div><div class="m-body excel-modal">${excelGroupsHTML().replace(/<button onclick="/g, '<button class="btn" onclick="closeModal();')}</div>`, 'sm'); }
+function openLabelGuide() {
+  openModal(`<div class="m-head"><h2>라벨 인쇄 (A4·A3)</h2><button class="icon-btn" onclick="closeModal()" aria-label="닫기">×</button></div><div class="m-body">
+    <ol class="ins-steps"><li><b>PC</b>: 비품 목록에서 체크 → 위에 뜨는 <b>라벨 인쇄</b></li><li><b>한 건</b>: 자산 상세의 <b>라벨</b> 버튼</li><li>미리보기에서 A4(8칸)·A3(15칸) 선택 후 인쇄</li></ol>
+    <button class="btn primary" style="width:100%;margin-top:12px" onclick="closeModal();homeGo('equip')">비품 목록으로 이동</button></div>`, 'sm');
+}
+
+/* ── 모바일 더보기 ── */
+function renderMore() {
+  UI.scope = '';
+  const row = (ic, t, sub, fn) => `<button class="more-row" onclick="${fn}">${icon(ic, 20)}<span><b>${t}</b>${sub ? `<small>${sub}</small>` : ''}</span>${icon('chev', 16)}</button>`;
+  const s = $('hdr-install'), canInstall = s && !s.classList.contains('hidden');
+  return `<div class="page-title"><h1>더보기</h1></div>
+  <div class="more-group"><h2>관리</h2>
+    ${row('box', '비품 목록', '분류·위치·상태 필터 · 현장 종료', "navTo('equip')")}
+    ${row('tag', '자재', '입고·반출·반납·실사 조정', "navTo('material')")}
+    ${row('check', '정기 실사', DOC.audit ? '진행 중' : '다음 예정 ' + auditDue().due, "DOC.audit?homeGo('equip',{filter:'unaudited'}):startAudit()")}
+    ${row('printer', '라벨 인쇄', 'A4·A3', 'openLabelGuide()')}
+    ${row('file', '엑셀 등록·다운로드', '', 'openExcelMenu()')}
+    ${row('download', '삭제 보관함', '되살리기', 'openTrash()')}
+  </div>
+  <div class="more-group"><h2>앱</h2>
+    ${canInstall ? row('download', '홈 화면 추가', '', 'installApp()') : ''}
+    ${row('settings', '설정', '', 'openSettings()')}
+    ${row('clock', '음성 미리듣기', '비품 찾기 안내 음성', 'openVoicePreview()')}
+    ${row('logout', '로그아웃', '', 'logout()')}
+  </div>
+  <p class="hint more-build">빌드 ${BUILD}</p>`;
 }
 
 /* ── 할 일: 상태 '하' + 점검일 7일 이내 + 렌탈 반납 14일 이내 ── */
@@ -1242,19 +1470,19 @@ function renderAssets() {
   const sel = (key, all, list) => `<select class="sel" onchange="UI.${key}=this.value;${key === 'cat' ? "UI.item='전체';UI.filter='all';UI.sel.clear();if(UI.cat==='자재')UI.mode='list';render()" : 'refreshList()'}">${['전체', ...list].map(k => `<option ${UI[key] === k ? 'selected' : ''} value="${esc(k)}">${k === '전체' ? all : esc(k)}</option>`).join('')}</select>`;
   const fk = FILTER_KO[UI.filter];
   return `
-  ${cardsHTML()}
+  ${UI.scope==='map'?'':cardsHTML()}
   <div class="toolbar">
     <div class="search-row"><label class="search">${icon('search', 16)}<input id="q" placeholder="${UI.cat==='자재'?'품명·규격·관리번호·PO·PL 검색':'품목·위치·관리번호 검색'}" aria-label="자산 검색" value="${esc(UI.q)}" oninput="UI.q=this.value;refreshList()"></label><button class="btn mobile-only filter-toggle" onclick="openAssetFilters()" aria-label="필터 및 정렬">${icon('settings',16)} 필터</button></div>
-    <div class="quick-filters">${sel('cat', '분류 전체', CATEGORIES)}${items.length ? sel('item', '품목 전체', items) : ''}${sel('loc', '위치 전체', DOC.locations)}</div>
+    <div class="quick-filters">${UI.scope==='material'?'':sel('cat', '분류 전체', CATEGORIES.filter(c=>c!=='자재'))}${items.length ? sel('item', '품목 전체', items) : ''}${sel('loc', '위치 전체', DOC.locations)}</div>
   </div>
   <div class="asset-actions">
     <div class="primary-actions">
       <button class="btn scan-action" onclick="openScanner()" aria-label="QR 스캔 열기" title="스캔 후 사진·위치 저장">${icon('qr',18)}<span>QR 스캔</span></button>
-      <button class="btn primary" onclick="openRegistration()" aria-label="${UI.cat==='자재'?'신규 자재 등록':UI.cat==='전체'?'신규 등록':'신규 비품 등록'}" title="기본 정보 입력 · QR 생성">${icon('plus',18)}<span>${UI.cat==='자재'?'신규 자재 등록':UI.cat==='전체'?'신규 등록 ▾':'신규 비품 등록'}</span></button>
+      <button class="btn primary" onclick="${UI.scope==='equip'||UI.scope==='map'?'openForm()':'openRegistration()'}" aria-label="${UI.cat==='자재'?'신규 자재 등록':UI.cat==='전체'?'신규 등록':'신규 비품 등록'}" title="기본 정보 입력 · QR 생성">${icon('plus',18)}<span>${UI.cat==='자재'?'신규 자재 등록':UI.cat==='전체'&&!UI.scope?'신규 등록 ▾':'신규 비품 등록'}</span></button>
     </div>
     <div class="secondary-actions">
-      <div class="paper-seg">${[['list', '목록'], ['map', '지도']].map(([k, l]) => `<button class="${UI.mode === k ? 'on' : ''}" onclick="UI.mode='${k}';render()">${icon(k === 'map' ? 'map' : 'list', 15)} ${l}</button>`).join('')}</div>
-      <div class="dd"><button class="btn" onclick="toggleDD(this)">${icon('file',16)} 엑셀 등록·다운로드 ${icon('down',14)}</button><div class="dd-menu excel-menu"><div class="excel-groups"><section><strong>비품·공기구</strong><button onclick="downloadTemplate('assets')">양식 받기</button><button onclick="pickExcel('assets')">일괄 등록</button><button onclick="exportExcel('assets')">내보내기</button></section><section><strong>자재</strong><button onclick="downloadTemplate('materials')">양식 받기</button><button onclick="materialExcelPick()">일괄 등록</button><button onclick="exportExcel('materials')">내보내기</button></section></div><p class="hint">처음이라면 양식을 먼저 받아주세요.</p></div></div>
+      <div class="paper-seg${UI.scope==='material'?' hidden':''}">${[['list', '목록'], ['map', '지도']].map(([k, l]) => `<button class="${UI.mode === k ? 'on' : ''}" onclick="goMode('${k}')">${icon(k === 'map' ? 'map' : 'list', 15)} ${l}</button>`).join('')}</div>
+      <div class="dd"><button class="btn" onclick="toggleDD(this)">${icon('file',16)} 엑셀 등록·다운로드 ${icon('down',14)}</button><div class="dd-menu excel-menu">${excelGroupsHTML()}</div></div>
     </div>
     <div class="list-head"><span id="asset-count"></span>${fk ? `<span class="chip on" onclick="setFilter('all')">${fk} ✕</span>` : ''}</div>
   </div>
@@ -1266,7 +1494,7 @@ function closeHeaderMenu() { $('header-more-menu').classList.remove('open'); doc
 function openAssetFilters() {
   const options = (values, selected) => values.map(([v, text]) => `<option value="${esc(v)}" ${v === selected ? 'selected' : ''}>${esc(text)}</option>`).join('');
   openModal(`<div class="m-head"><h2>필터·정렬</h2><button class="icon-btn" onclick="closeModal()" aria-label="닫기">×</button></div><div class="m-body filter-fields">
-    <label>분류<select class="inp" id="filter-category">${options([['전체','분류 전체'], ...CATEGORIES.map(x=>[x,x])], UI.cat)}</select></label>
+    <label${UI.scope==='material'?' hidden':''}>분류<select class="inp" id="filter-category">${options([['전체','분류 전체'], ...CATEGORIES.filter(x=>!UI.scope||UI.scope!=='equip'&&UI.scope!=='map'||x!=='자재').map(x=>[x,x])], UI.cat)}</select></label>
     <label>위치<select class="inp" id="filter-location">${options([['전체','위치 전체'], ...DOC.locations.map(x=>[x,x])], UI.loc)}</select></label>
     <label>정렬<select class="inp" id="filter-sort">${options(SORTS, UI.sort.k)}</select></label>
     <label>순서<select class="inp" id="filter-direction"><option value="1" ${UI.sort.d===1?'selected':''}>오름차순</option><option value="-1" ${UI.sort.d===-1?'selected':''}>내림차순</option></select></label>
@@ -1285,6 +1513,7 @@ function filteredAssets() {
   const todo = f === 'todo' ? new Set(todos().map(t => t.a.id)) : null;
   return DOC.assets.filter(a => {
     if(UI.cat==='자재'&&!isMaterial(a))return false;
+    if(UI.scope==='equip'&&isMaterial(a))return false;
     if(isMaterial(a)){if(UI.cat==='자재'){if(!matMatches(a))return false;}else if(a.material.archived||f!=='all')return false;}
     if (f === 'lease') { if (!isLease(a)) return false; }
     else if (f === 'leaseOut') { if (!isLease(a) || !a.out) return false; }
@@ -1299,7 +1528,7 @@ function filteredAssets() {
     }
     if (UI.cat === '공기구' && !toolMatches(a,UI.toolFilter)) return false;
     return (UI.cat === '전체' || a.category === UI.cat) && (UI.item === '전체' || a.item === UI.item) && (UI.loc === '전체' || a.location === UI.loc || isMaterial(a)&&materialZones(a).some(z=>z.name===UI.loc)) &&
-      (!q || [a.id, a.item, a.model, a.contract, a.location, a.category, a.note, a.manager, kitText(a.toolKit), a.tool?.borrower, a.tool?.place, isMaterial(a)?materialLocationText(a):'', a.material?.common?.po, a.material?.common?.pl, a.material?.common?.vendor, a.material?.serial, a.material?.parts?.map(p=>p.name+' '+p.spec).join(' '), a.leaseVendor, a.out && a.out.type, a.out && a.out.to, a.out && a.out.docNo].some(v => String(v || '').toLowerCase().includes(q)));
+      (!q || assetSearchText(a).includes(q));
   });
 }
 function schedOf(a) {
@@ -1959,7 +2188,7 @@ function mapSpot(g) {   // 같은 자리 여러 개 → 목록
 function showOnMap(id) {
   const a = getAsset(id); MAP_FOCUS = id; closeDrawer();
   Object.assign(UI, { mode: 'map', q: '', cat: '전체', item: '전체', loc: '전체', filter: a && a.out ? (isGone(a) ? 'disposed' : 'out') : 'all' });
-  go('assets');
+  go('map');
 }
 
 // 내 위치는 현재 화면의 메모리에만 유지한다. 서버·브라우저 저장소에는 쓰지 않는다.
@@ -3870,7 +4099,7 @@ function showInstall() {
   box.innerHTML = h; box.classList.remove('hidden');
 }
 
-const BUILD = '2026-11-28a';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
+const BUILD = '2026-11-28-nav1';   // index.html 바꿀 때마다 올림 → 휴대폰 앱이 새 버전 자동 반영
 async function checkUpdate() {
   try {
     const t = await (await fetch(location.pathname + '?v=' + Date.now(), { cache: 'reload' })).text();
@@ -3887,7 +4116,7 @@ let OPEN_SET = false;   // ?settings 주소로 열면 로그인 뒤 설정 바�
   const p = new URLSearchParams(location.search);
   if(p.get('voice-preview')==='1'){const page=document.createElement('main');page.className='voice-preview-page';page.innerHTML='<h1>안내 음성 미리듣기</h1><p>근처 도착 안내의 목소리를 휴대폰에서 먼저 들어보세요.</p><button class="btn primary" onclick="openVoicePreview()">음성 미리듣기 열기</button><p><a href="./">자산관리 화면으로</a></p>';document.body.append(page);openVoicePreview();return;}
   if (p.has('settings')) { OPEN_SET = true; history.replaceState(null, '', location.pathname); }
-  if (p.get('id')) { PENDING_ID = p.get('id').toUpperCase(); history.replaceState(null, '', location.pathname + '#assets'); }
+  if (p.get('id')) { PENDING_ID = p.get('id').toUpperCase(); history.replaceState(null, '', location.pathname + '#home'); }
   if (await isAuthed()) startApp(); else { $('gate').classList.remove('hidden'); setTimeout(() => $('pw').focus(), 50); }
 })();
 </script>
